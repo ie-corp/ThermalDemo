@@ -1,0 +1,185 @@
+.editorrow {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    
+    
+  }
+  
+  .editorcolumn {
+    
+    flex-direction: column;
+    
+   
+    width:min-content;
+  }
+
+
+
+
+
+
+.resizebutton{
+    width: 60px;
+    height: 60px;
+    color:white;
+    background-color:#2dabf9;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 20px;
+    font-weight: bold;
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 60px;       /* The same as your div height */
+}
+
+  .shapeditorletterbox
+  {
+      width: 60px;
+      height: 60px;
+      color:white;
+      background-color: #000000;
+      font-family: 'Courier New', Courier, monospace;
+    
+      font-weight: bold;
+      display: inline-block;
+      text-align: center;
+      vertical-align: middle;
+      margin:0px;
+      padding: 0px;
+      border-spacing:0; 
+   
+    }
+
+    .shapeditorletterboxwide
+  {
+      width: 124px;
+      height: 60px;
+      color:white;
+      background-color: #000000;
+      font-family: 'Courier New', Courier, monospace;
+    
+      font-weight: bold;
+      display: inline-block;
+      text-align: start;
+      vertical-align: middle;
+      margin:0px;
+      padding: 0px;
+      border-spacing:0; 
+   
+    }
+
+    table.shapeditorletterbox td
+    {
+      width: 60px;
+    }
+
+    .shapeeditortext
+    {
+      
+      font-size: 15px;
+     line-height: 30px;       
+    }
+
+    .shapeeditortext2
+    {
+      
+      font-size: 15px;
+     line-height: 6px;       
+    }
+
+    .shapeditortextsub
+    {
+      
+      font-size: 15px;
+          
+    }
+
+    .shapeditortextsub2
+    {
+      
+      font-size: 15px;
+    }
+
+    .shapeditortextsub3
+    {
+      
+      font-size: 12px;
+    }
+
+
+.shapebutton{
+    width: 60px;
+    height: 60px;
+    background-color:#16196f;
+    color:white;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+.movebutton{
+    width: 60px;
+    height: 60px;
+    background-color:#2dabf9;
+}
+
+.arrowmove {
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 3px;
+  }
+  
+  .arrowright {
+    transform: rotate(-45deg);
+  }
+  
+  .arrowleft {
+    transform: rotate(135deg);
+  }
+  
+  .arrowup {
+    transform: rotate(-135deg);
+  }
+
+  .arrowupleft {
+    transform: rotate(180deg);
+  }
+
+  .arrowupright {
+    transform: rotate(270deg);
+  }
+  
+  .arrowdown {
+    transform: rotate(45deg);
+  }
+
+  .arrowdownleft {
+    transform: rotate(90deg);
+  }
+
+  .arrowdownright {
+    transform: rotate(0deg);
+  }
+
+
+
+
+  /* Chrome, Edge, and Safari */
+  div::-webkit-scrollbar {
+    width: 16px;
+  }
+
+  div::-webkit-scrollbar-track {
+    background: #ffffff;
+  }
+
+  div::-webkit-scrollbar-thumb {
+    background-color: #2dabf9;
+    border-radius: 10px;
+    border: 3px solid #ffffff;
+  }
+
+

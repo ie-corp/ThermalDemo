@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Home</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        var shapeEditor = { "imageRotation": 0, "imageFilter": "none", "maxNameLength": 16, "tempDisplayUnit": "F", "imageNativeWidth": 256, "imageNativeHeight": 192, "imageWidth": 256, "imageHeight": 192, "imageScale": 1.0, "regions": [], "selectedRegionIndex": -1 };
+        var shapeColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
+        var tempRanges = { "LowestCelsius": -20.0, "HighestCelsius": 550.0, "defaultHiCelsius": 250.0, "defaultLoCelsius": 0 };
+        let shapeTypes = ['rectangle', 'ellipse', 'point'];
+        var activeFunc = null;
+        var waiterTime = 100;
+
+        let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
+
+
+
+        function clearFunc() {
+            activeFunc = null;
+            waiterTime = 1000;
+        }
+
+
+
+        function repeatFunc(myfunc) {
+            if (activeFunc != myfunc) {
+                waiterTime = 1000;
+            }
+            activeFunc = myfunc;
+            activeFunc();
+            waiterTime -= 150;
+            if (waiterTime <= 10) {
+                waiterTime = 10;
+            }
+            setTimeout(function () {
+                if (activeFunc != null) {
+                    repeatFunc(activeFunc);
+                }
+            }, waiterTime);
+        }
+
+        function redoShapeEditor() {
+            alert('not currently supported');
+        }
+
+        function undoShapeEditor() {
+            alert('not currently supported');
+        }
+
+        function recalcEditor() {
+
+            if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
+                shapeEditor.imageWidth = shapeEditor.imageNativeWidth * shapeEditor.imageScale;
+                shapeEditor.imageHeight = shapeEditor.imageNativeHeight * shapeEditor.imageScale;
+            }
+            else {
+                shapeEditor.imageWidth = shapeEditor.imageNativeHeight * shapeEditor.imageScale;
+                shapeEditor.imageHeight = shapeEditor.imageNativeWidth * shapeEditor.imageScale;
+            }
+
+
+
+
+
+
+            var valueZoom = document.getElementById("valueZoom");
+            valueZoom.innerHTML = Math.round(shapeEditor.imageScale * 100) + "%";
+
+
+            var valImageRotation = document.getElementById("valImageRotation");
+            valImageRotation.innerHTML = shapeEditor.imageRotation + "&deg;";
+            drawShapes();
+
+        }
+
+
+
+        function rotate90(w, h, x, y) {
+            // Create a new object to store the new coordinate
+            var newPoint = {};
+
+            // To rotate the point 90 degrees clockwise, swap the x and y values and subtract the x value from the height
+            newPoint.x = h - y;
+            newPoint.y = x;
+
+            // To rotate the point 90 degrees counterclockwise, swap the x and y values and subtract the y value from the width
+            // newPoint.x = y;
+            // newPoint.y = w - x;
+
+            // Return the new coordinate object
+            return [newPoint.x, newPoint.y];
+        }
+
+
+        function rotateImage() {
+            let originalRotation = shapeEditor.imageRotation;
+            shapeEditor.imageRotation += 90;
+            if (shapeEditor.imageRotation >= 360) {
+                shapeEditor.imageRotation = 0;
+            }
+            if (shapeEditor.regions.length > 0) {
+                //rotate all shapes by 90 degrees. move x and y accordingly
+                for (let i = 0; i < shapeEditor.regions.length; i++) {
+                    let region = shapeEditor.regions[i];
+                    var pts = [region.x, region.y];
+                    if (originalRotation == 0 || originalRotation == 180) {
+                        if (region.type == 'point') {
+                            console.log('point');
+                            pts = rotate90(shapeEditor.imageNativeWidth, shapeEditor.imageNativeHeight, region.x, region.y);
+                        }
+                        else {
+                            pts = rotate90(shapeEditor.imageNativeWidth, shapeEditor.imageNativeHeight, region.x, region.y);
+                            let nX = pts[0];//85  //80
+                            let nY = pts[1];//64  //84
+                            //console.log('rotating: ' + region.x + ',' + region.y + ' to ' + nX + ',' + nY);
+                            nX = nX - region.height;
+
+                            //console.log('adjusted rotating: ' + region.x + ',' + region.y + ' to ' + nX + ',' + nY);
+                            pts[0] = nX;
+                            pts[1] = nY;
+
+                        }
+
+                    }
+                    else {
+                        if (region.type == 'point') {
+                            pts = rotate90(shapeEditor.imageNativeHeight, shapeEditor.imageNativeWidth, region.x, region.y);
+                        }
+                        else {
+                            pts = rotate90(shapeEditor.imageNativeHeight, shapeEditor.imageNativeWidth, region.x, region.y);
+                            let nX = pts[0];//85  //80
+                            let nY = pts[1];//64  //84
+                            //console.log('rotating: ' + region.x + ',' + region.y + ' to ' + nX + ',' + nY);
+                            nX = nX - region.height;
+
+                            //console.log('adjusted rotating: ' + region.x + ',' + region.y + ' to ' + nX + ',' + nY);
+                            pts[0] = nX;
+                            pts[1] = nY;
+                        }
+
+
+                    }
+                    let originalWidth = region.width;
+                    let originalHeight = region.height;
+                    let newX = pts[0];
+                    let newY = pts[1];
+
+                    region.x = newX;
+                    region.y = newY;
+                    region.width = originalHeight;
+                    region.height = originalWidth;
+
+                }
+            }
+            recalcEditor();
+        }
+
+        function drawShapes() {
+
+            var shapeEditorImage = document.getElementById("shapeEditorImage");
+            var shapeEditorImageRef = document.getElementById("shapeEditorImageRef");
+
+            var canvas = document.createElement("canvas");
+            if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
+                canvas.width = shapeEditor.imageNativeWidth;
+                canvas.height = shapeEditor.imageNativeHeight;
+
+            }
+            else {
+                canvas.width = shapeEditor.imageNativeHeight;
+                canvas.height = shapeEditor.imageNativeWidth;
+
+            }
+
+            var ctx = canvas.getContext("2d");
+            resetSelectedShapeAttributes();
+
+            let rotation = shapeEditor.imageRotation * Math.PI / 180;
+            if (shapeEditor.imageFilter == 'sepia') {
+                ctx.filter = "sepia(1)";
+            }
+            else if (shapeEditor.imageFilter == 'contrast') {
+                ctx.filter = ' contrast(150%) brightness(60%)';
+            }
+            else if (shapeEditor.imageFilter == 'invert') {
+                ctx.filter = 'invert(75%)';
+            }
+            else {
+                ctx.filter = 'none';
+            }
+
+
+            if (rotation != 0) {
+                // translate context to center of canvas
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(rotation);
+                // draw image
+                ctx.drawImage(shapeEditorImageRef, -shapeEditor.imageNativeWidth / 2, -shapeEditor.imageNativeHeight / 2);
+                //unrotate
+                ctx.rotate(-rotation);
+                // un-translate the canvas back to origin==top-left canvas
+                ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+            }
+            else {
+                ctx.drawImage(shapeEditorImageRef, 0, 0, canvas.width, canvas.height);
+            }
+            ctx.filter = 'none';
+
+            for (var i = 0; i < shapeEditor.regions.length; i++) {
+                var region = shapeEditor.regions[i];
+                var isSelected = i == shapeEditor.selectedRegionIndex;
+                drawShape(ctx, region, isSelected);
+                if (isSelected) {
+                    updateSelectedShapeAttributes(region);
+                }
+            }
+
+            var dataURL = canvas.toDataURL("image/png");
+            shapeEditorImage.src = dataURL;
+            shapeEditorImage.style.width = shapeEditor.imageWidth + "px";
+            shapeEditorImage.style.height = shapeEditor.imageHeight + "px";
+        }
+
+        function getDisplayTempFromCelsius(celsius, displayFahrenheit) {
+            if (celsius == null) {
+                return '--';
+            }
+            if (!displayFahrenheit) {
+                return (Math.round(celsius * 10) / 10).toString();
+            }
+            else {
+                let valF = (celsius * 9 / 5) + 32;
+                return (Math.round(valF * 10) / 10).toString();
+            }
+
+        }
+
+        function changeShapeNext(nextShape) {
+            if (shapeEditor.selectedRegionIndex == -1 || shapeEditor.regions.length == 0) {
+                return;
+            }
+
+            let shapeIndex = shapeEditor.selectedRegionIndex;
+            if (nextShape) {
+                shapeIndex++;
+            }
+            else {
+                shapeIndex--;
+            }
+            if (shapeIndex < 0) {
+                shapeIndex = shapeEditor.regions.length - 1;
+            }
+            else if (shapeIndex >= shapeEditor.regions.length) {
+                shapeIndex = 0;
+            }
+            shapeEditor.selectedRegionIndex = shapeIndex;
+            recalcEditor();
+        }
+
+        function updateSelectedShapeAttributes(region) {
+            resetSelectedShapeAttributes();
+            document.getElementById("valShapeIndex").innerHTML = "0 of 0";
+            if (shapeEditor.selectedRegionIndex > -1 && shapeEditor.regions.length > 0) {
+                document.getElementById("valShapeIndex").innerHTML = (shapeEditor.selectedRegionIndex + 1) + " of " + shapeEditor.regions.length;
+            }
+            document.getElementById("valShapeName").innerHTML = region.name;
+            document.getElementById("valMaxTempC").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, false);
+            document.getElementById("valMaxTempF").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, true);
+            document.getElementById("valMinTempC").innerHTML = getDisplayTempFromCelsius(region.minTempCelsius, false);
+            document.getElementById("valMinTempF").innerHTML = getDisplayTempFromCelsius(region.minTempCelsius, true);
+            document.getElementById("valShapePosX").innerHTML = region.x;
+            document.getElementById("valShapePosY").innerHTML = region.y;
+            document.getElementById("valShapeWidth").innerHTML = region.width;
+            document.getElementById("valShapeHeight").innerHTML = region.height;
+            document.getElementById("valShapeAngle").innerHTML = region.angle;
+            document.getElementById("valShapeColor").innerHTML = region.color;
+            document.getElementById("valShapeColorDemo").style.backgroundColor = region.color;
+        }
+
+        function resetSelectedShapeAttributes() {
+            document.getElementById("valShapeIndex").innerHTML = "0 of 0";
+            document.getElementById("valShapeName").innerHTML = "--";
+            document.getElementById("valMaxTempC").innerHTML = "--";
+            document.getElementById("valMaxTempF").innerHTML = "--";
+            document.getElementById("valMinTempC").innerHTML = "--";
+            document.getElementById("valMaxTempF").innerHTML = "--";
+            document.getElementById("valShapePosX").innerHTML = "--";
+            document.getElementById("valShapePosY").innerHTML = "--";
+            document.getElementById("valShapeWidth").innerHTML = "--";
+            document.getElementById("valShapeHeight").innerHTML = "--";
+            document.getElementById("valShapeAngle").innerHTML = "--";
+            document.getElementById("valShapeColor").innerHTML = "--";
+            document.getElementById("valShapeColorDemo").style.backgroundColor = "black";
+
+        }
+
+        function deleteShapeEditor() {
+            if (shapeEditor.selectedRegionIndex >= 0) {
+                shapeEditor.regions.splice(shapeEditor.selectedRegionIndex, 1);
+                shapeEditor.selectedRegionIndex--;
+                recalcEditor();
+            }
+        }
+
+        function changeImageFilterNext(nextFilter) {
+
+            let imageFilter = imageFilters[0];
+            let imageFilterIndex = 0;
+            if (shapeEditor.imageFilter != null) {
+                imageFilterIndex = imageFilters.indexOf(shapeEditor.imageFilter);
+                if (imageFilterIndex == -1) {
+                    imageFilterIndex = 0;
+                }
+            }
+            if (nextFilter) {
+                imageFilterIndex++;
+            }
+            else {
+                imageFilterIndex--;
+            }
+
+            if (imageFilterIndex < 0) {
+                imageFilterIndex = imageFilters.length - 1;
+            }
+            else if (imageFilterIndex >= imageFilters.length) {
+                imageFilterIndex = 0;
+            }
+            imageFilter = imageFilters[imageFilterIndex];
+            shapeEditor.imageFilter = imageFilter;
+            document.getElementById("valueFilter").innerHTML = imageFilter;
+            recalcEditor();
+        }
+
+        function changeShapeName() {
+            if (shapeEditor.selectedRegionIndex >= 0) {
+                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+                var newName = prompt("Please enter a new name with maximum length of " + shapeEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", region.name);
+                if (newName != null && newName.trim() != "") {
+                    newName = newName.trim();
+                    if (newName.length > shapeEditor.maxNameLength) {
+                        console.error('name too long, max ' + shapeEditor.maxNameLength + ' characters');
+                        return;
+                    }
+                    for (let i = 0; i < newName.length; i++) {
+                        let c = newName.charAt(i);
+                        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == '_')) {
+                            console.error('Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
+                            return;
+                        }
+                    }
+                    region.name = newName;
+                    recalcEditor();
+                }
+            }
+        }
+
+        function drawShape(ctx, region, isSelected) {
+            // Reset transformation matrix to the identity matrix
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            if (region.type == "rectangle") {
+                ctx.beginPath();
+                // Matrix transformation to plot at center
+                ctx.translate((region.x + region.width / 2), (region.y + region.height / 2));
+                ctx.rotate(region.angle * Math.PI / 180);
+                ctx.translate((region.x + region.width / 2) * -1, (region.y + region.height / 2) * -1);
+
+                ctx.rect(region.x, region.y, region.width, region.height);
+                if (isSelected) {
+                    ctx.setLineDash([2, 1]);
+                }
+                else {
+                    ctx.setLineDash([]);
+                }
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = region.color;
+
+                ctx.stroke();
+            }
+            else if (region.type == 'ellipse') {
+                ctx.beginPath();
+                // Matrix transformation to plot at center
+                ctx.translate((region.x + region.width / 2), (region.y + region.height / 2));
+                ctx.rotate(region.angle * Math.PI / 180);
+                ctx.translate((region.x + region.width / 2) * -1, (region.y + region.height / 2) * -1);
+
+                let rad = region.angle * Math.PI / 180;
+
+                let cx = region.x + region.width / 2;
+                let cy = region.y + region.height / 2;
+                let rx = region.width / 2;
+                let ry = region.height / 2;
+
+                ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
+                if (isSelected) {
+                    ctx.setLineDash([2, 1]);
+                }
+                else {
+                    ctx.setLineDash([]);
+                }
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = region.color;
+                ctx.stroke();
+            }
+            else if (region.type == 'point') {
+                ctx.beginPath();
+                //if (isSelected) {
+                //ctx.setLineDash([5, 15]);
+                //}
+                ctx.setLineDash([]);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = region.color;
+                ctx.moveTo(region.x, region.y - 8);
+                ctx.lineTo(region.x, region.y - 1);
+                ctx.stroke();
+
+                ctx.moveTo(region.x, region.y + 1);
+                ctx.lineTo(region.x, region.y + 8);
+                ctx.stroke();
+
+                ctx.moveTo(region.x - 8, region.y);
+                ctx.lineTo(region.x - 1, region.y);
+                ctx.stroke();
+
+                ctx.moveTo(region.x + 1, region.y);
+                ctx.lineTo(region.x + 8, region.y);
+                ctx.stroke();
+
+                if (isSelected) {
+                    ctx.beginPath();
+                    ctx.arc(region.x, region.y, 4, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+
+
+
+
+
+
+            }
+        }
+
+        function fixShapeOutOfBounds(region) {
+            if (region.type == 'point') {
+                region.x = Math.max(region.x, 0);
+                region.y = Math.max(region.y, 0);
+                if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
+                    region.x = Math.min(region.x, shapeEditor.imageNativeWidth);
+                    region.y = Math.min(region.y, shapeEditor.imageNativeHeight);
+                }
+                else {
+                    region.x = Math.min(region.x, shapeEditor.imageNativeHeight);
+                    region.y = Math.min(region.y, shapeEditor.imageNativeWidth);
+                }
+            }
+            else {
+                
+                if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
+                    region.x = Math.max(region.x, 0 - region.width / 2);
+                    region.y = Math.max(region.y, 0 - region.height/ 2);
+                    region.x = Math.min(region.x, shapeEditor.imageNativeWidth - region.width/2);
+                    region.y = Math.min(region.y, shapeEditor.imageNativeHeight - region.height/2);
+                }
+                else {
+                    region.x = Math.max(region.x, 0 - region.height / 2);
+                    region.y = Math.max(region.y, 0 - region.width/ 2);
+                    region.x = Math.min(region.x, shapeEditor.imageNativeHeight - region.width/2);
+                    region.y = Math.min(region.y, shapeEditor.imageNativeWidth - region.height/2);
+                }
+            }
+        }
+
+        function moveShape(x, y) {
+            if (shapeEditor.selectedRegionIndex >= 0) {
+                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+                region.x += x;
+                region.y += y;
+                fixShapeOutOfBounds(region);
+                recalcEditor();
+            }
+        }
+
+        function resizeShapeBy(w, h) {
+            if (shapeEditor.selectedRegionIndex >= 0) {
+                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+                if (region.type == 'point') {
+                    clearFunc();
+                    return;
+                }
+                region.width += w;
+                region.height += h;
+                region.width = Math.max(region.width, 1);
+                region.height = Math.max(region.height, 1);
+                region.width = Math.min(region.width, shapeEditor.imageNativeWidth);
+                region.height = Math.min(region.height, shapeEditor.imageNativeHeight);
+                fixShapeOutOfBounds(region);
+                recalcEditor();
+            }
+        }
+
+        function rotateShapeBy(rotateBy) {
+            if (shapeEditor.selectedRegionIndex >= 0) {
+                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+                if (region.type == 'point') {
+                    clearFunc();
+                    return;
+                }
+                region.angle += rotateBy;
+                while (region.angle > 360) {
+                    region.angle -= 360;
+                }
+                while (region.angle < 0) {
+                    region.angle += 360;
+                }
+                fixShapeOutOfBounds(region);
+                recalcEditor();
+            }
+        }
+
+        function changeShapeColorNext(goNext) {
+            if (shapeEditor.selectedRegionIndex >= 0) {
+                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+                var currentIndex = shapeColors.indexOf(region.color);
+                if (currentIndex == -1) {
+                    currentIndex = 0;
+                }
+                if (goNext) {
+                    currentIndex++;
+                }
+                else {
+                    currentIndex--;
+                }
+
+                if (currentIndex < 0) {
+                    currentIndex = shapeColors.length - 1;
+                }
+                else if (currentIndex >= shapeColors.length) {
+                    currentIndex = 0;
+                }
+                region.color = shapeColors[currentIndex];
+                recalcEditor();
+            }
+        }
+
+        function changeShapeTempBy(isMaxTemp, changeAmount) {
+            if (shapeEditor.selectedRegionIndex >= 0) {
+                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+                if (isMaxTemp) {
+                    let defaultTemp = tempRanges.defaultHiCelsius;//need to look at last shape with a value?
+                    let tempCelsius = (region.maxTempCelsius ?? defaultTemp) + changeAmount;
+                    tempCelsius = Math.round(tempCelsius * 10) / 10;//round to .1
+                    if (tempCelsius < tempRanges.LowestCelsius) {
+                        tempCelsius = null;
+                    }
+                    else if (tempCelsius > tempRanges.HighestCelsius) {
+                        tempCelsius = null;
+                    }
+                    region.maxTempCelsius = tempCelsius;
+                }
+                else {
+                    let defaultTemp = tempRanges.defaultLoCelsius;//need to look at last shape with a value?
+                    let tempCelsius = (region.minTempCelsius ?? defaultTemp) + changeAmount;
+                    tempCelsius = Math.round(tempCelsius * 10) / 10;//round to .1
+                    if (tempCelsius < tempRanges.LowestCelsius) {
+                        tempCelsius = null;
+                    }
+                    else if (tempCelsius > tempRanges.HighestCelsius) {
+                        tempCelsius = null;
+                    }
+                    region.minTempCelsius = tempCelsius;
+                }
+                recalcEditor();
+            }
+        }
+
+        function go() {
+            shapeEditor.imageScale = 4.0;
+            recalcEditor();
+
+        }
+
+        function zoomShapeEditor(scale) {
+            shapeEditor.imageScale += scale;
+
+            shapeEditor.imageScale = Math.max(shapeEditor.imageScale, 1.0);
+            shapeEditor.imageScale = Math.min(shapeEditor.imageScale, 5.0);
+
+            recalcEditor();
+        }
+
+        function addShape(shapeType) {
+
+            if (shapeTypes.indexOf(shapeType) == -1) {
+                console.error('unsupported shape type: ' + shapeType);
+                return;
+            }
+            let colorToUse = shapeColors[Math.floor(Math.random() * shapeColors.length)];
+            console.log('adding shape: ' + shapeType);
+            let shapePrefix = shapeType;
+            let shapeName = '';
+            let shapeNameIndex = 0;
+            //create a unique shape name
+            while (true) {
+                shapeNameIndex++;
+                if (shapeNameIndex < 10) {
+                    shapeName = shapePrefix + '0' + shapeNameIndex;
+                }
+                else {
+                    shapeName = shapePrefix + shapeNameIndex;
+                }
+                let res = shapeEditor.regions.findIndex(item => shapeName.toLowerCase() === item.name.toLowerCase());
+                if (res == -1) {
+                    break;
+                }
+            }
+            let shapeX = Math.round(shapeType == 'point' ? shapeEditor.imageNativeWidth / 2 : shapeEditor.imageNativeWidth / 3);
+            let shapeY = Math.round(shapeType == 'point' ? shapeEditor.imageNativeHeight / 2 : shapeEditor.imageNativeHeight / 3);
+            let shapeWidth = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeWidth / 4);
+            let shapeHeight = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeHeight / 4);
+
+
+            let shape = { "name": shapeName, "maxTempCelsius": tempRanges.defaultHiCelsius, "minTempCelsius": null, "type": shapeType, "color": colorToUse, "x": shapeX, "y": shapeY, "width": shapeWidth, "height": shapeHeight, "angle": 0.0 };
+            shapeEditor.regions.push(shape);
+            shapeEditor.selectedRegionIndex = shapeEditor.regions.length - 1;
+            recalcEditor();
+        }
+
+
+    </script>
+</head>
+
+<body onload="go()">
+    <div>
+        <div class="editorrow">
+            <div class="editorcolumn">
+                <div id="shapeEditorAddArea">
+                    <table>
+                        <tr>
+                            <td><button id="btnRectangleAdd" onclick="addShape('rectangle')" class="shapebutton">
+                                    <div>
+                                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="10" y="10" width="24" height="24" stroke="white"
+                                                stroke-width="2" />
+                                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
+
+                                        </svg>
+
+                                    </div>
+                                </button></td>
+                            </td>
+                            <td><button id="btnEllipseAdd" onclick="addShape('ellipse')" class="shapebutton">
+                                    <div>
+                                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+
+                                            <circle cx="22" cy="22" r="12" stroke="white" stroke-width="2" />
+                                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
+
+                                        </svg>
+
+                                    </div>
+                                </button></td>
+                            <td><button id="btnPointAdd" onclick="addShape('point')" class="shapebutton">
+                                    <div>
+                                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+
+                                            <line x1="22" y1="4" x2="22" y2="20" stroke="white" stroke-width="2" />
+                                            <line x1="22" y1="24" x2="22" y2="41" stroke="white" stroke-width="2" />
+
+                                            <line x1="3" y1="22" x2="20" y2="22" stroke="white" stroke-width="2" />
+                                            <line x1="24" y1="22" x2="41" y2="22" stroke="white" stroke-width="2" />
+
+                                            <circle cx="22" cy="22" r="12" stroke="white" stroke-width="2" />
+                                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
+
+                                        </svg>
+
+                                    </div>
+
+                                </button></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="editorcolumn">
+                <div id="shapeEditorZoomArea">
+                    <table>
+                        <tr>
+
+
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext">Zoom</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valueZoom" class="shapeditortextsub">100%</span></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td><button id="btnZoomOut" onmousedown="repeatFunc(zoomShapeEditor.bind(null,-.5))"
+                                    onmouseup="clearFunc()" class="resizebutton">-</button>
+                            </td>
+                            <td><button id="btnZoomIn" onmousedown="repeatFunc(zoomShapeEditor.bind(null,.5))"
+                                    onmouseup="clearFunc()" class="resizebutton">+</button>
+                            </td>
+                            <td>
+                            </td>
+                            <td><button id="btnRotateImage" onclick="rotateImage()" class="resizebutton">
+
+                                    <div style="line-height: 4px;">
+                                        <span style="margin-left: -5px;" class="shapeeditortext">Rotate</span>
+                                        <span id="valImageRotation" class="shapeeditortext">0&deg;</span>
+                                    </div>
+                                </button>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext">Filter</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valueFilter" class="shapeditortextsub3">none</span></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td><button id="btnImageFilterPrev" onclick="changeImageFilterNext(false)"
+                                    onmouseup="clearFunc()" class="resizebutton">&lt;</button>
+                            </td>
+                            <td><button id="btnImageFilterNext" onclick="changeImageFilterNext(true)"
+                                    onmouseup="clearFunc()" class="resizebutton">&gt;</button>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                            <td><button id="btnUndo" onclick="undoShapeEditor()" class="resizebutton">
+
+                                    <div style="line-height: 4px;">
+                                        <span class="shapeeditortext">Undo</span>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
+                                                fill="white" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
+                            <td><button id="btnRedo" onclick="redoShapeEditor()" class="resizebutton">
+                                    <div style="line-height: 4px;">
+                                        <span class="shapeeditortext">Redo</span>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
+                                                fill="currentColor" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                            <td><button id="btnDeleteShape" onclick="deleteShapeEditor()" class="resizebutton">
+                                    <div style="line-height: 4px;">
+                                        <span style="margin-left: -5px;" class="shapeeditortext">Delete</span>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M17 5V4C17 2.89543 16.1046 2 15 2H9C7.89543 2 7 2.89543 7 4V5H4C3.44772 5 3 5.44772 3 6C3 6.55228 3.44772 7 4 7H5V18C5 19.6569 6.34315 21 8 21H16C17.6569 21 19 19.6569 19 18V7H20C20.5523 7 21 6.55228 21 6C21 5.44772 20.5523 5 20 5H17ZM15 4H9V5H15V4ZM17 7H7V18C7 18.5523 7.44772 19 8 19H16C16.5523 19 17 18.5523 17 18V7Z"
+                                                fill="white" />
+                                            <path d="M9 9H11V17H9V9Z" fill="white" />
+                                            <path d="M13 9H15V17H13V9Z" fill="white" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
+
+                        </tr>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="editorrow">
+            <div class="editorcolumn">
+
+
+
+                <div id="shapeEditorAttributesArea">
+                    <table>
+                        <tr>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext2">Region</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="shapeditortextsub3">&nbsp;</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valShapeIndex" class="shapeditortextsub3">0 of 0</span></td>
+                                    </tr>
+                                </table>
+
+                            </td>
+                            <td><button id="btnChangeColorPrev" onclick="changeShapeNext(false)" onmouseup="clearFunc()"
+                                    class="resizebutton">&lt;</button></td>
+                            <td><button id="btnChangeColorNext" onclick="changeShapeNext(true)" onmouseup="clearFunc()"
+                                    class="resizebutton">&gt;</button></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                <hr />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <table class="shapeditorletterboxwide">
+                                    <tr>
+                                        <td><span class="shapeeditortext">&nbsp;Name</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valShapeName" style="padding-left: 4px;"
+                                                class="shapeditortextsub3">--</span></td>
+                                    </tr>
+                                </table>
+
+                            </td>
+                            <td><button id="btnChangeShapeName" onclick="changeShapeName()" onmouseup="clearFunc()"
+                                    class="resizebutton">
+                                    <div style="line-height: 70px;">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M21.2635 2.29289C20.873 1.90237 20.2398 1.90237 19.8493 2.29289L18.9769 3.16525C17.8618 2.63254 16.4857 2.82801 15.5621 3.75165L4.95549 14.3582L10.6123 20.0151L21.2189 9.4085C22.1426 8.48486 22.338 7.1088 21.8053 5.99367L22.6777 5.12132C23.0682 4.7308 23.0682 4.09763 22.6777 3.70711L21.2635 2.29289ZM16.9955 10.8035L10.6123 17.1867L7.78392 14.3582L14.1671 7.9751L16.9955 10.8035ZM18.8138 8.98525L19.8047 7.99429C20.1953 7.60376 20.1953 6.9706 19.8047 6.58007L18.3905 5.16586C18 4.77534 17.3668 4.77534 16.9763 5.16586L15.9853 6.15683L18.8138 8.98525Z"
+                                                fill="white" />
+                                            <path d="M2 22.9502L4.12171 15.1717L9.77817 20.8289L2 22.9502Z"
+                                                fill="white" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext2">Color</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valShapeColorDemo" style="background-color: red;"
+                                                class="shapeditortextsub2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valShapeColor" class="shapeditortextsub3">Red</span></td>
+                                    </tr>
+                                </table>
+
+                            </td>
+                            <td><button id="btnChangeColorPrev"
+                                    onmousedown="repeatFunc(changeShapeColorNext.bind(null,false))"
+                                    onmouseup="clearFunc()" class="resizebutton">&lt;</button></td>
+                            <td><button id="btnChangeColorNext"
+                                    onmousedown="repeatFunc(changeShapeColorNext.bind(null,true))"
+                                    onmouseup="clearFunc()" class="resizebutton">&gt;</button></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext2">Max</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valMaxTempC" class="shapeditortextsub3">--</span><span
+                                                class="shapeditortextsub2">&deg;C</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valMaxTempF" class="shapeditortextsub3">--</span><span
+                                                class="shapeditortextsub2">&deg;F</span></td>
+                                    </tr>
+                                </table>
+
+                            </td>
+                            <td><button id="btnChangeMaxTempAbsMore"
+                                    onmousedown="repeatFunc(changeShapeTempBy.bind(null,true,-0.1))"
+                                    onmouseup="clearFunc()" class="resizebutton">-</button></td>
+                            <td><button id="btnChangeMaxTempAbsLess"
+                                    onmousedown="repeatFunc(changeShapeTempBy.bind(null,true,0.1))"
+                                    onmouseup="clearFunc()" class="resizebutton">+</button></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext2">Min</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valMinTempC" class="shapeditortextsub3">--</span><span
+                                                class="shapeditortextsub3">&deg;C</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valMinTempF" class="shapeditortextsub3">--</span><span
+                                                class="shapeditortextsub3">&deg;F</span></td>
+                                    </tr>
+                                </table>
+
+                            </td>
+                            <td><button id="btnChangeMinTempAbsMore"
+                                    onmousedown="repeatFunc(changeShapeTempBy.bind(null,false,-0.1))"
+                                    onmouseup="clearFunc()" class="resizebutton">-</button></td>
+                            <td><button id="btnChangeMinTempAbsLess"
+                                    onmousedown="repeatFunc(changeShapeTempBy.bind(null,false,0.1))"
+                                    onmouseup="clearFunc()" class="resizebutton">+</button></td>
+                        </tr>
+
+                    </table>
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <div id="shapeEditorMoveArea">
+                    <table>
+                        <tr>
+                            <td colspan="3">
+                                <hr />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><button id="btnMoveUpLeft" onmousedown="repeatFunc(moveShape.bind(null,-1,-1))"
+                                    onmouseup="clearFunc()" class="movebutton"><i
+                                        class="arrowmove arrowupleft"></i></button></td>
+                            <td><button id="btnMoveUp" onmousedown="repeatFunc(moveShape.bind(null,0,-1))"
+                                    onmouseup="clearFunc()" class="movebutton"><i
+                                        class="arrowmove arrowup"></i></button>
+                            </td>
+                            <td><button id="btnMoveUpRight" onmousedown="repeatFunc(moveShape.bind(null,1,-1))"
+                                    onmouseup="clearFunc()" class="movebutton"><i
+                                        class="arrowmove arrowupright"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td><button id="btnMoveLeft" onmousedown="repeatFunc(moveShape.bind(null,-1,0))"
+                                    onmouseup="clearFunc()" class="movebutton"><i
+                                        class="arrowmove arrowleft"></i></button>
+                            </td>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext2">Move</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="shapeditortextsub2">x:</span><span id="valShapePosX"
+                                                class="shapeditortextsub2">1920</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="shapeditortextsub2">y:</span><span id="valShapePosY"
+                                                class="shapeditortextsub2">1080</span></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td><button id="btnMoveRight" onmousedown="repeatFunc(moveShape.bind(null,1,0))"
+                                    onmouseup="clearFunc()" class="movebutton"><i
+                                        class="arrowmove arrowright"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><button id="btnMoveDownLeft" onmousedown="repeatFunc(moveShape.bind(null,-1,1))"
+                                    onmouseup="clearFunc()" class="movebutton"><i
+                                        class="arrowmove arrowdownleft"></i></button></td>
+                            <td><button id="btnMoveDown" onmousedown="repeatFunc(moveShape.bind(null,0,1))"
+                                    onmouseup="clearFunc()" class="movebutton"><i
+                                        class="arrowmove arrowdown"></i></button>
+                            </td>
+                            <td><button id="btnMoveDownRight" onmousedown="repeatFunc(moveShape.bind(null,1,1))"
+                                    onmouseup="clearFunc()" class="movebutton"><i
+                                        class="arrowmove arrowdownright"></button></i></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="shapeEditorResizeArea">
+                    <table>
+                        <tr>
+                            <td colspan="3">
+                                <hr />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext">Width</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valShapeWidth" class="shapeditortextsub">1920</span></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td><button id="btnWidthLess" onmousedown="repeatFunc(resizeShapeBy.bind(null,-1,0))"
+                                    onmouseup="clearFunc()" class="resizebutton">-</button>
+                            </td>
+                            <td><button id="btnWidthMore" onmousedown="repeatFunc(resizeShapeBy.bind(null,1,0))"
+                                    onmouseup="clearFunc()" class="resizebutton">+</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext">Height</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valShapeHeight" class="shapeditortextsub">1080</span></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td><button id="btnHeightLess" onmousedown="repeatFunc(resizeShapeBy.bind(null,0,-1))"
+                                    onmouseup="clearFunc()" class="resizebutton">-</button>
+                            </td>
+                            <td><button id="btnHeightMore" onmousedown="repeatFunc(resizeShapeBy.bind(null,0,1))"
+                                    onmouseup="clearFunc()" class="resizebutton">+</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext">Angle</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valShapeAngle" class="shapeditortextsub">0</span><span
+                                                class="shapeditortextsub">&deg;</span></td>
+                                    </tr>
+                                </table>
+
+                            </td>
+                            <td><button id="btnRotateClockwise" onmousedown="repeatFunc(rotateShapeBy.bind(null,-1.0))"
+                                    onmouseup="clearFunc()" class="resizebutton">-</button></td>
+                            <td><button id="btnRotateCounterClockwise"
+                                    onmousedown="repeatFunc(rotateShapeBy.bind(null,1.0))" onmouseup="clearFunc()"
+                                    class="resizebutton">+</button></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="editorcolumn">
+                <div width="512" height="384" id="shapeEditorImageWrapper" style="margin-top:3px;">
+
+                    <img id="shapeEditorImage" src="reference_01.png">
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <img id="shapeEditorImageRef" style="display: none;" src="reference_01.png">
+</body>
+
+</html>
