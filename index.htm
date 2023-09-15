@@ -768,9 +768,32 @@
             let shapeY = Math.round(shapeType == 'point' ? shapeEditor.imageNativeHeight / 2 : shapeEditor.imageNativeHeight / 3);
             let shapeWidth = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeWidth / 4);
             let shapeHeight = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeHeight / 4);
-
-
-            let shape = { "name": shapeName, "maxTempCelsius": tempRanges.defaultHiCelsius, "minTempCelsius": null, "type": shapeType, "color": colorToUse, "x": shapeX, "y": shapeY, "width": shapeWidth, "height": shapeHeight, "angle": 0.0 };
+            let shapeAngle = 0.0;
+            let shapeMaxTempCelsius =  tempRanges.defaultHiCelsius;
+            let shapeMinTempCelsius =  null;
+            if(shapeEditor.regions.length > 0){
+                let lastRegion = null;
+                let lastResIndex = shapeEditor.regions.findLastIndex(item => shapeType === item.type);
+                if(lastResIndex != -1){
+                    console.log('found last shape of type ' + shapeType + ' at index ' + lastResIndex);
+                    lastRegion = shapeEditor.regions[lastResIndex];
+                    shapeMaxTempCelsius = lastRegion.maxTempCelsius;
+                    shapeMinTempCelsius = lastRegion.minTempCelsius;
+                    shapeWidth = lastRegion.width;
+                    shapeHeight = lastRegion.height;
+                    shapeAngle = lastRegion.angle;
+                    shapeX = lastRegion.x + 10;
+                    shapeY = lastRegion.y + 10;
+                }
+                else{
+                    console.log('did not find last shape of type ' + shapeType);
+                    lastRegion = shapeEditor.regions[shapeEditor.regions.length - 1];
+                    shapeMaxTempCelsius = lastRegion.maxTempCelsius;
+                    shapeMinTempCelsius = lastRegion.minTempCelsius;
+                }
+            }
+            let shape = { "name": shapeName, "maxTempCelsius": shapeMaxTempCelsius, "minTempCelsius": shapeMinTempCelsius, "type": shapeType, "color": colorToUse, "x": shapeX, "y": shapeY, "width": shapeWidth, "height": shapeHeight, "angle": shapeAngle};
+            fixShapeOutOfBounds(shape);
             shapeEditor.regions.push(shape);
             shapeEditor.selectedRegionIndex = shapeEditor.regions.length - 1;
             recalcEditor();
