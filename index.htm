@@ -251,7 +251,7 @@
                 }
             }
             recalcEditor();
-            //I don't think this needs a undo.
+            addHistory('rotate image', null, false);//I don't think this needs a undo.
         }
 
         function drawShapes() {
@@ -433,7 +433,7 @@
             shapeEditor.imageFilter = imageFilter;
             document.getElementById("valueFilter").innerHTML = imageFilter;
             recalcEditor();
-            //I don't think this needs an undo
+            addHistory('change image filter', null, false);//I don't think this needs a undo.
         }
 
         function changeShapeName() {
@@ -736,7 +736,7 @@
             shapeEditor.imageScale = Math.min(shapeEditor.imageScale, 5.0);
 
             recalcEditor();
-            //we don't need to undo this
+            addHistory('zoom image', null, false);//I don't think this needs a undo.
         }
 
         function addShape(shapeType) {
