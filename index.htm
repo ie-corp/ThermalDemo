@@ -10,11 +10,113 @@
         var shapeColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
         var tempRanges = { "LowestCelsius": -20.0, "HighestCelsius": 550.0, "defaultHiCelsius": 250.0, "defaultLoCelsius": 0 };
         let shapeTypes = ['rectangle', 'ellipse', 'point'];
+        let historyStack = [];
+        let historyIndex = -1;
+        
         var activeFunc = null;
         var waiterTime = 100;
 
         let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
+        
+        function redoShapeEditor() {
+            if(historyIndex < 0 || historyStack.length <= 1){
+                console.log('nothing to redo');
+                return;
+            }
+            if(historyIndex < historyStack.length - 1){
+                historyIndex++;
+                let historyEntry = historyStack[historyIndex];
+                console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
+                let storedShapeEditor = JSON.parse(historyEntry.shapeEditor);
+                shapeEditor = storedShapeEditor;
+                recalcEditor();
+            }
+            else{
+                console.log('nothing to redo');
+                return;
+            }
+            
+        }
 
+        function undoShapeEditor() {
+            if(historyStack.length <= 1){//first entry is initial state
+                console.log('nothing to undo');
+                return;
+            }
+            
+            if(historyIndex < 0 || historyIndex >= historyStack.length){
+                console.log('adjusting out of bounds history index to last entry');
+                historyIndex = historyStack.length - 1;
+            }
+            
+            if(historyIndex >= 1){
+                let currentHistoryEntry = historyStack[historyIndex];
+                console.log('undoing ' + currentHistoryEntry.historyType + ' with index ' + currentHistoryEntry.selectedIndex);
+                historyIndex--;
+                let historyEntry = historyStack[historyIndex];
+                console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
+                let storedShapeEditor = JSON.parse(historyEntry.shapeEditor);
+                shapeEditor = storedShapeEditor;
+                recalcEditor();
+            }
+            else{
+                console.log('nothing to undo');
+
+            }
+             
+
+        }
+
+        function addHistory(historyType, selectedIndex, force){
+            let historyEntry = {"historyType": historyType, "selectedIndex": selectedIndex, "shapeEditor": JSON.stringify(shapeEditor)};
+            let lastHistoryEntry = null;
+            if(historyStack.length > 0){
+                if(historyIndex < 0 || historyIndex > historyStack.length){
+                    console.log('adjusting out of bounds history index to last entry');
+                    historyIndex = historyStack.length - 1;
+                }
+                lastHistoryEntry = historyStack[historyIndex];
+                //even for a force this doesn't make sense.
+                if(historyEntry.shapeEditor == lastHistoryEntry.shapeEditor){
+                    return;
+                }
+                if(force){
+                    console.log('force add history entry of ' + historyEntry.historyType)
+                    historyStack.splice(historyIndex+1, 0, historyEntry);
+                }
+                else{
+                    if(historyEntry.historyType == lastHistoryEntry.historyType && historyEntry.selectedIndex == lastHistoryEntry.selectedIndex){
+                        console.log('replace existing history entry');
+                        historyStack[historyIndex] = historyEntry;
+                        return;
+                    }
+                    else{
+                        console.log('add history entry of ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex)
+                        historyStack.splice(historyIndex+1, 0, historyEntry);
+                    }
+                   
+                }
+            }
+            else{
+                console.log('add initial history entry of ' + historyEntry.historyType)
+                historyStack.push(historyEntry);
+                historyIndex = 0;
+                return;
+            }
+            historyIndex++;
+            if (historyStack.length > 50) {
+                if(historyIndex > 1)
+                {
+                    historyStack.shift();
+                    historyIndex--;
+                }
+                else{
+                    historyStack.pop();
+                }
+            }
+           
+            
+        }
 
 
         function clearFunc() {
@@ -41,13 +143,7 @@
             }, waiterTime);
         }
 
-        function redoShapeEditor() {
-            alert('not currently supported');
-        }
-
-        function undoShapeEditor() {
-            alert('not currently supported');
-        }
+       
 
         function recalcEditor() {
 
@@ -155,6 +251,7 @@
                 }
             }
             recalcEditor();
+            //I don't think this needs a undo.
         }
 
         function drawShapes() {
@@ -239,7 +336,7 @@
         }
 
         function changeShapeNext(nextShape) {
-            if (shapeEditor.selectedRegionIndex == -1 || shapeEditor.regions.length == 0) {
+            if (shapeEditor.regions.length <= 1) {
                 return;
             }
 
@@ -258,6 +355,7 @@
             }
             shapeEditor.selectedRegionIndex = shapeIndex;
             recalcEditor();
+            //I don't think this needs a undo.
         }
 
         function updateSelectedShapeAttributes(region) {
@@ -299,9 +397,12 @@
 
         function deleteShapeEditor() {
             if (shapeEditor.selectedRegionIndex >= 0) {
+                let selIndex = shapeEditor.selectedRegionIndex;
+                let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
                 shapeEditor.regions.splice(shapeEditor.selectedRegionIndex, 1);
                 shapeEditor.selectedRegionIndex--;
                 recalcEditor();
+                addHistory('delete ' + region.type, selIndex, true);
             }
         }
 
@@ -332,6 +433,7 @@
             shapeEditor.imageFilter = imageFilter;
             document.getElementById("valueFilter").innerHTML = imageFilter;
             recalcEditor();
+            //I don't think this needs an undo
         }
 
         function changeShapeName() {
@@ -353,6 +455,7 @@
                     }
                     region.name = newName;
                     recalcEditor();
+                    addHistory('change ' + region.type + ' name', shapeEditor.selectedRegionIndex, true);
                 }
             }
         }
@@ -474,17 +577,36 @@
             }
         }
 
+        
         function moveShape(x, y) {
+            if(x==0 && y == 0){
+                return;
+            }
             if (shapeEditor.selectedRegionIndex >= 0) {
                 var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
                 region.x += x;
                 region.y += y;
                 fixShapeOutOfBounds(region);
                 recalcEditor();
+                let strTag = '';
+                if(x != 0 && y != 0){
+                    strTag = 'diagnolly';
+                }
+                else if(x != 0){
+                    strTag = 'horizontally';
+                }
+                else {
+                    strTag = 'vertically';
+                }
+                addHistory('move ' + region.type + ' ' + strTag, shapeEditor.selectedRegionIndex, false);
             }
         }
+        
 
         function resizeShapeBy(w, h) {
+            if(w ==0 && h == 0){
+                return;
+            }
             if (shapeEditor.selectedRegionIndex >= 0) {
                 var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
                 if (region.type == 'point') {
@@ -499,10 +621,24 @@
                 region.height = Math.min(region.height, shapeEditor.imageNativeHeight);
                 fixShapeOutOfBounds(region);
                 recalcEditor();
+                let strTag = '';
+                if(w != 0 && h != 0){
+                    strTag = 'width and height';
+                }
+                else if(h != 0){
+                    strTag = 'height';
+                }
+                else {
+                    strTag = 'width';
+                }
+                addHistory('resize ' + region.type + ' ' + strTag, shapeEditor.selectedRegionIndex, false);
             }
         }
 
         function rotateShapeBy(rotateBy) {
+            if(rotateBy == 0){
+                return;
+            }
             if (shapeEditor.selectedRegionIndex >= 0) {
                 var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
                 if (region.type == 'point') {
@@ -518,6 +654,7 @@
                 }
                 fixShapeOutOfBounds(region);
                 recalcEditor();
+                addHistory('rotate ' + region.type, shapeEditor.selectedRegionIndex, false);
             }
         }
 
@@ -543,6 +680,7 @@
                 }
                 region.color = shapeColors[currentIndex];
                 recalcEditor();
+                addHistory('change ' + region.type + ' color', shapeEditor.selectedRegionIndex, false);
             }
         }
 
@@ -574,12 +712,20 @@
                     region.minTempCelsius = tempCelsius;
                 }
                 recalcEditor();
+                if(isMaxTemp){
+                    addHistory('change max temp', shapeEditor.selectedRegionIndex, false);
+                }
+                else{
+                    addHistory('change min temp', shapeEditor.selectedRegionIndex, false);
+                }
+
             }
         }
 
         function go() {
             shapeEditor.imageScale = 4.0;
             recalcEditor();
+            addHistory('Initial App State', null, true);
 
         }
 
@@ -590,6 +736,7 @@
             shapeEditor.imageScale = Math.min(shapeEditor.imageScale, 5.0);
 
             recalcEditor();
+            //we don't need to undo this
         }
 
         function addShape(shapeType) {
@@ -599,7 +746,7 @@
                 return;
             }
             let colorToUse = shapeColors[Math.floor(Math.random() * shapeColors.length)];
-            console.log('adding shape: ' + shapeType);
+            
             let shapePrefix = shapeType;
             let shapeName = '';
             let shapeNameIndex = 0;
@@ -627,6 +774,7 @@
             shapeEditor.regions.push(shape);
             shapeEditor.selectedRegionIndex = shapeEditor.regions.length - 1;
             recalcEditor();
+            addHistory('new ' + shapeType, shapeEditor.selectedRegionIndex, true);
         }
 
 
