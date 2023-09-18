@@ -84,6 +84,7 @@
                 if(force){
                     console.log('force add history entry of ' + historyEntry.historyType)
                     historyStack.splice(historyIndex+1, 0, historyEntry);
+                    historyStack.length = historyIndex + 2;//new action clears redo stack
                 }
                 else{
                     if(historyEntry.historyType == lastHistoryEntry.historyType && historyEntry.selectedIndex == lastHistoryEntry.selectedIndex){
@@ -94,6 +95,7 @@
                     else{
                         console.log('add history entry of ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex)
                         historyStack.splice(historyIndex+1, 0, historyEntry);
+                        historyStack.length = historyIndex + 2;//new action clears redo stack
                     }
                    
                 }
@@ -1350,7 +1352,7 @@
             <div class="editorcolumn">
                 <div width="512" height="384" id="shapeEditorImageWrapper" style="margin-top:3px;">
 
-                    <img id="shapeEditorImage" src="reference_01.png">
+                    <img id="shapeEditorImage" draggable="false" src="reference_01.png">
 
                 </div>
             </div>
