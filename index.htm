@@ -11,6 +11,7 @@
         var tempRanges = { "LowestCelsius": -20.0, "HighestCelsius": 550.0, "defaultHiCelsius": 250.0, "defaultLoCelsius": 0 };
         let shapeTypes = ['rectangle', 'ellipse', 'point'];
         let historyStack = [];
+        let tempsCelsius = [];
         let historyIndex = -1;
         
         var activeFunc = null;
@@ -118,6 +119,23 @@
             
         }
 
+        function randomNumberGenerator(min = 0, max = 1, fractionDigits = 0, inclusive = true) {
+            const precision = Math.pow(10, Math.max(fractionDigits, 0));
+            const scaledMax = max * precision;
+            const scaledMin = min * precision;
+            const offset = inclusive ? 1 : 0;
+            const num = Math.floor(Math.random() * (scaledMax - scaledMin + offset)) + scaledMin;
+
+            return num / precision;
+            };
+
+        function fillTempsWithTestData(){
+            tempsCelsius = [49152];//256*192
+            let length = shapeEditor.imageNativeWidth * shapeEditor.imageNativeHeight;
+            for(let i=0;i<length;i++){
+                tempsCelsius[i] = randomNumberGenerator(35, 40, 1, true);
+            }
+        }
 
         function clearFunc() {
             activeFunc = null;
@@ -727,6 +745,95 @@
             recalcEditor();
             addHistory('Initial App State', null, true);
 
+            fillTempsWithTestData();
+            const image = document.querySelector('#shapeEditorImage');
+            const tooltip = document.querySelector('.tooltip');
+            image.addEventListener('mouseover', (e) => {
+                tooltip.style.display = 'block';
+                //tooltip.textContent = `X: ${e.offsetX}, Y: ${e.offsetY}`;
+            });
+
+            image.addEventListener('mouseout', () => {
+                tooltip.style.display = 'none';
+            });
+
+            image.addEventListener('mousemove', (e) => {
+                let x = Math.max(0,Math.round(e.offsetX / shapeEditor.imageScale));
+                let y = Math.max(0,Math.round(e.offsetY / shapeEditor.imageScale));
+                let tempX = -1;
+                let tempY = -1;
+                let indexTempC = -1;
+                let posX = -1;
+                let posY = -1;
+
+                let placementOffsetX = 0;
+                let placementOffsetY = 0;
+                if(e.offsetX > shapeEditor.imageWidth / 2){
+                        placementOffsetX -= 146;//bottom left x
+                }
+                else{
+                    placementOffsetX += 10;//left side
+                }
+
+                if(e.offsetY > shapeEditor.imageHeight / 2){
+                        placementOffsetY -= 90;
+                }
+                else{
+                    placementOffsetY += 20;
+                }
+
+                tooltip.style.top = `${e.pageY + placementOffsetY}px`;
+                tooltip.style.left = `${e.pageX + placementOffsetX}px`;
+                if(shapeEditor.imageRotation == 0){
+                    posX = Math.min(x, shapeEditor.imageNativeWidth);
+                    posY = Math.min(y, shapeEditor.imageNativeHeight);
+                    indexTempC = (posY * shapeEditor.imageNativeHeight) + posX;
+                    
+                    
+                }
+                else if(shapeEditor.imageRotation == 180){
+                    posX = Math.min(x, shapeEditor.imageNativeWidth);
+                    posY = Math.min(y, shapeEditor.imageNativeHeight);
+                    //image is upside down
+                    indexTempC = ((shapeEditor.imageNativeHeight - posY) * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posX);
+                }
+                else if(shapeEditor.imageRotation == 90){
+                    posX = Math.min(x, shapeEditor.imageNativeHeight);
+                    posY = Math.min(y, shapeEditor.imageNativeWidth);
+                    indexTempC = ((shapeEditor.imageNativeHeight - posX) * shapeEditor.imageNativeHeight) + posY;
+                }
+                else if(shapeEditor.imageRotation == 270){
+                    posX = Math.min(x, shapeEditor.imageNativeHeight);
+                    posY = Math.min(y, shapeEditor.imageNativeWidth);
+                    indexTempC = (posX * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posY);
+                }
+                else{
+                    console.error('unsupported rotation: ' + shapeEditor.imageRotation);
+                    tooltip.textContent = 'unsupported rotation: ' + shapeEditor.imageRotation;
+                    return;
+                }
+                if(indexTempC > -1 && indexTempC < tempsCelsius.length){
+                    
+                    
+                    
+                    let tempC = tempsCelsius[indexTempC];
+                    tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` + 
+                    `${getDisplayTempFromCelsius(tempC, false)}&deg;C<br/>` + 
+                    `${getDisplayTempFromCelsius(tempC, true)}&deg;F`; 
+                }
+                else{
+                    console.error('invalid indexTempC: ' + indexTempC);
+                    tooltip.textContent = 'No temperature reading at this location.';
+                }
+                
+
+               
+                
+                
+            }
+                
+                );
+
         }
 
         function zoomShapeEditor(scale) {
@@ -1247,6 +1354,7 @@
 
                 </div>
             </div>
+            <div class="tooltip">This is a tooltip</div>
         </div>
     </div>
     <img id="shapeEditorImageRef" style="display: none;" src="reference_01.png">

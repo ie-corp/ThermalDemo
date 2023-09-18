@@ -23,7 +23,7 @@
     width: 60px;
     height: 60px;
     color:white;
-    background-color:#2dabf9;
+    background-color:#353A3F;
     font-family: 'Courier New', Courier, monospace;
     font-size: 20px;
     font-weight: bold;
@@ -111,7 +111,7 @@
 .shapebutton{
     width: 60px;
     height: 60px;
-    background-color:#16196f;
+    background-color:#007CF9;
     color:white;
     font-family: 'Courier New', Courier, monospace;
     font-size: 18px;
@@ -122,7 +122,7 @@
 .movebutton{
     width: 60px;
     height: 60px;
-    background-color:#2dabf9;
+    background-color:#353A3F;
 }
 
 .arrowmove {
@@ -177,9 +177,23 @@
   }
 
   div::-webkit-scrollbar-thumb {
-    background-color: #2dabf9;
+    background-color: #353A3F;
     border-radius: 10px;
     border: 3px solid #ffffff;
+  }
+
+  .tooltip {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    position: absolute;
+    top: -30px;
+    left: 0;
+    display: none;
+    padding: 5px;
+    background-color: #000;
+    color: #fff;
+    font-size: 16px;
+    pointer-events: none;
   }
 
 
