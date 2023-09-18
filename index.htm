@@ -13,18 +13,18 @@
         let historyStack = [];
         let tempsCelsius = [];
         let historyIndex = -1;
-        
+
         var activeFunc = null;
         var waiterTime = 100;
 
         let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
-        
+
         function redoShapeEditor() {
-            if(historyIndex < 0 || historyStack.length <= 1){
+            if (historyIndex < 0 || historyStack.length <= 1) {
                 console.log('nothing to redo');
                 return;
             }
-            if(historyIndex < historyStack.length - 1){
+            if (historyIndex < historyStack.length - 1) {
                 historyIndex++;
                 let historyEntry = historyStack[historyIndex];
                 console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
@@ -32,25 +32,25 @@
                 shapeEditor = storedShapeEditor;
                 recalcEditor();
             }
-            else{
+            else {
                 console.log('nothing to redo');
                 return;
             }
-            
+
         }
 
         function undoShapeEditor() {
-            if(historyStack.length <= 1){//first entry is initial state
+            if (historyStack.length <= 1) {//first entry is initial state
                 console.log('nothing to undo');
                 return;
             }
-            
-            if(historyIndex < 0 || historyIndex >= historyStack.length){
+
+            if (historyIndex < 0 || historyIndex >= historyStack.length) {
                 console.log('adjusting out of bounds history index to last entry');
                 historyIndex = historyStack.length - 1;
             }
-            
-            if(historyIndex >= 1){
+
+            if (historyIndex >= 1) {
                 let currentHistoryEntry = historyStack[historyIndex];
                 console.log('undoing ' + currentHistoryEntry.historyType + ' with index ' + currentHistoryEntry.selectedIndex);
                 historyIndex--;
@@ -60,47 +60,47 @@
                 shapeEditor = storedShapeEditor;
                 recalcEditor();
             }
-            else{
+            else {
                 console.log('nothing to undo');
 
             }
-             
+
 
         }
 
-        function addHistory(historyType, selectedIndex, force){
-            let historyEntry = {"historyType": historyType, "selectedIndex": selectedIndex, "shapeEditor": JSON.stringify(shapeEditor)};
+        function addHistory(historyType, selectedIndex, force) {
+            let historyEntry = { "historyType": historyType, "selectedIndex": selectedIndex, "shapeEditor": JSON.stringify(shapeEditor) };
             let lastHistoryEntry = null;
-            if(historyStack.length > 0){
-                if(historyIndex < 0 || historyIndex > historyStack.length){
+            if (historyStack.length > 0) {
+                if (historyIndex < 0 || historyIndex > historyStack.length) {
                     console.log('adjusting out of bounds history index to last entry');
                     historyIndex = historyStack.length - 1;
                 }
                 lastHistoryEntry = historyStack[historyIndex];
                 //even for a force this doesn't make sense.
-                if(historyEntry.shapeEditor == lastHistoryEntry.shapeEditor){
+                if (historyEntry.shapeEditor == lastHistoryEntry.shapeEditor) {
                     return;
                 }
-                if(force){
+                if (force) {
                     console.log('force add history entry of ' + historyEntry.historyType)
-                    historyStack.splice(historyIndex+1, 0, historyEntry);
+                    historyStack.splice(historyIndex + 1, 0, historyEntry);
                     historyStack.length = historyIndex + 2;//new action clears redo stack
                 }
-                else{
-                    if(historyEntry.historyType == lastHistoryEntry.historyType && historyEntry.selectedIndex == lastHistoryEntry.selectedIndex){
+                else {
+                    if (historyEntry.historyType == lastHistoryEntry.historyType && historyEntry.selectedIndex == lastHistoryEntry.selectedIndex) {
                         console.log('replace existing history entry');
                         historyStack[historyIndex] = historyEntry;
                         return;
                     }
-                    else{
+                    else {
                         console.log('add history entry of ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex)
-                        historyStack.splice(historyIndex+1, 0, historyEntry);
+                        historyStack.splice(historyIndex + 1, 0, historyEntry);
                         historyStack.length = historyIndex + 2;//new action clears redo stack
                     }
-                   
+
                 }
             }
-            else{
+            else {
                 console.log('add initial history entry of ' + historyEntry.historyType)
                 historyStack.push(historyEntry);
                 historyIndex = 0;
@@ -108,17 +108,16 @@
             }
             historyIndex++;
             if (historyStack.length > 50) {
-                if(historyIndex > 1)
-                {
+                if (historyIndex > 1) {
                     historyStack.shift();
                     historyIndex--;
                 }
-                else{
+                else {
                     historyStack.pop();
                 }
             }
-           
-            
+
+
         }
 
         function randomNumberGenerator(min = 0, max = 1, fractionDigits = 0, inclusive = true) {
@@ -129,12 +128,12 @@
             const num = Math.floor(Math.random() * (scaledMax - scaledMin + offset)) + scaledMin;
 
             return num / precision;
-            };
+        };
 
-        function fillTempsWithTestData(){
+        function fillTempsWithTestData() {
             tempsCelsius = [49152];//256*192
             let length = shapeEditor.imageNativeWidth * shapeEditor.imageNativeHeight;
-            for(let i=0;i<length;i++){
+            for (let i = 0; i < length; i++) {
                 tempsCelsius[i] = randomNumberGenerator(35, 40, 1, true);
             }
         }
@@ -163,7 +162,7 @@
             }, waiterTime);
         }
 
-       
+
 
         function recalcEditor() {
 
@@ -581,25 +580,45 @@
                 }
             }
             else {
-                
+
                 if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
                     region.x = Math.max(region.x, 0 - region.width / 2);
-                    region.y = Math.max(region.y, 0 - region.height/ 2);
-                    region.x = Math.min(region.x, shapeEditor.imageNativeWidth - region.width/2);
-                    region.y = Math.min(region.y, shapeEditor.imageNativeHeight - region.height/2);
+                    region.y = Math.max(region.y, 0 - region.height / 2);
+                    region.x = Math.min(region.x, shapeEditor.imageNativeWidth - region.width / 2);
+                    region.y = Math.min(region.y, shapeEditor.imageNativeHeight - region.height / 2);
                 }
                 else {
                     region.x = Math.max(region.x, 0 - region.height / 2);
-                    region.y = Math.max(region.y, 0 - region.width/ 2);
-                    region.x = Math.min(region.x, shapeEditor.imageNativeHeight - region.width/2);
-                    region.y = Math.min(region.y, shapeEditor.imageNativeWidth - region.height/2);
+                    region.y = Math.max(region.y, 0 - region.width / 2);
+                    region.x = Math.min(region.x, shapeEditor.imageNativeHeight - region.width / 2);
+                    region.y = Math.min(region.y, shapeEditor.imageNativeWidth - region.height / 2);
                 }
             }
         }
 
-        
-        function moveShape(x, y) {
-            if(x==0 && y == 0){
+        function moveShapeAbsolute(x, y) {
+            if (x == -1 || y == -1) {
+                return;
+            }
+
+
+            if (shapeEditor.selectedRegionIndex >= 0) {
+                let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+                if (region.x == x && region.y == y) {
+                    return;
+                }
+                region.x = x;
+                region.y = y;
+                fixShapeOutOfBounds(region);
+                recalcEditor();
+                let strTag = 'dragged';
+                addHistory('move ' + region.type + ' ' + strTag, shapeEditor.selectedRegionIndex, false);
+            }
+        }
+
+
+        function moveShapeBy(x, y) {
+            if (x == 0 && y == 0) {
                 return;
             }
             if (shapeEditor.selectedRegionIndex >= 0) {
@@ -609,10 +628,10 @@
                 fixShapeOutOfBounds(region);
                 recalcEditor();
                 let strTag = '';
-                if(x != 0 && y != 0){
+                if (x != 0 && y != 0) {
                     strTag = 'diagnolly';
                 }
-                else if(x != 0){
+                else if (x != 0) {
                     strTag = 'horizontally';
                 }
                 else {
@@ -621,10 +640,10 @@
                 addHistory('move ' + region.type + ' ' + strTag, shapeEditor.selectedRegionIndex, false);
             }
         }
-        
+
 
         function resizeShapeBy(w, h) {
-            if(w ==0 && h == 0){
+            if (w == 0 && h == 0) {
                 return;
             }
             if (shapeEditor.selectedRegionIndex >= 0) {
@@ -642,10 +661,10 @@
                 fixShapeOutOfBounds(region);
                 recalcEditor();
                 let strTag = '';
-                if(w != 0 && h != 0){
+                if (w != 0 && h != 0) {
                     strTag = 'width and height';
                 }
-                else if(h != 0){
+                else if (h != 0) {
                     strTag = 'height';
                 }
                 else {
@@ -656,7 +675,7 @@
         }
 
         function rotateShapeBy(rotateBy) {
-            if(rotateBy == 0){
+            if (rotateBy == 0) {
                 return;
             }
             if (shapeEditor.selectedRegionIndex >= 0) {
@@ -732,10 +751,10 @@
                     region.minTempCelsius = tempCelsius;
                 }
                 recalcEditor();
-                if(isMaxTemp){
+                if (isMaxTemp) {
                     addHistory('change max temp', shapeEditor.selectedRegionIndex, false);
                 }
-                else{
+                else {
                     addHistory('change min temp', shapeEditor.selectedRegionIndex, false);
                 }
 
@@ -750,18 +769,53 @@
             fillTempsWithTestData();
             const image = document.querySelector('#shapeEditorImage');
             const tooltip = document.querySelector('.tooltip');
+
+            image.addEventListener('mousedown', (e) => {
+
+                if ("buttons" in e) {
+                    if (e.buttons == 1) {
+                        if (shapeEditor.selectedRegionIndex >= 0) {
+                            let dragX = Math.max(-200, Math.round(e.offsetX / shapeEditor.imageScale));
+                            let dragY = Math.max(-200, Math.round(e.offsetY / shapeEditor.imageScale));
+                            moveShapeAbsolute(dragX, dragY);
+                        }
+                    }
+                }
+
+            });
+
+
             image.addEventListener('mouseover', (e) => {
                 tooltip.style.display = 'block';
                 //tooltip.textContent = `X: ${e.offsetX}, Y: ${e.offsetY}`;
             });
+
 
             image.addEventListener('mouseout', () => {
                 tooltip.style.display = 'none';
             });
 
             image.addEventListener('mousemove', (e) => {
-                let x = Math.max(0,Math.round(e.offsetX / shapeEditor.imageScale));
-                let y = Math.max(0,Math.round(e.offsetY / shapeEditor.imageScale));
+
+                
+
+
+                
+
+
+                if ("buttons" in e) {
+                    if (e.buttons == 1) {
+                        if (shapeEditor.selectedRegionIndex >= 0) {
+                            let dragX = Math.max(-200, Math.round(e.offsetX / shapeEditor.imageScale));
+                            let dragY = Math.max(-200, Math.round(e.offsetY / shapeEditor.imageScale));
+                            moveShapeAbsolute(dragX, dragY);
+                        }
+                    }
+                }
+
+
+                let x = Math.max(0, Math.round(e.offsetX / shapeEditor.imageScale));
+                let y = Math.max(0, Math.round(e.offsetY / shapeEditor.imageScale));
                 let tempX = -1;
                 let tempY = -1;
                 let indexTempC = -1;
@@ -770,71 +824,71 @@
 
                 let placementOffsetX = 0;
                 let placementOffsetY = 0;
-                if(e.offsetX > shapeEditor.imageWidth / 2){
-                        placementOffsetX -= 146;//bottom left x
+                if (e.offsetX > shapeEditor.imageWidth / 2) {
+                    placementOffsetX -= 146;//bottom left x
                 }
-                else{
+                else {
                     placementOffsetX += 10;//left side
                 }
 
-                if(e.offsetY > shapeEditor.imageHeight / 2){
-                        placementOffsetY -= 90;
+                if (e.offsetY > shapeEditor.imageHeight / 2) {
+                    placementOffsetY -= 90;
                 }
-                else{
+                else {
                     placementOffsetY += 20;
                 }
 
                 tooltip.style.top = `${e.pageY + placementOffsetY}px`;
                 tooltip.style.left = `${e.pageX + placementOffsetX}px`;
-                if(shapeEditor.imageRotation == 0){
+                if (shapeEditor.imageRotation == 0) {
                     posX = Math.min(x, shapeEditor.imageNativeWidth);
                     posY = Math.min(y, shapeEditor.imageNativeHeight);
                     indexTempC = (posY * shapeEditor.imageNativeHeight) + posX;
-                    
-                    
+
+
                 }
-                else if(shapeEditor.imageRotation == 180){
+                else if (shapeEditor.imageRotation == 180) {
                     posX = Math.min(x, shapeEditor.imageNativeWidth);
                     posY = Math.min(y, shapeEditor.imageNativeHeight);
                     //image is upside down
                     indexTempC = ((shapeEditor.imageNativeHeight - posY) * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posX);
                 }
-                else if(shapeEditor.imageRotation == 90){
+                else if (shapeEditor.imageRotation == 90) {
                     posX = Math.min(x, shapeEditor.imageNativeHeight);
                     posY = Math.min(y, shapeEditor.imageNativeWidth);
                     indexTempC = ((shapeEditor.imageNativeHeight - posX) * shapeEditor.imageNativeHeight) + posY;
                 }
-                else if(shapeEditor.imageRotation == 270){
+                else if (shapeEditor.imageRotation == 270) {
                     posX = Math.min(x, shapeEditor.imageNativeHeight);
                     posY = Math.min(y, shapeEditor.imageNativeWidth);
                     indexTempC = (posX * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posY);
                 }
-                else{
+                else {
                     console.error('unsupported rotation: ' + shapeEditor.imageRotation);
                     tooltip.textContent = 'unsupported rotation: ' + shapeEditor.imageRotation;
                     return;
                 }
-                if(indexTempC > -1 && indexTempC < tempsCelsius.length){
-                    
-                    
-                    
+                if (indexTempC > -1 && indexTempC < tempsCelsius.length) {
+
+
+
                     let tempC = tempsCelsius[indexTempC];
-                    tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` + 
-                    `${getDisplayTempFromCelsius(tempC, false)}&deg;C<br/>` + 
-                    `${getDisplayTempFromCelsius(tempC, true)}&deg;F`; 
+                    tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` +
+                        `${getDisplayTempFromCelsius(tempC, false)}&deg;C<br/>` +
+                        `${getDisplayTempFromCelsius(tempC, true)}&deg;F`;
                 }
-                else{
+                else {
                     console.error('invalid indexTempC: ' + indexTempC);
                     tooltip.textContent = 'No temperature reading at this location.';
                 }
-                
 
-               
-                
-                
+
+
+
+
             }
-                
-                );
+
+            );
 
         }
 
@@ -855,7 +909,7 @@
                 return;
             }
             let colorToUse = shapeColors[Math.floor(Math.random() * shapeColors.length)];
-            
+
             let shapePrefix = shapeType;
             let shapeName = '';
             let shapeNameIndex = 0;
@@ -878,12 +932,12 @@
             let shapeWidth = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeWidth / 4);
             let shapeHeight = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeHeight / 4);
             let shapeAngle = 0.0;
-            let shapeMaxTempCelsius =  tempRanges.defaultHiCelsius;
-            let shapeMinTempCelsius =  null;
-            if(shapeEditor.regions.length > 0){
+            let shapeMaxTempCelsius = tempRanges.defaultHiCelsius;
+            let shapeMinTempCelsius = null;
+            if (shapeEditor.regions.length > 0) {
                 let lastRegion = null;
                 let lastResIndex = shapeEditor.regions.findLastIndex(item => shapeType === item.type);
-                if(lastResIndex != -1){
+                if (lastResIndex != -1) {
                     console.log('found last shape of type ' + shapeType + ' at index ' + lastResIndex);
                     lastRegion = shapeEditor.regions[lastResIndex];
                     shapeMaxTempCelsius = lastRegion.maxTempCelsius;
@@ -894,14 +948,14 @@
                     shapeX = lastRegion.x + 10;
                     shapeY = lastRegion.y + 10;
                 }
-                else{
+                else {
                     console.log('did not find last shape of type ' + shapeType);
                     lastRegion = shapeEditor.regions[shapeEditor.regions.length - 1];
                     shapeMaxTempCelsius = lastRegion.maxTempCelsius;
                     shapeMinTempCelsius = lastRegion.minTempCelsius;
                 }
             }
-            let shape = { "name": shapeName, "maxTempCelsius": shapeMaxTempCelsius, "minTempCelsius": shapeMinTempCelsius, "type": shapeType, "color": colorToUse, "x": shapeX, "y": shapeY, "width": shapeWidth, "height": shapeHeight, "angle": shapeAngle};
+            let shape = { "name": shapeName, "maxTempCelsius": shapeMaxTempCelsius, "minTempCelsius": shapeMinTempCelsius, "type": shapeType, "color": colorToUse, "x": shapeX, "y": shapeY, "width": shapeWidth, "height": shapeHeight, "angle": shapeAngle };
             fixShapeOutOfBounds(shape);
             shapeEditor.regions.push(shape);
             shapeEditor.selectedRegionIndex = shapeEditor.regions.length - 1;
@@ -1233,19 +1287,19 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><button id="btnMoveUpLeft" onmousedown="repeatFunc(moveShape.bind(null,-1,-1))"
+                            <td><button id="btnMoveUpLeft" onmousedown="repeatFunc(moveShapeBy.bind(null,-1,-1))"
                                     onmouseup="clearFunc()" class="movebutton"><i
                                         class="arrowmove arrowupleft"></i></button></td>
-                            <td><button id="btnMoveUp" onmousedown="repeatFunc(moveShape.bind(null,0,-1))"
+                            <td><button id="btnMoveUp" onmousedown="repeatFunc(moveShapeBy.bind(null,0,-1))"
                                     onmouseup="clearFunc()" class="movebutton"><i
                                         class="arrowmove arrowup"></i></button>
                             </td>
-                            <td><button id="btnMoveUpRight" onmousedown="repeatFunc(moveShape.bind(null,1,-1))"
+                            <td><button id="btnMoveUpRight" onmousedown="repeatFunc(moveShapeBy.bind(null,1,-1))"
                                     onmouseup="clearFunc()" class="movebutton"><i
                                         class="arrowmove arrowupright"></i></button></td>
                         </tr>
                         <tr>
-                            <td><button id="btnMoveLeft" onmousedown="repeatFunc(moveShape.bind(null,-1,0))"
+                            <td><button id="btnMoveLeft" onmousedown="repeatFunc(moveShapeBy.bind(null,-1,0))"
                                     onmouseup="clearFunc()" class="movebutton"><i
                                         class="arrowmove arrowleft"></i></button>
                             </td>
@@ -1264,20 +1318,20 @@
                                     </tr>
                                 </table>
                             </td>
-                            <td><button id="btnMoveRight" onmousedown="repeatFunc(moveShape.bind(null,1,0))"
+                            <td><button id="btnMoveRight" onmousedown="repeatFunc(moveShapeBy.bind(null,1,0))"
                                     onmouseup="clearFunc()" class="movebutton"><i
                                         class="arrowmove arrowright"></i></button>
                             </td>
                         </tr>
                         <tr>
-                            <td><button id="btnMoveDownLeft" onmousedown="repeatFunc(moveShape.bind(null,-1,1))"
+                            <td><button id="btnMoveDownLeft" onmousedown="repeatFunc(moveShapeBy.bind(null,-1,1))"
                                     onmouseup="clearFunc()" class="movebutton"><i
                                         class="arrowmove arrowdownleft"></i></button></td>
-                            <td><button id="btnMoveDown" onmousedown="repeatFunc(moveShape.bind(null,0,1))"
+                            <td><button id="btnMoveDown" onmousedown="repeatFunc(moveShapeBy.bind(null,0,1))"
                                     onmouseup="clearFunc()" class="movebutton"><i
                                         class="arrowmove arrowdown"></i></button>
                             </td>
-                            <td><button id="btnMoveDownRight" onmousedown="repeatFunc(moveShape.bind(null,1,1))"
+                            <td><button id="btnMoveDownRight" onmousedown="repeatFunc(moveShapeBy.bind(null,1,1))"
                                     onmouseup="clearFunc()" class="movebutton"><i
                                         class="arrowmove arrowdownright"></button></i></td>
                         </tr>
