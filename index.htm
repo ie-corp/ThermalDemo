@@ -420,6 +420,9 @@
                 let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
                 shapeEditor.regions.splice(shapeEditor.selectedRegionIndex, 1);
                 shapeEditor.selectedRegionIndex--;
+                if (shapeEditor.selectedRegionIndex < 0 && shapeEditor.regions.length > 0) {
+                    shapeEditor.selectedRegionIndex = 0;
+                }
                 recalcEditor();
                 addHistory('delete ' + region.type, selIndex, true);
             }
