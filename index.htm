@@ -9,7 +9,7 @@
         var shapeEditor = { "imageRotation": 0, "imageFilter": "none", "maxNameLength": 16, "tempDisplayUnit": "F", "imageNativeWidth": 256, "imageNativeHeight": 192, "imageWidth": 256, "imageHeight": 192, "imageScale": 1.0, "regions": [], "selectedRegionIndex": -1 };
         var shapeColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
         var tempRanges = { "LowestCelsius": -20.0, "HighestCelsius": 550.0, "defaultHiCelsius": 250.0, "defaultLoCelsius": 0 };
-        let shapeTypes = ['rectangle', 'ellipse', 'point'];
+        let shapeTypes = ['rectangle', 'ellipse', 'point', 'polygon'];
         let historyStack = [];
         let tempsCelsius = [];
         let historyIndex = -1;
@@ -21,19 +21,19 @@
 
         function redoShapeEditor() {
             if (historyIndex < 0 || historyStack.length <= 1) {
-                console.log('nothing to redo');
+                //console.log('nothing to redo');
                 return;
             }
             if (historyIndex < historyStack.length - 1) {
                 historyIndex++;
                 let historyEntry = historyStack[historyIndex];
-                console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
+                //console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
                 let storedShapeEditor = JSON.parse(historyEntry.shapeEditor);
                 shapeEditor = storedShapeEditor;
                 recalcEditor();
             }
             else {
-                console.log('nothing to redo');
+                //console.log('nothing to redo');
                 return;
             }
 
@@ -41,21 +41,21 @@
 
         function undoShapeEditor() {
             if (historyStack.length <= 1) {//first entry is initial state
-                console.log('nothing to undo');
+                //console.log('nothing to undo');
                 return;
             }
 
             if (historyIndex < 0 || historyIndex >= historyStack.length) {
-                console.log('adjusting out of bounds history index to last entry');
+                //console.log('adjusting out of bounds history index to last entry');
                 historyIndex = historyStack.length - 1;
             }
 
             if (historyIndex >= 1) {
                 let currentHistoryEntry = historyStack[historyIndex];
-                console.log('undoing ' + currentHistoryEntry.historyType + ' with index ' + currentHistoryEntry.selectedIndex);
+                //console.log('undoing ' + currentHistoryEntry.historyType + ' with index ' + currentHistoryEntry.selectedIndex);
                 historyIndex--;
                 let historyEntry = historyStack[historyIndex];
-                console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
+                //console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
                 let storedShapeEditor = JSON.parse(historyEntry.shapeEditor);
                 shapeEditor = storedShapeEditor;
                 recalcEditor();
@@ -73,27 +73,29 @@
             let lastHistoryEntry = null;
             if (historyStack.length > 0) {
                 if (historyIndex < 0 || historyIndex > historyStack.length) {
-                    console.log('adjusting out of bounds history index to last entry');
+                    //console.log('adjusting out of bounds history index to last entry');
                     historyIndex = historyStack.length - 1;
                 }
                 lastHistoryEntry = historyStack[historyIndex];
                 //even for a force this doesn't make sense.
                 if (historyEntry.shapeEditor == lastHistoryEntry.shapeEditor) {
+                    setButtons();
                     return;
                 }
                 if (force) {
-                    console.log('force add history entry of ' + historyEntry.historyType)
+                    //console.log('force add history entry of ' + historyEntry.historyType)
                     historyStack.splice(historyIndex + 1, 0, historyEntry);
                     historyStack.length = historyIndex + 2;//new action clears redo stack
                 }
                 else {
                     if (historyEntry.historyType == lastHistoryEntry.historyType && historyEntry.selectedIndex == lastHistoryEntry.selectedIndex) {
-                        console.log('replace existing history entry');
+                        //console.log('replace existing history entry');
                         historyStack[historyIndex] = historyEntry;
+                        setButtons();
                         return;
                     }
                     else {
-                        console.log('add history entry of ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex)
+                        //console.log('add history entry of ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex)
                         historyStack.splice(historyIndex + 1, 0, historyEntry);
                         historyStack.length = historyIndex + 2;//new action clears redo stack
                     }
@@ -101,9 +103,10 @@
                 }
             }
             else {
-                console.log('add initial history entry of ' + historyEntry.historyType)
+                //console.log('add initial history entry of ' + historyEntry.historyType)
                 historyStack.push(historyEntry);
                 historyIndex = 0;
+                setButtons();
                 return;
             }
             historyIndex++;
@@ -116,7 +119,51 @@
                     historyStack.pop();
                 }
             }
+            setButtons();
 
+
+
+
+        }
+
+        function setButtons() {
+            document.getElementById("btnUndo").disabled = historyStack.length <= 1 || historyIndex <= 0;
+            document.getElementById("btnRedo").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
+            let hasActiveItem = false; shapeEditor.selectedRegionIndex >= 0;
+            let canSize = false;
+            let canRotate = false;
+            if (shapeEditor.selectedRegionIndex >= 0 && shapeEditor.selectedRegionIndex < shapeEditor.regions.length) {
+                let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+                hasActiveItem = true;
+                canSize = region.type != 'point' && region.type != 'polygon';
+            }
+
+
+            document.getElementById("btnDeleteShape").disabled = !hasActiveItem;
+            document.getElementById("btnChangeRegionPrev").disabled = !hasActiveItem;
+            document.getElementById("btnChangeRegionNext").disabled = !hasActiveItem;
+            document.getElementById("btnChangeShapeName").disabled = !hasActiveItem;
+            document.getElementById("btnChangeColorPrev").disabled = !hasActiveItem;
+            document.getElementById("btnChangeColorNext").disabled = !hasActiveItem;
+            document.getElementById("btnChangeMaxTempAbsMore").disabled = !hasActiveItem;
+            document.getElementById("btnChangeMaxTempAbsLess").disabled = !hasActiveItem;
+            document.getElementById("btnChangeMinTempAbsMore").disabled = !hasActiveItem;
+            document.getElementById("btnChangeMinTempAbsLess").disabled = !hasActiveItem;
+            document.getElementById("btnMoveUpLeft").disabled = !hasActiveItem;
+            document.getElementById("btnMoveUp").disabled = !hasActiveItem;
+            document.getElementById("btnMoveUpRight").disabled = !hasActiveItem;
+            document.getElementById("btnMoveLeft").disabled = !hasActiveItem;
+            document.getElementById("btnMoveRight").disabled = !hasActiveItem;
+            document.getElementById("btnMoveDownLeft").disabled = !hasActiveItem;
+            document.getElementById("btnMoveDown").disabled = !hasActiveItem;
+            document.getElementById("btnMoveDownRight").disabled = !hasActiveItem;
+
+            document.getElementById("btnWidthLess").disabled = !hasActiveItem || !canSize;
+            document.getElementById("btnWidthMore").disabled = !hasActiveItem || !canSize;
+            document.getElementById("btnHeightLess").disabled = !hasActiveItem || !canSize;
+            document.getElementById("btnHeightMore").disabled = !hasActiveItem || !canSize;
+            document.getElementById("btnRotateClockwise").disabled = !hasActiveItem || !canSize;
+            document.getElementById("btnRotateCounterClockwise").disabled = !hasActiveItem || !canSize;
 
         }
 
@@ -187,6 +234,7 @@
             var valImageRotation = document.getElementById("valImageRotation");
             valImageRotation.innerHTML = shapeEditor.imageRotation + "&deg;";
             drawShapes();
+            setButtons();
 
         }
 
@@ -222,8 +270,20 @@
                     var pts = [region.x, region.y];
                     if (originalRotation == 0 || originalRotation == 180) {
                         if (region.type == 'point') {
-                            console.log('point');
+                            //console.log('point');
                             pts = rotate90(shapeEditor.imageNativeWidth, shapeEditor.imageNativeHeight, region.x, region.y);
+                        }
+                        else if (region.type == 'polygon') {
+
+                            for (let index = 0; index < region.points.length; index++) {
+                                let point = region.points[index];
+                                pts = rotate90(shapeEditor.imageNativeWidth, shapeEditor.imageNativeHeight, point.x, point.y);
+                                point.x = pts[0];
+                                point.y = pts[1];
+                            }
+                            region.x = region.points[0].x;
+                            region.y = region.points[0].y;
+                            fixShapeOutOfBounds(region);//recalcs width and height.
                         }
                         else {
                             pts = rotate90(shapeEditor.imageNativeWidth, shapeEditor.imageNativeHeight, region.x, region.y);
@@ -242,6 +302,18 @@
                     else {
                         if (region.type == 'point') {
                             pts = rotate90(shapeEditor.imageNativeHeight, shapeEditor.imageNativeWidth, region.x, region.y);
+                        }
+                        else if (region.type == 'polygon') {
+
+                            for (let index = 0; index < region.points.length; index++) {
+                                let point = region.points[index];
+                                pts = rotate90(shapeEditor.imageNativeHeight, shapeEditor.imageNativeWidth, point.x, point.y);
+                                point.x = pts[0];
+                                point.y = pts[1];
+                            }
+                            region.x = region.points[0].x;
+                            region.y = region.points[0].y;
+                            fixShapeOutOfBounds(region);//recalcs width and height.
                         }
                         else {
                             pts = rotate90(shapeEditor.imageNativeHeight, shapeEditor.imageNativeWidth, region.x, region.y);
@@ -328,7 +400,7 @@
             for (var i = 0; i < shapeEditor.regions.length; i++) {
                 var region = shapeEditor.regions[i];
                 var isSelected = i == shapeEditor.selectedRegionIndex;
-                drawShape(ctx, region, isSelected);
+                drawShape(ctx, region, isSelected, region.color, null);
                 if (isSelected) {
                     updateSelectedShapeAttributes(region);
                 }
@@ -377,12 +449,102 @@
             //I don't think this needs a undo.
         }
 
+        function getShapePointsOnCanvas(region) {
+            let canvas = document.createElement("canvas");
+            if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
+                canvas.width = shapeEditor.imageNativeWidth;
+                canvas.height = shapeEditor.imageNativeHeight;
+
+            }
+            else {
+                canvas.width = shapeEditor.imageNativeHeight;
+                canvas.height = shapeEditor.imageNativeWidth;
+
+            }
+            let ctx = canvas.getContext("2d");
+            drawShape(ctx, region, false, 'black', 'black');
+            let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let data = imageData.data;
+            let points = [];
+            for (let i = 0; i < data.length; i += 4) {
+                //i==R i+1==G i+2==B i+3==A
+                if (data[i + 3] > 0) {
+                    let x = (i / 4) % canvas.width;
+                    let y = Math.floor((i / 4) / canvas.width);
+                    points.push({ "x": x, "y": y })
+                }
+            }
+            //console.log('length ' + data.length / 4 + ' points: ' + points.length);
+            return points;
+        }
+
+
+        function getRegionFillPoints(region) {
+            //This will return only points that are in bounds!
+            if (region.type == 'point') {
+                return [{ "x": region.x, "y": region.y }];//only one point
+            }
+            else {
+                return getShapePointsOnCanvas(region);
+            }
+        }
+
+        function getRegionTemps(region) {
+
+            let points = getRegionFillPoints(region);
+
+            let lowCelsius = 999999
+            let highCelsius = -999999
+            let lowX = -1;
+            let lowY = -1;
+            let highX = -1;
+            let highY = -1;
+            for (let i = 0; i < points.length; i++) {
+                let point = points[i];
+
+                let index = getIndexOfTempFromXY(point.x, point.y);
+                if (index > -1 && index < tempsCelsius.length) {
+                    let temp = tempsCelsius[index];
+                    if (temp < lowCelsius) {
+                        lowCelsius = temp;
+                        lowX = point.x;
+                        lowY = point.y;
+                    }
+                    if (temp > highCelsius) {
+                        highCelsius = temp;
+                        highX = point.x;
+                        highY = point.y;
+                    }
+                }
+                else {
+                    console.error("temp index out of bounds:" + index);
+                }
+
+            }
+            if (lowCelsius == 999999) {
+                lowCelsius = null;
+                highCelsius = null;
+                console.error('no temps found');
+            }
+            let regionTemps = { "lowCelsius": lowCelsius, "highCelsius": highCelsius, "lowX": lowX, "lowY": lowY, "highX": highX, "highY": highY };
+            //console.log('region temps: ' + JSON.stringify(regionTemps));
+            return regionTemps;
+        }
+
         function updateSelectedShapeAttributes(region) {
             resetSelectedShapeAttributes();
             document.getElementById("valShapeIndex").innerHTML = "0 of 0";
             if (shapeEditor.selectedRegionIndex > -1 && shapeEditor.regions.length > 0) {
                 document.getElementById("valShapeIndex").innerHTML = (shapeEditor.selectedRegionIndex + 1) + " of " + shapeEditor.regions.length;
             }
+
+            let regionTemps = getRegionTemps(region);
+            document.getElementById("valHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false);
+            document.getElementById("valHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true);
+            document.getElementById("valLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false);
+            document.getElementById("valLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true);
+
+
             document.getElementById("valShapeName").innerHTML = region.name;
             document.getElementById("valMaxTempC").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, false);
             document.getElementById("valMaxTempF").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, true);
@@ -399,6 +561,12 @@
 
         function resetSelectedShapeAttributes() {
             document.getElementById("valShapeIndex").innerHTML = "0 of 0";
+
+            document.getElementById("valHighTempC").innerHTML = "--";
+            document.getElementById("valHighTempF").innerHTML = "--";
+            document.getElementById("valLowTempC").innerHTML = "--";
+            document.getElementById("valLowTempF").innerHTML = "--";
+
             document.getElementById("valShapeName").innerHTML = "--";
             document.getElementById("valMaxTempC").innerHTML = "--";
             document.getElementById("valMaxTempF").innerHTML = "--";
@@ -482,7 +650,7 @@
             }
         }
 
-        function drawShape(ctx, region, isSelected) {
+        function drawShape(ctx, region, isSelected, strokeColor, fillColor) {
             // Reset transformation matrix to the identity matrix
             ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -495,16 +663,49 @@
 
                 ctx.rect(region.x, region.y, region.width, region.height);
                 if (isSelected) {
-                    ctx.setLineDash([2, 1]);
+                    ctx.setLineDash([1, 2]);
                 }
                 else {
                     ctx.setLineDash([]);
                 }
 
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = region.color;
-
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = strokeColor;
+                if (fillColor != null) {
+                    ctx.fillStyle = fillColor;
+                    ctx.fill();
+                }
                 ctx.stroke();
+            }
+            else if (region.type == "polygon") {
+
+                if (region.points != null && region.points.length > 0) {
+                    ctx.beginPath();
+                    // we don't have a rotation angle
+                    ctx.moveTo(region.points[0].x, region.points[0].y);
+                    for (let i = 1; i < region.points.length; i++) {
+                        ctx.lineTo(region.points[i].x, region.points[i].y);
+                    }
+                    ctx.closePath();
+                    if (isSelected) {
+                        ctx.setLineDash([1]);
+                    }
+                    else {
+                        ctx.setLineDash([]);
+                    }
+
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = strokeColor;
+                    ctx.stroke();
+                    ctx.closePath();
+                    if (fillColor != null) {
+                        ctx.fillStyle = fillColor;
+                        ctx.fill();
+                    }
+                }
+                else {
+                    console.error('polygon has no points: ' + JSON.stringify(region));
+                }
             }
             else if (region.type == 'ellipse') {
                 ctx.beginPath();
@@ -522,13 +723,17 @@
 
                 ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
                 if (isSelected) {
-                    ctx.setLineDash([2, 1]);
+                    ctx.setLineDash([1, 2]);
                 }
                 else {
                     ctx.setLineDash([]);
                 }
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = region.color;
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = strokeColor;
+                if (fillColor != null) {
+                    ctx.fillStyle = fillColor;
+                    ctx.fill();
+                }
                 ctx.stroke();
             }
             else if (region.type == 'point') {
@@ -537,8 +742,8 @@
                 //ctx.setLineDash([5, 15]);
                 //}
                 ctx.setLineDash([]);
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = region.color;
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = strokeColor;
                 ctx.moveTo(region.x, region.y - 8);
                 ctx.lineTo(region.x, region.y - 1);
                 ctx.stroke();
@@ -569,6 +774,30 @@
             }
         }
 
+        function getPolygonBounds(points) {
+
+            let minX = points[0].x;
+            let maxX = points[0].x;
+            let minY = points[0].y;
+            let maxY = points[0].y;
+            for (let index = 1; index < points.length; index++) {
+                if (points[index].x < minX) {
+                    minX = points[index].x;
+                }
+                if (points[index].x > maxX) {
+                    maxX = points[index].x;
+                }
+                if (points[index].y < minY) {
+                    minY = points[index].y;
+                }
+                if (points[index].y > maxY) {
+                    maxY = points[index].y;
+                }
+            }
+            let bounds = { "minX": minX, "minY": minY, "maxX": maxX, "maxY": maxY, "width": maxX - minX, "height": maxY - minY, "x": minX, "y": minY };
+            return bounds;
+        }
+
         function fixShapeOutOfBounds(region) {
             if (region.type == 'point') {
                 region.x = Math.max(region.x, 0);
@@ -581,6 +810,47 @@
                     region.x = Math.min(region.x, shapeEditor.imageNativeHeight);
                     region.y = Math.min(region.y, shapeEditor.imageNativeWidth);
                 }
+            }
+            else if (region.type == 'polygon') {
+                //we need to adjust x and  y.
+                let bounds = getPolygonBounds(region.points);
+                region.angle = 0;//cannot rotate polygon.
+                region.width = bounds.width;
+                region.height = bounds.height;
+
+                let moveX = 0;
+                let moveY = 0;
+                if (bounds.minX < 0) {
+                    moveX = 0 - bounds.minX;
+                }
+                else if ((shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) && bounds.maxX > shapeEditor.imageNativeWidth) {
+                    moveX = shapeEditor.imageNativeWidth - bounds.maxX;
+                }
+                else if ((shapeEditor.imageRotation == 90 || shapeEditor.imageRotation == 270) && bounds.maxX > shapeEditor.imageNativeHeight) {
+                    moveX = shapeEditor.imageNativeHeight - bounds.maxX;
+                }
+
+                if (bounds.minY < 0) {
+                    moveY = 0 - bounds.minY;
+                }
+                else if ((shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) && bounds.maxY > shapeEditor.imageNativeHeight) {
+                    moveY = shapeEditor.imageNativeHeight - bounds.maxY;
+                }
+                else if ((shapeEditor.imageRotation == 90 || shapeEditor.imageRotation == 270) && bounds.maxY > shapeEditor.imageNativeWidth) {
+                    moveY = shapeEditor.imageNativeWidth - bounds.maxY;
+                }
+
+                if (moveX != 0 || moveY != 0) {
+                    for (let index = 0; index < region.points.length; index++) {
+                        region.points[index].x += moveX;
+                        region.points[index].y += moveY;
+                    }
+                    bounds = getPolygonBounds(region.points)
+                    region.x = bounds.x;
+                    region.y = bounds.y;
+                }
+
+
             }
             else {
 
@@ -607,11 +877,32 @@
 
             if (shapeEditor.selectedRegionIndex >= 0) {
                 let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
-                if (region.x == x && region.y == y) {
-                    return;
+                let originalX = region.x;
+                let originalY = region.y;
+
+                if (region.type == 'polygon') {
+                    let bounds = getPolygonBounds(region.points);
+                    if (bounds.x == x && bounds.y == y) {
+                        return;
+                    }
+                    let diffX = x - bounds.x;
+                    let diffy = y - bounds.y;
+                    for (let index = 0; index < region.points.length; index++) {
+                        region.points[index].x += diffX;
+                        region.points[index].y += diffy;
+                    }
+                    bounds = getPolygonBounds(region.points);
+                    region.x = bounds.x;
+                    region.y = bounds.y;
                 }
-                region.x = x;
-                region.y = y;
+                else {
+                    if (region.x == x && region.y == y) {
+                        return;
+                    }
+                    region.x = x;
+                    region.y = y;
+                }
+
                 fixShapeOutOfBounds(region);
                 recalcEditor();
                 let strTag = 'dragged';
@@ -628,6 +919,15 @@
                 var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
                 region.x += x;
                 region.y += y;
+
+                if (region.type == 'polygon') {
+                    for (let index = 0; index < region.points.length; index++) {
+                        region.points[index].x += x;
+                        region.points[index].y += y;
+                    }
+                    region.x = region.points[0].x;
+                    region.y = region.points[0].y;
+                }
                 fixShapeOutOfBounds(region);
                 recalcEditor();
                 let strTag = '';
@@ -764,6 +1064,28 @@
             }
         }
 
+        function getIndexOfTempFromXY(posX, posY) {
+            let indexTempC = -1;
+            if (shapeEditor.imageRotation == 0) {
+                indexTempC = (posY * shapeEditor.imageNativeHeight) + posX;
+
+            }
+            else if (shapeEditor.imageRotation == 180) {
+                indexTempC = ((shapeEditor.imageNativeHeight - posY) * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posX);
+            }
+            else if (shapeEditor.imageRotation == 90) {
+                indexTempC = ((shapeEditor.imageNativeHeight - posX) * shapeEditor.imageNativeHeight) + posY;
+            }
+            else if (shapeEditor.imageRotation == 270) {
+                indexTempC = (posX * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posY);
+            }
+            else {
+                return -1;
+            }
+
+            return indexTempC;
+        }
+
         function go() {
             shapeEditor.imageScale = 4.0;
             recalcEditor();
@@ -800,10 +1122,10 @@
 
             image.addEventListener('mousemove', (e) => {
 
-                
 
 
-                
+
+
 
 
                 if ("buttons" in e) {
@@ -846,35 +1168,30 @@
                 if (shapeEditor.imageRotation == 0) {
                     posX = Math.min(x, shapeEditor.imageNativeWidth);
                     posY = Math.min(y, shapeEditor.imageNativeHeight);
-                    indexTempC = (posY * shapeEditor.imageNativeHeight) + posX;
-
 
                 }
                 else if (shapeEditor.imageRotation == 180) {
                     posX = Math.min(x, shapeEditor.imageNativeWidth);
                     posY = Math.min(y, shapeEditor.imageNativeHeight);
-                    //image is upside down
-                    indexTempC = ((shapeEditor.imageNativeHeight - posY) * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posX);
+
                 }
                 else if (shapeEditor.imageRotation == 90) {
                     posX = Math.min(x, shapeEditor.imageNativeHeight);
                     posY = Math.min(y, shapeEditor.imageNativeWidth);
-                    indexTempC = ((shapeEditor.imageNativeHeight - posX) * shapeEditor.imageNativeHeight) + posY;
+
                 }
                 else if (shapeEditor.imageRotation == 270) {
                     posX = Math.min(x, shapeEditor.imageNativeHeight);
                     posY = Math.min(y, shapeEditor.imageNativeWidth);
-                    indexTempC = (posX * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posY);
+
                 }
                 else {
                     console.error('unsupported rotation: ' + shapeEditor.imageRotation);
                     tooltip.textContent = 'unsupported rotation: ' + shapeEditor.imageRotation;
                     return;
                 }
+                indexTempC = getIndexOfTempFromXY(posX, posY);
                 if (indexTempC > -1 && indexTempC < tempsCelsius.length) {
-
-
-
                     let tempC = tempsCelsius[indexTempC];
                     tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` +
                         `${getDisplayTempFromCelsius(tempC, false)}&deg;C<br/>` +
@@ -934,6 +1251,7 @@
             let shapeY = Math.round(shapeType == 'point' ? shapeEditor.imageNativeHeight / 2 : shapeEditor.imageNativeHeight / 3);
             let shapeWidth = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeWidth / 4);
             let shapeHeight = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeHeight / 4);
+            let shapePoints = null;
             let shapeAngle = 0.0;
             let shapeMaxTempCelsius = tempRanges.defaultHiCelsius;
             let shapeMinTempCelsius = null;
@@ -941,7 +1259,7 @@
                 let lastRegion = null;
                 let lastResIndex = shapeEditor.regions.findLastIndex(item => shapeType === item.type);
                 if (lastResIndex != -1) {
-                    console.log('found last shape of type ' + shapeType + ' at index ' + lastResIndex);
+                    //console.log('found last shape of type ' + shapeType + ' at index ' + lastResIndex);
                     lastRegion = shapeEditor.regions[lastResIndex];
                     shapeMaxTempCelsius = lastRegion.maxTempCelsius;
                     shapeMinTempCelsius = lastRegion.minTempCelsius;
@@ -950,15 +1268,36 @@
                     shapeAngle = lastRegion.angle;
                     shapeX = lastRegion.x + 10;
                     shapeY = lastRegion.y + 10;
+                    if (lastRegion.points != null && lastRegion.points.length > 0) {
+                        shapePoints = [];
+                        for (let q = 0; q < lastRegion.points.length; q++) {
+                            shapePoints.push({ "x": (lastRegion.points[q].x + 10), "y": (lastRegion.points[q].y + 10) });
+                        }
+                    }
+
                 }
                 else {
-                    console.log('did not find last shape of type ' + shapeType);
+                    //console.log('did not find last shape of type ' + shapeType);
                     lastRegion = shapeEditor.regions[shapeEditor.regions.length - 1];
                     shapeMaxTempCelsius = lastRegion.maxTempCelsius;
                     shapeMinTempCelsius = lastRegion.minTempCelsius;
+
+
                 }
             }
-            let shape = { "name": shapeName, "maxTempCelsius": shapeMaxTempCelsius, "minTempCelsius": shapeMinTempCelsius, "type": shapeType, "color": colorToUse, "x": shapeX, "y": shapeY, "width": shapeWidth, "height": shapeHeight, "angle": shapeAngle };
+
+            if (shapeType == 'polygon' && (shapePoints == null || shapePoints.length == 0)) {
+                let x = shapeX;
+                let y = shapeY;
+                shapePoints = [{ "x": 0 + x, "y": 5 + y }, { "x": 40 + x, "y": 5 + y }, { "x": 40 + x, "y": 20 + y }, { "x": 30 + x, "y": 20 + y }, { "x": 30 + x, "y": 40 + y }, { "x": 10 + x, "y": 40 + y }];
+                let bounds = getPolygonBounds(shapePoints);
+                shapeX = bounds.x;
+                shapeY = bounds.y;
+                shapeWidth = bounds.width;
+                shapeHeight = bounds.height;
+            }
+            let shape = { "name": shapeName, "maxTempCelsius": shapeMaxTempCelsius, "minTempCelsius": shapeMinTempCelsius, "type": shapeType, "color": colorToUse, "x": shapeX, "y": shapeY, "width": shapeWidth, "height": shapeHeight, "angle": shapeAngle, "points": shapePoints };
+
             fixShapeOutOfBounds(shape);
             shapeEditor.regions.push(shape);
             shapeEditor.selectedRegionIndex = shapeEditor.regions.length - 1;
@@ -1019,6 +1358,20 @@
                                             <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
                                             <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
 
+                                        </svg>
+
+                                    </div>
+
+                                </button></td>
+                            <td><button id="btnPolygonAdd" onclick="addShape('polygon')" class="shapebutton">
+                                    <div>
+                                        <svg width="48" height="38" viewBox="0 0 48 48" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <polygon points="0,5 40,5 40,20 30,20 30,40 10,40" stroke="white"
+                                                stroke-width="2" />
+                                            />
+                                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
                                         </svg>
 
                                     </div>
@@ -1155,10 +1508,45 @@
                                 </table>
 
                             </td>
-                            <td><button id="btnChangeColorPrev" onclick="changeShapeNext(false)" onmouseup="clearFunc()"
-                                    class="resizebutton">&lt;</button></td>
-                            <td><button id="btnChangeColorNext" onclick="changeShapeNext(true)" onmouseup="clearFunc()"
+                            <td><button id="btnChangeRegionPrev" onclick="changeShapeNext(false)"
+                                    onmouseup="clearFunc()" class="resizebutton">&lt;</button></td>
+                            <td><button id="btnChangeRegionNext" onclick="changeShapeNext(true)" onmouseup="clearFunc()"
                                     class="resizebutton">&gt;</button></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext2">High</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valHighTempC" class="shapeditortextsub3">--</span><span
+                                                class="shapeditortextsub2">&deg;C</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valHighTempF" class="shapeditortextsub3">--</span><span
+                                                class="shapeditortextsub2">&deg;F</span></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td>
+                                <table class="shapeditorletterbox">
+                                    <tr>
+                                        <td><span class="shapeeditortext2">Low</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valLowTempC" class="shapeditortextsub3">--</span><span
+                                                class="shapeditortextsub2">&deg;C</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="valLowTempF" class="shapeditortextsub3">--</span><span
+                                                class="shapeditortextsub2">&deg;F</span></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td>
+
+                            </td>
                         </tr>
                         <tr>
                             <td colspan="3">
