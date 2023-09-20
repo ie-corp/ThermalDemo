@@ -10,14 +10,29 @@
         var shapeColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
         var tempRanges = { "LowestCelsius": -20.0, "HighestCelsius": 550.0, "defaultHiCelsius": 250.0, "defaultLoCelsius": 0 };
         let shapeTypes = ['rectangle', 'ellipse', 'point', 'polygon'];
+        let shapeEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete'];
+        let activeTool = 'look';
         let historyStack = [];
         let tempsCelsius = [];
         let historyIndex = -1;
+        let selectedPointIndex = -1;
 
         var activeFunc = null;
         var waiterTime = 100;
 
         let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
+
+        function selectShapeEditorTool(toolName) {
+            if (shapeEditorTools.indexOf(toolName) == -1) {
+                console.error('invalid tool name: ' + toolName);
+                recalcEditor();
+                return;
+            }
+            let oldActiveTool = activeTool;
+            //put some logic here
+            activeTool = toolName;
+            recalcEditor();
+        }
 
         function redoShapeEditor() {
             if (historyIndex < 0 || historyStack.length <= 1) {
@@ -129,14 +144,31 @@
         function setButtons() {
             document.getElementById("btnUndo").disabled = historyStack.length <= 1 || historyIndex <= 0;
             document.getElementById("btnRedo").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
-            let hasActiveItem = false; shapeEditor.selectedRegionIndex >= 0;
+            let hasActiveItem = false;
             let canSize = false;
             let canRotate = false;
+            let polygonSelected = false;
+            let region = null;
             if (shapeEditor.selectedRegionIndex >= 0 && shapeEditor.selectedRegionIndex < shapeEditor.regions.length) {
-                let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+                region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
                 hasActiveItem = true;
                 canSize = region.type != 'point' && region.type != 'polygon';
+                polygonSelected = region.type == 'polygon';
             }
+            let activeToolColor = 'green';
+            let inactiveToolColor = 'white';
+            document.getElementById("btnShapeToolLook").disabled = false;
+            document.getElementById("btnShapeToolLook").style.color = (activeTool == 'look' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnShapeToolSelect").disabled = shapeEditor.regions.length <= 1;
+            document.getElementById("btnShapeToolSelect").style.color = (activeTool == 'select' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnShapeToolMove").disabled = !hasActiveItem;
+            document.getElementById("btnShapeToolMove").style.color = (activeTool == 'move' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnShapeToolPointAdd").disabled = !polygonSelected;
+            document.getElementById("btnShapeToolPointAdd").style.color = (activeTool == 'pointadd' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnShapeToolPointMove").disabled = !polygonSelected;
+            document.getElementById("btnShapeToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnShapeToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
+            document.getElementById("btnShapeToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
 
 
             document.getElementById("btnDeleteShape").disabled = !hasActiveItem;
@@ -400,7 +432,13 @@
             for (var i = 0; i < shapeEditor.regions.length; i++) {
                 var region = shapeEditor.regions[i];
                 var isSelected = i == shapeEditor.selectedRegionIndex;
-                drawShape(ctx, region, isSelected, region.color, null);
+                let drawControls = region.type == 'polygon' && activeTool.indexOf('point') > -1;
+                if (drawControls) {
+                    if (region.points.length <= 3 && activeTool == 'pointdelete') {
+                        drawControls = false;
+                    }
+                }
+                drawShape(ctx, region, isSelected, region.color, null, drawControls);
                 if (isSelected) {
                     updateSelectedShapeAttributes(region);
                 }
@@ -444,6 +482,27 @@
             else if (shapeIndex >= shapeEditor.regions.length) {
                 shapeIndex = 0;
             }
+            setShapeIndex(shapeIndex);
+
+        }
+
+        function setShapeIndex(shapeIndex) {
+            if (shapeIndex < 0 || shapeIndex >= shapeEditor.regions.length) {
+                console.error('invalid shape index: ' + shapeIndex);
+                return;
+            }
+            if (shapeIndex != shapeEditor.selectedRegionIndex) {
+                let shape = shapeEditor.regions[shapeIndex];
+                if (shape.type == 'polygon') {
+                    if (selectedPointIndex < 0 || selectedPointIndex >= shape.points.length) {
+                        selectedPointIndex = 0;
+                    }
+                }
+                else {
+                    selectedPointIndex = -1;
+                }
+
+            }
             shapeEditor.selectedRegionIndex = shapeIndex;
             recalcEditor();
             //I don't think this needs a undo.
@@ -462,7 +521,7 @@
 
             }
             let ctx = canvas.getContext("2d");
-            drawShape(ctx, region, false, 'black', 'black');
+            drawShape(ctx, region, false, 'black', 'black', false);
             let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             let data = imageData.data;
             let points = [];
@@ -650,7 +709,7 @@
             }
         }
 
-        function drawShape(ctx, region, isSelected, strokeColor, fillColor) {
+        function drawShape(ctx, region, isSelected, strokeColor, fillColor, drawControls) {
             // Reset transformation matrix to the identity matrix
             ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -701,6 +760,26 @@
                     if (fillColor != null) {
                         ctx.fillStyle = fillColor;
                         ctx.fill();
+                    }
+                    if (drawControls) {
+                        for (let i = 0; i < region.points.length; i++) {
+                            let point = region.points[i];
+
+                            ctx.beginPath();
+                            ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+                            ctx.fillStyle = strokeColor;
+                            ctx.fill();
+
+                            if (i == selectedPointIndex) {
+
+                                ctx.beginPath();
+                                ctx.setLineDash([]);
+                                ctx.strokeStyle = strokeColor;
+                                ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+                                ctx.stroke();
+                            }
+
+                        }
                     }
                 }
                 else {
@@ -1086,6 +1165,167 @@
             return indexTempC;
         }
 
+        function findIndexOfClosestShape(x, y, ignoreList) {
+            if (shapeEditor.regions.length == 0) {
+                return -1;
+            }
+            if (ignoreList == null) {
+                ignoreList = [];
+            }
+            let closetShapeIndex = -1;
+            //todo we need to go through each shape draw it.. Get the distance to the closest point.
+            //then return the index of the closest shape.
+            return closetShapeIndex;
+        }
+
+        function findIndexOfClosestPoint(dragX, dragY, points, ignoreList) {
+            let indexOfClosestPoint = -1;
+            let closestDistance = 999999;
+            for (let index = 0; index < points.length; index++) {
+                if (ignoreList != null && ignoreList.includes(index)) {
+                    continue;
+                }
+                let point = points[index];
+                let distance = Math.sqrt(Math.pow(point.x - dragX, 2) + Math.pow(point.y - dragY, 2));
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    indexOfClosestPoint = index;
+                }
+            }
+            return indexOfClosestPoint;
+        }
+
+        function findIndexOfClosestPolygonLine(x, y, points) {
+            let indexOfClosestLine = -1;
+            let closestDistance = 999999;
+            for (let index = 0; index < points.length; index++) {
+                let point = points[index];
+                let nextPoint = null;
+                if (index < points.length - 1) {
+                    nextPoint = points[index + 1];
+                }
+                else {
+                    nextPoint = points[0];
+                }
+                let distance = distanceToLine(x, y, point.x, point.y, nextPoint.x, nextPoint.y);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    indexOfClosestLine = index;
+                }
+            }
+            return indexOfClosestLine;
+        }
+
+        function distanceToLine(x, y, x1, y1, x2, y2) {
+            let A = x - x1;
+            let B = y - y1;
+            let C = x2 - x1;
+            let D = y2 - y1;
+
+            let dot = A * C + B * D;
+            let len_sq = C * C + D * D;
+            let param = -1;
+            if (len_sq != 0){ //in case of 0 length line
+                param = dot / len_sq;
+            }
+
+            let xx;
+            let yy;
+
+            if (param < 0) {
+                xx = x1;
+                yy = y1;
+            }
+            else if (param > 1) {
+                xx = x2;
+                yy = y2;
+            }
+            else {
+                xx = x1 + param * C;
+                yy = y1 + param * D;
+            }
+
+            let dx = x - xx;
+            let dy = y - yy;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function processScreenTouchCoordinates(offsetX, offsetY, isMouseMoveEvent) {
+            if (shapeEditor.selectedRegionIndex < 0 || shapeEditor.selectedRegionIndex >= shapeEditor.regions.length) {
+                return;
+            }
+            let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+            let dragX = Math.max(-200, Math.round(offsetX / shapeEditor.imageScale));
+            let dragY = Math.max(-200, Math.round(offsetY / shapeEditor.imageScale));
+            if (activeTool == 'look') {
+                return;//nothing to do
+            }
+            else if (!isMouseMoveEvent && activeTool == 'select') {
+                if (shapeEditor.regions.length == 2) {
+                    changeShapeNext(true);
+                }
+                else if (shapeEditor.regions.length > 2) {
+                    //todo find closest shape that isn't this one.
+                    let indexOfClosestShape = findIndexOfClosestShape(x, y, [shapeEditor.selectedRegionIndex]);//ignore the current shape.
+                    if (indexOfClosestShape == -1) {
+                        changeShapeNext(true);
+                    }
+                    else {
+                        setShapeIndex(indexOfClosestShape);
+                    }
+
+
+                }
+
+            }
+            else if (isMouseMoveEvent && activeTool == 'move') {
+                moveShapeAbsolute(dragX, dragY);
+            }
+            else if (region.type == 'polygon') {
+                if (!isMouseMoveEvent && activeTool == 'pointadd') {
+                    let indexOfClosestPoint = findIndexOfClosestPolygonLine(dragX, dragY, region.points);
+                    if (indexOfClosestPoint > -1) {
+                        let point = { "x": dragX, "y": dragY };
+                        let insertIndex = indexOfClosestPoint + 1;
+                        region.points.splice(insertIndex, 0, point);
+                        selectedPointIndex = insertIndex;
+                        activeTool = 'pointmove';
+                        recalcEditor();
+                        addHistory('add point to ' + region.type, shapeEditor.selectedRegionIndex, true);//force this
+                    }
+
+                }
+                else if (!isMouseMoveEvent && activeTool == 'pointdelete') {
+                    if (region.points.length > 3) {
+                        let indexOfClosestPoint = findIndexOfClosestPoint(dragX, dragY, region.points, []);
+                        if (indexOfClosestPoint > -1) {
+                            region.points.splice(indexOfClosestPoint, 1);
+                            recalcEditor();
+                            addHistory('remove point from ' + region.type, shapeEditor.selectedRegionIndex, false);//force this
+                        }
+                    }
+                }
+                else if (activeTool == 'pointmove') {
+                    if (!isMouseMoveEvent) {
+                        let indexOfClosestPoint = findIndexOfClosestPoint(dragX, dragY, region.points, []);
+                        if (indexOfClosestPoint > -1) {
+                            selectedPointIndex = indexOfClosestPoint;
+                        }
+                        else {
+                            return;
+                        }
+                    }
+                    if (selectedPointIndex > -1 && selectedPointIndex < region.points.length) {
+                        region.points[selectedPointIndex].x = dragX;
+                        region.points[selectedPointIndex].y = dragY;
+                        recalcEditor();
+                        addHistory('move point in ' + region.type + 'pt:' + selectedPointIndex , shapeEditor.selectedRegionIndex, false);
+                    }
+                }
+            }
+
+        }
+
         function go() {
             shapeEditor.imageScale = 4.0;
             recalcEditor();
@@ -1100,10 +1340,9 @@
                 if ("buttons" in e) {
                     if (e.buttons == 1) {
                         if (shapeEditor.selectedRegionIndex >= 0) {
-                            let dragX = Math.max(-200, Math.round(e.offsetX / shapeEditor.imageScale));
-                            let dragY = Math.max(-200, Math.round(e.offsetY / shapeEditor.imageScale));
-                            moveShapeAbsolute(dragX, dragY);
+                            processScreenTouchCoordinates(e.offsetX, e.offsetY, false);
                         }
+
                     }
                 }
 
@@ -1121,22 +1360,6 @@
             });
 
             image.addEventListener('mousemove', (e) => {
-
-
-
-
-
-
-
-                if ("buttons" in e) {
-                    if (e.buttons == 1) {
-                        if (shapeEditor.selectedRegionIndex >= 0) {
-                            let dragX = Math.max(-200, Math.round(e.offsetX / shapeEditor.imageScale));
-                            let dragY = Math.max(-200, Math.round(e.offsetY / shapeEditor.imageScale));
-                            moveShapeAbsolute(dragX, dragY);
-                        }
-                    }
-                }
 
 
                 let x = Math.max(0, Math.round(e.offsetX / shapeEditor.imageScale));
@@ -1201,6 +1424,21 @@
                     console.error('invalid indexTempC: ' + indexTempC);
                     tooltip.textContent = 'No temperature reading at this location.';
                 }
+
+
+
+
+                if ("buttons" in e) {
+                    if (e.buttons == 1) {
+                        if (shapeEditor.selectedRegionIndex >= 0) {
+                            processScreenTouchCoordinates(e.offsetX, e.offsetY, true);
+
+                        }
+                    }
+                }
+
+
+
 
 
 
@@ -1295,12 +1533,15 @@
                 shapeY = bounds.y;
                 shapeWidth = bounds.width;
                 shapeHeight = bounds.height;
+
+                selectedPointIndex = 0;
             }
             let shape = { "name": shapeName, "maxTempCelsius": shapeMaxTempCelsius, "minTempCelsius": shapeMinTempCelsius, "type": shapeType, "color": colorToUse, "x": shapeX, "y": shapeY, "width": shapeWidth, "height": shapeHeight, "angle": shapeAngle, "points": shapePoints };
 
             fixShapeOutOfBounds(shape);
             shapeEditor.regions.push(shape);
             shapeEditor.selectedRegionIndex = shapeEditor.regions.length - 1;
+            activeTool = 'move';//this makes the most sense to me.
             recalcEditor();
             addHistory('new ' + shapeType, shapeEditor.selectedRegionIndex, true);
         }
@@ -1385,7 +1626,104 @@
                 <div id="shapeEditorZoomArea">
                     <table>
                         <tr>
-
+                            <td><button id="btnShapeToolLook" onclick="selectShapeEditorTool('look')"
+                                    class="resizebutton">
+                                    <div style="line-height: 4px;">
+                                        <span style="margin-left: -5px;" class="shapeeditortext">Look</span>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M7 14C8.10457 14 9 13.1046 9 12C9 10.8954 8.10457 10 7 10C5.89543 10 5 10.8954 5 12C5 13.1046 5.89543 14 7 14ZM10.4649 10C9.77325 8.8044 8.48056 8 7 8C5.13616 8 3.57006 9.27477 3.12602 11H2C1.44772 11 1 11.4477 1 12C1 12.5523 1.44772 13 2 13H3.12602C3.57006 14.7252 5.13616 16 7 16C9.20914 16 11 14.2091 11 12H13C13 14.2091 14.7909 16 17 16C18.8638 16 20.4299 14.7252 20.874 13H22C22.5523 13 23 12.5523 23 12C23 11.4477 22.5523 11 22 11H20.874C20.4299 9.27477 18.8638 8 17 8C15.5194 8 14.2267 8.8044 13.5351 10H10.4649ZM15 12C15 13.1046 15.8954 14 17 14C18.1046 14 19 13.1046 19 12C19 10.8954 18.1046 10 17 10C15.8954 10 15 10.8954 15 12Z"
+                                                fill="white" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
+                            <td><button id="btnShapeToolSelect" onclick="selectShapeEditorTool('select')"
+                                    class="resizebutton">
+                                    <div style="line-height: 4px;">
+                                        <span style="margin-left: -5px;" class="shapeeditortext">Select</span>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="white"
+                                                stroke-width="2" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
+                            <td><button id="btnShapeToolMove" onclick="selectShapeEditorTool('move')"
+                                    class="resizebutton">
+                                    <div style="line-height: 4px;">
+                                        <span style="margin-left: -5px;" class="shapeeditortext">Move</span>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M14.8284 6.34313L16.2426 4.92892L12 0.686279L7.75735 4.92892L9.17156 6.34313L12 3.51471L14.8284 6.34313Z"
+                                                fill="white" />
+                                            <path
+                                                d="M4.92892 16.2426L6.34313 14.8284L3.51471 12L6.34313 9.17156L4.92892 7.75735L0.686279 12L4.92892 16.2426Z"
+                                                fill="white" />
+                                            <path
+                                                d="M7.75735 19.0711L12 23.3137L16.2426 19.0711L14.8284 17.6568L12 20.4853L9.17156 17.6568L7.75735 19.0711Z"
+                                                fill="white" />
+                                            <path
+                                                d="M17.6568 9.17156L20.4853 12L17.6568 14.8284L19.0711 16.2426L23.3137 12L19.0711 7.75735L17.6568 9.17156Z"
+                                                fill="white" />
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8ZM12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z"
+                                                fill="white" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
+                            <td><button id="btnShapeToolPointAdd" onclick="selectShapeEditorTool('pointadd')"
+                                    class="resizebutton">
+                                    <div style="line-height: 4px;">
+                                        <span style="margin-left: -5px;" class="shapeeditortext">Add&nbsp;Pt</span>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
+                                                fill="white" />
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M13 7C13 6.44772 12.5523 6 12 6C11.4477 6 11 6.44772 11 7V11H7C6.44772 11 6 11.4477 6 12C6 12.5523 6.44772 13 7 13H11V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V13H17C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H13V7Z"
+                                                fill="white" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
+                            <td><button id="btnShapeToolPointMove" onclick="selectShapeEditorTool('pointmove')"
+                                    class="resizebutton">
+                                    <div style="line-height: 4px;">
+                                        <span style="margin-left: -5px;" class="shapeeditortext">Mve&nbsp;Pt</span>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M10 10.0367L8.00002 10.0367L8 16.0367L14 16.0367L14 14.0367L11.4143 14.0366L16.7438 8.7071L15.3296 7.29289L10 12.6224L10 10.0367Z"
+                                                fill="white" />
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                                                fill="white" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
+                            <td><button id="btnShapeToolPointDelete" onclick="selectShapeEditorTool('pointdelete')"
+                                    class="resizebutton">
+                                    <div style="line-height: 4px;">
+                                        <span style="margin-left: -5px;" class="shapeeditortext">Del&nbsp;Pt</span>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M16.3394 9.32245C16.7434 8.94589 16.7657 8.31312 16.3891 7.90911C16.0126 7.50509 15.3798 7.48283 14.9758 7.85938L12.0497 10.5866L9.32245 7.66048C8.94589 7.25647 8.31312 7.23421 7.90911 7.61076C7.50509 7.98731 7.48283 8.62008 7.85938 9.0241L10.5866 11.9502L7.66048 14.6775C7.25647 15.054 7.23421 15.6868 7.61076 16.0908C7.98731 16.4948 8.62008 16.5171 9.0241 16.1405L11.9502 13.4133L14.6775 16.3394C15.054 16.7434 15.6868 16.7657 16.0908 16.3891C16.4948 16.0126 16.5171 15.3798 16.1405 14.9758L13.4133 12.0497L16.3394 9.32245Z"
+                                                fill="currentColor" />
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12ZM12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z"
+                                                fill="currentColor" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </td>
 
                             <td>
                                 <table class="shapeditorletterbox">
