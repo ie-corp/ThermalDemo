@@ -760,22 +760,45 @@
                         ctx.fill();
                     }
                     if (drawControls) {
+                        let showDeleteNodes = region.points.length > 3 && activeTool == 'pointdelete';
                         for (let i = 0; i < region.points.length; i++) {
                             let point = region.points[i];
+                            if (showDeleteNodes) {
+                                
+                                ctx.beginPath();
+                                ctx.lineWidth = 1;
+                                ctx.strokeStyle = strokeColor;
+                                let slashLength = 3;
+                                ctx.moveTo(point.x - slashLength, point.y - slashLength);
+                                ctx.lineTo(point.x + slashLength, point.y + slashLength);
 
-                            ctx.beginPath();
-                            ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
-                            ctx.fillStyle = strokeColor;
-                            ctx.fill();
-
-                            if (i == selectedPointIndex) {
-
+                                ctx.moveTo(point.x + slashLength, point.y - slashLength);
+                                ctx.lineTo(point.x - slashLength, point.y + slashLength);
+                                ctx.stroke();
+                                ctx.closePath();
+                                
                                 ctx.beginPath();
                                 ctx.setLineDash([]);
                                 ctx.strokeStyle = strokeColor;
-                                ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+                                ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
                                 ctx.stroke();
                             }
+                            else{
+                                ctx.beginPath();
+                                ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+                                ctx.fillStyle = strokeColor;
+                                ctx.fill();
+
+                                if (activeTool != 'pointadd' && (i == selectedPointIndex || activeTool == 'pointmove')) {
+
+                                    ctx.beginPath();
+                                    ctx.setLineDash([]);
+                                    ctx.strokeStyle = strokeColor;
+                                    ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+                                    ctx.stroke();
+                                }
+                            }
+                            
 
                         }
                     }
