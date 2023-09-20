@@ -1340,7 +1340,7 @@
                         if (indexOfClosestPoint > -1) {
                             region.points.splice(indexOfClosestPoint, 1);
                             recalcEditor();
-                            addHistory('remove point from ' + region.type, shapeEditor.selectedRegionIndex, false);//force this
+                            addHistory('remove point from ' + region.type, shapeEditor.selectedRegionIndex, true);//force this
                         }
                     }
                 }
