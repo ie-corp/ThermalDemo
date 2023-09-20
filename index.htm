@@ -501,9 +501,11 @@
                 else {
                     selectedPointIndex = -1;
                 }
+                
 
             }
             shapeEditor.selectedRegionIndex = shapeIndex;
+            activeTool = 'select';
             recalcEditor();
             //I don't think this needs a undo.
         }
@@ -1266,8 +1268,9 @@
                 }
                 else if (shapeEditor.regions.length > 2) {
                     //todo find closest shape that isn't this one.
-                    let indexOfClosestShape = findIndexOfClosestShape(x, y, [shapeEditor.selectedRegionIndex]);//ignore the current shape.
+                    let indexOfClosestShape = findIndexOfClosestShape(dragX, dragY, [shapeEditor.selectedRegionIndex]);//ignore the current shape.
                     if (indexOfClosestShape == -1) {
+                        console.log('no other shapes found')
                         changeShapeNext(true);
                     }
                     else {
