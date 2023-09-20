@@ -510,7 +510,10 @@
             //I don't think this needs a undo.
         }
 
-        function getShapePointsOnCanvas(region) {
+        function getShapePointsOnCanvas(region, outlineOnly) {
+            if (region.type == 'point') {
+                return [{ "x": region.x, "y": region.y }];//only one point
+            }
             let canvas = document.createElement("canvas");
             if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
                 canvas.width = shapeEditor.imageNativeWidth;
@@ -523,7 +526,8 @@
 
             }
             let ctx = canvas.getContext("2d");
-            drawShape(ctx, region, false, 'black', 'black', false);
+            let fillColor = outlineOnly ? null : 'black';
+            drawShape(ctx, region, false, 'black', fillColor, false);
             let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             let data = imageData.data;
             let points = [];
@@ -540,19 +544,11 @@
         }
 
 
-        function getRegionFillPoints(region) {
-            //This will return only points that are in bounds!
-            if (region.type == 'point') {
-                return [{ "x": region.x, "y": region.y }];//only one point
-            }
-            else {
-                return getShapePointsOnCanvas(region);
-            }
-        }
+        
 
         function getRegionTemps(region) {
 
-            let points = getRegionFillPoints(region);
+            let points = getShapePointsOnCanvas(region,false);//This will return only points that are in bounds!
 
             let lowCelsius = 999999
             let highCelsius = -999999
@@ -1175,8 +1171,25 @@
                 ignoreList = [];
             }
             let closetShapeIndex = -1;
-            //todo we need to go through each shape draw it.. Get the distance to the closest point.
-            //then return the index of the closest shape.
+            let closestDistance = 999999;
+            for(let i=0; i<shapeEditor.regions.length;i++){
+                
+                if (ignoreList.includes(i)) {
+                    continue;
+                }
+                let region = shapeEditor.regions[i];
+                let points = getShapePointsOnCanvas(region,true);
+                let index = findIndexOfClosestPoint(x, y, points);
+                if(index == -1){
+                    continue;
+                }
+                let point = points[index];
+                let distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closetShapeIndex = i;
+                }
+            }
             return closetShapeIndex;
         }
 
