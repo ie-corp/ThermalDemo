@@ -432,7 +432,7 @@
             for (var i = 0; i < shapeEditor.regions.length; i++) {
                 var region = shapeEditor.regions[i];
                 var isSelected = i == shapeEditor.selectedRegionIndex;
-                let drawControls = region.type == 'polygon' && activeTool.indexOf('point') > -1;
+                let drawControls = isSelected && region.type == 'polygon' && activeTool.indexOf('point') > -1;
                 if (drawControls) {
                     if (region.points.length <= 3 && activeTool == 'pointdelete') {
                         drawControls = false;
