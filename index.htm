@@ -501,7 +501,7 @@
                 else {
                     selectedPointIndex = -1;
                 }
-                
+
 
             }
             shapeEditor.selectedRegionIndex = shapeIndex;
@@ -1227,7 +1227,7 @@
             let dot = A * C + B * D;
             let len_sq = C * C + D * D;
             let param = -1;
-            if (len_sq != 0){ //in case of 0 length line
+            if (len_sq != 0) { //in case of 0 length line
                 param = dot / len_sq;
             }
 
@@ -1322,7 +1322,7 @@
                         region.points[selectedPointIndex].x = dragX;
                         region.points[selectedPointIndex].y = dragY;
                         recalcEditor();
-                        addHistory('move point in ' + region.type + 'pt:' + selectedPointIndex , shapeEditor.selectedRegionIndex, false);
+                        addHistory('move point in ' + region.type + 'pt:' + selectedPointIndex, shapeEditor.selectedRegionIndex, false);
                     }
                 }
             }
@@ -1364,68 +1364,74 @@
 
             image.addEventListener('mousemove', (e) => {
 
+                if (activeTool == 'look') {
 
-                let x = Math.max(0, Math.round(e.offsetX / shapeEditor.imageScale));
-                let y = Math.max(0, Math.round(e.offsetY / shapeEditor.imageScale));
-                let tempX = -1;
-                let tempY = -1;
-                let indexTempC = -1;
-                let posX = -1;
-                let posY = -1;
 
-                let placementOffsetX = 0;
-                let placementOffsetY = 0;
-                if (e.offsetX > shapeEditor.imageWidth / 2) {
-                    placementOffsetX -= 146;//bottom left x
-                }
-                else {
-                    placementOffsetX += 10;//left side
-                }
+                    let x = Math.max(0, Math.round(e.offsetX / shapeEditor.imageScale));
+                    let y = Math.max(0, Math.round(e.offsetY / shapeEditor.imageScale));
+                    let tempX = -1;
+                    let tempY = -1;
+                    let indexTempC = -1;
+                    let posX = -1;
+                    let posY = -1;
 
-                if (e.offsetY > shapeEditor.imageHeight / 2) {
-                    placementOffsetY -= 90;
-                }
-                else {
-                    placementOffsetY += 20;
-                }
+                    let placementOffsetX = 0;
+                    let placementOffsetY = 0;
+                    if (e.offsetX > shapeEditor.imageWidth / 2) {
+                        placementOffsetX -= 146;//bottom left x
+                    }
+                    else {
+                        placementOffsetX += 10;//left side
+                    }
 
-                tooltip.style.top = `${e.pageY + placementOffsetY}px`;
-                tooltip.style.left = `${e.pageX + placementOffsetX}px`;
-                if (shapeEditor.imageRotation == 0) {
-                    posX = Math.min(x, shapeEditor.imageNativeWidth);
-                    posY = Math.min(y, shapeEditor.imageNativeHeight);
+                    if (e.offsetY > shapeEditor.imageHeight / 2) {
+                        placementOffsetY -= 90;
+                    }
+                    else {
+                        placementOffsetY += 20;
+                    }
 
-                }
-                else if (shapeEditor.imageRotation == 180) {
-                    posX = Math.min(x, shapeEditor.imageNativeWidth);
-                    posY = Math.min(y, shapeEditor.imageNativeHeight);
+                    tooltip.style.top = `${e.pageY + placementOffsetY}px`;
+                    tooltip.style.left = `${e.pageX + placementOffsetX}px`;
+                    if (shapeEditor.imageRotation == 0) {
+                        posX = Math.min(x, shapeEditor.imageNativeWidth);
+                        posY = Math.min(y, shapeEditor.imageNativeHeight);
 
-                }
-                else if (shapeEditor.imageRotation == 90) {
-                    posX = Math.min(x, shapeEditor.imageNativeHeight);
-                    posY = Math.min(y, shapeEditor.imageNativeWidth);
+                    }
+                    else if (shapeEditor.imageRotation == 180) {
+                        posX = Math.min(x, shapeEditor.imageNativeWidth);
+                        posY = Math.min(y, shapeEditor.imageNativeHeight);
 
-                }
-                else if (shapeEditor.imageRotation == 270) {
-                    posX = Math.min(x, shapeEditor.imageNativeHeight);
-                    posY = Math.min(y, shapeEditor.imageNativeWidth);
+                    }
+                    else if (shapeEditor.imageRotation == 90) {
+                        posX = Math.min(x, shapeEditor.imageNativeHeight);
+                        posY = Math.min(y, shapeEditor.imageNativeWidth);
 
+                    }
+                    else if (shapeEditor.imageRotation == 270) {
+                        posX = Math.min(x, shapeEditor.imageNativeHeight);
+                        posY = Math.min(y, shapeEditor.imageNativeWidth);
+
+                    }
+                    else {
+                        console.error('unsupported rotation: ' + shapeEditor.imageRotation);
+                        tooltip.textContent = 'unsupported rotation: ' + shapeEditor.imageRotation;
+                        return;
+                    }
+                    indexTempC = getIndexOfTempFromXY(posX, posY);
+                    if (indexTempC > -1 && indexTempC < tempsCelsius.length) {
+                        let tempC = tempsCelsius[indexTempC];
+                        tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` +
+                            `${getDisplayTempFromCelsius(tempC, false)}&deg;C<br/>` +
+                            `${getDisplayTempFromCelsius(tempC, true)}&deg;F`;
+                    }
+                    else {
+                        console.error('invalid indexTempC: ' + indexTempC);
+                        tooltip.textContent = 'No temperature reading at this location.';
+                    }
                 }
-                else {
-                    console.error('unsupported rotation: ' + shapeEditor.imageRotation);
-                    tooltip.textContent = 'unsupported rotation: ' + shapeEditor.imageRotation;
-                    return;
-                }
-                indexTempC = getIndexOfTempFromXY(posX, posY);
-                if (indexTempC > -1 && indexTempC < tempsCelsius.length) {
-                    let tempC = tempsCelsius[indexTempC];
-                    tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` +
-                        `${getDisplayTempFromCelsius(tempC, false)}&deg;C<br/>` +
-                        `${getDisplayTempFromCelsius(tempC, true)}&deg;F`;
-                }
-                else {
-                    console.error('invalid indexTempC: ' + indexTempC);
-                    tooltip.textContent = 'No temperature reading at this location.';
+                else{
+                    tooltip.style.display = 'none';
                 }
 
 
