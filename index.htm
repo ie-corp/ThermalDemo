@@ -383,6 +383,9 @@
             var shapeEditorImageRef = document.getElementById("shapeEditorImageRef");
 
             var canvas = document.createElement("canvas");
+            canvas.width = shapeEditor.imageWidth;
+            canvas.height = shapeEditor.imageHeight;
+            /*
             if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
                 canvas.width = shapeEditor.imageNativeWidth;
                 canvas.height = shapeEditor.imageNativeHeight;
@@ -393,6 +396,7 @@
                 canvas.height = shapeEditor.imageNativeWidth;
 
             }
+            */
 
             var ctx = canvas.getContext("2d");
             resetSelectedShapeAttributes();
@@ -410,14 +414,18 @@
             else {
                 ctx.filter = 'none';
             }
-
-
+            let scale = shapeEditor.imageScale;
+            //fix this
             if (rotation != 0) {
                 // translate context to center of canvas
                 ctx.translate(canvas.width / 2, canvas.height / 2);
                 ctx.rotate(rotation);
                 // draw image
-                ctx.drawImage(shapeEditorImageRef, -shapeEditor.imageNativeWidth / 2, -shapeEditor.imageNativeHeight / 2);
+                
+                ctx.scale(scale, scale);
+                ctx.drawImage(shapeEditorImageRef, (-shapeEditor.imageNativeWidth / 2), (-shapeEditor.imageNativeHeight / 2));
+                ctx.scale(1/scale, 1/scale);
+                //ctx.drawImage(shapeEditorImageRef,(-shapeEditor.imageNativeWidth * shapeEditor.imageScale) / 2, (-shapeEditor.imageNativeHeight * shapeEditor.imageScale) / 2);
                 //unrotate
                 ctx.rotate(-rotation);
                 // un-translate the canvas back to origin==top-left canvas
@@ -438,16 +446,18 @@
                         drawControls = false;
                     }
                 }
-                drawShape(ctx, region, isSelected, region.color, null, drawControls);
+                drawShape(ctx, scale,  region, isSelected, region.color, null, drawControls);
                 if (isSelected) {
                     updateSelectedShapeAttributes(region);
                 }
             }
 
-            var dataURL = canvas.toDataURL("image/png");
-            shapeEditorImage.src = dataURL;
-            shapeEditorImage.style.width = shapeEditor.imageWidth + "px";
-            shapeEditorImage.style.height = shapeEditor.imageHeight + "px";
+            
+            var ctxMain = shapeEditorImage.getContext("2d");
+            shapeEditorImage.width = canvas.width;
+            shapeEditorImage.height = canvas.height;
+            ctxMain.clearRect(0, 0, shapeEditorImage.width, shapeEditorImage.height);
+            ctxMain.drawImage(canvas, 0, 0, shapeEditorImage.width, shapeEditorImage.height);
         }
 
         function getDisplayTempFromCelsius(celsius, displayFahrenheit) {
@@ -527,7 +537,7 @@
             }
             let ctx = canvas.getContext("2d");
             let fillColor = outlineOnly ? null : 'black';
-            drawShape(ctx, region, false, 'black', fillColor, false);
+            drawShape(ctx, 1, region, false, 'black', fillColor, false);
             let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             let data = imageData.data;
             let points = [];
@@ -707,18 +717,18 @@
             }
         }
 
-        function drawShape(ctx, region, isSelected, strokeColor, fillColor, drawControls) {
+        function drawShape(ctx, scale, region, isSelected, strokeColor, fillColor, drawControls) {
             // Reset transformation matrix to the identity matrix
             ctx.setTransform(1, 0, 0, 1, 0, 0);
 
             if (region.type == "rectangle") {
                 ctx.beginPath();
                 // Matrix transformation to plot at center
-                ctx.translate((region.x + region.width / 2), (region.y + region.height / 2));
+                ctx.translate(((region.x * scale) + (region.width * scale) / 2), ((region.y * scale) + (region.height * scale) / 2));
                 ctx.rotate(region.angle * Math.PI / 180);
-                ctx.translate((region.x + region.width / 2) * -1, (region.y + region.height / 2) * -1);
+                ctx.translate(((region.x * scale) + (region.width * scale) / 2) * -1, ((region.y * scale) + (region.height * scale) / 2) * -1);
 
-                ctx.rect(region.x, region.y, region.width, region.height);
+                ctx.rect(region.x * scale, region.y * scale, region.width * scale, region.height * scale);
                 if (isSelected) {
                     ctx.setLineDash([1, 2]);
                 }
@@ -726,7 +736,7 @@
                     ctx.setLineDash([]);
                 }
 
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 1 * scale;
                 ctx.strokeStyle = strokeColor;
                 if (fillColor != null) {
                     ctx.fillStyle = fillColor;
@@ -739,9 +749,9 @@
                 if (region.points != null && region.points.length > 0) {
                     ctx.beginPath();
                     // we don't have a rotation angle
-                    ctx.moveTo(region.points[0].x, region.points[0].y);
+                    ctx.moveTo((region.points[0].x * scale), (region.points[0].y * scale));
                     for (let i = 1; i < region.points.length; i++) {
-                        ctx.lineTo(region.points[i].x, region.points[i].y);
+                        ctx.lineTo((region.points[i].x * scale), (region.points[i].y * scale));
                     }
                     ctx.closePath();
                     if (isSelected) {
@@ -751,7 +761,7 @@
                         ctx.setLineDash([]);
                     }
 
-                    ctx.lineWidth = 1;
+                    ctx.lineWidth = 1 * scale;
                     ctx.strokeStyle = strokeColor;
                     ctx.stroke();
                     ctx.closePath();
@@ -761,40 +771,62 @@
                     }
                     if (drawControls) {
                         let showDeleteNodes = region.points.length > 3 && activeTool == 'pointdelete';
+                        let showAddNodes = activeTool == 'pointadd';
                         for (let i = 0; i < region.points.length; i++) {
                             let point = region.points[i];
                             if (showDeleteNodes) {
                                 
                                 ctx.beginPath();
-                                ctx.lineWidth = 1;
+                                ctx.setLineDash([]);
+                                ctx.lineWidth = 1 * scale;
                                 ctx.strokeStyle = strokeColor;
-                                let slashLength = 3;
-                                ctx.moveTo(point.x - slashLength, point.y - slashLength);
-                                ctx.lineTo(point.x + slashLength, point.y + slashLength);
+                                let slashLength = 3 * scale;
+                                ctx.moveTo((point.x * scale) - slashLength, (point.y*scale) - slashLength);
+                                ctx.lineTo((point.x * scale) + slashLength, (point.y*scale) + slashLength);
 
-                                ctx.moveTo(point.x + slashLength, point.y - slashLength);
-                                ctx.lineTo(point.x - slashLength, point.y + slashLength);
+                                ctx.moveTo((point.x * scale) + slashLength, (point.y * scale) - slashLength);
+                                ctx.lineTo((point.x * scale) - slashLength, (point.y * scale) + slashLength);
                                 ctx.stroke();
                                 ctx.closePath();
                                 
                                 ctx.beginPath();
                                 ctx.setLineDash([]);
                                 ctx.strokeStyle = strokeColor;
-                                ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+                                ctx.arc((point.x * scale), (point.y * scale), (4 * scale), 0, 2 * Math.PI);
+                                ctx.stroke();
+                            }
+                            else if(showAddNodes){
+                                ctx.beginPath();
+                                ctx.setLineDash([]);
+                                ctx.lineWidth = 1 * scale;
+                                ctx.strokeStyle = strokeColor;
+                                let slashLength = 3 * scale;
+                                ctx.moveTo((point.x * scale), (point.y*scale) - slashLength);
+                                ctx.lineTo((point.x * scale), (point.y*scale) + slashLength);
+
+                                ctx.moveTo((point.x * scale) + slashLength, (point.y * scale));
+                                ctx.lineTo((point.x * scale) - slashLength, (point.y * scale));
+                                ctx.stroke();
+                                ctx.closePath();
+                                
+                                ctx.beginPath();
+                                ctx.setLineDash([]);
+                                ctx.strokeStyle = strokeColor;
+                                ctx.arc((point.x * scale), (point.y * scale), (4 * scale), 0, 2 * Math.PI);
                                 ctx.stroke();
                             }
                             else{
                                 ctx.beginPath();
-                                ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+                                ctx.arc((point.x * scale), (point.y * scale), (2 * scale), 0, 2 * Math.PI);
                                 ctx.fillStyle = strokeColor;
                                 ctx.fill();
 
-                                if (activeTool != 'pointadd' && (i == selectedPointIndex || activeTool == 'pointmove')) {
+                                if ((i == selectedPointIndex || activeTool == 'pointmove')) {
 
                                     ctx.beginPath();
                                     ctx.setLineDash([]);
                                     ctx.strokeStyle = strokeColor;
-                                    ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+                                    ctx.arc((point.x * scale), (point.y * scale), (4 * scale), 0, 2 * Math.PI);
                                     ctx.stroke();
                                 }
                             }
@@ -810,16 +842,16 @@
             else if (region.type == 'ellipse') {
                 ctx.beginPath();
                 // Matrix transformation to plot at center
-                ctx.translate((region.x + region.width / 2), (region.y + region.height / 2));
+                ctx.translate(((region.x * scale) + (region.width * scale) / 2), ((region.y * scale) + (region.height * scale) / 2));
                 ctx.rotate(region.angle * Math.PI / 180);
-                ctx.translate((region.x + region.width / 2) * -1, (region.y + region.height / 2) * -1);
+                ctx.translate(((region.x * scale) + (region.width * scale) / 2) * -1, ((region.y * scale) + (region.height * scale) / 2) * -1);
 
                 let rad = region.angle * Math.PI / 180;
 
-                let cx = region.x + region.width / 2;
-                let cy = region.y + region.height / 2;
-                let rx = region.width / 2;
-                let ry = region.height / 2;
+                let cx = (region.x * scale) + (region.width * scale) / 2;
+                let cy = (region.y * scale) + (region.height * scale) / 2;
+                let rx = (region.width * scale) / 2;
+                let ry = (region.height * scale) / 2;
 
                 ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
                 if (isSelected) {
@@ -828,7 +860,7 @@
                 else {
                     ctx.setLineDash([]);
                 }
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 1 * scale;
                 ctx.strokeStyle = strokeColor;
                 if (fillColor != null) {
                     ctx.fillStyle = fillColor;
@@ -842,27 +874,27 @@
                 //ctx.setLineDash([5, 15]);
                 //}
                 ctx.setLineDash([]);
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 1 * scale;
                 ctx.strokeStyle = strokeColor;
-                ctx.moveTo(region.x, region.y - 8);
-                ctx.lineTo(region.x, region.y - 1);
+                ctx.moveTo((region.x * scale), (region.y * scale) - (8 * scale));
+                ctx.lineTo((region.x * scale), (region.y * scale) - (1 * scale));
                 ctx.stroke();
 
-                ctx.moveTo(region.x, region.y + 1);
-                ctx.lineTo(region.x, region.y + 8);
+                ctx.moveTo((region.x * scale), (region.y * scale) + (1 * scale));
+                ctx.lineTo((region.x * scale), (region.y * scale) + (8 * scale));
                 ctx.stroke();
 
-                ctx.moveTo(region.x - 8, region.y);
-                ctx.lineTo(region.x - 1, region.y);
+                ctx.moveTo((region.x * scale) - (8 * scale), (region.y * scale));
+                ctx.lineTo((region.x * scale) - (1 * scale), (region.y * scale));
                 ctx.stroke();
 
-                ctx.moveTo(region.x + 1, region.y);
-                ctx.lineTo(region.x + 8, region.y);
+                ctx.moveTo((region.x * scale) + (1 * scale), (region.y * scale));
+                ctx.lineTo((region.x * scale) + (8 * scale), (region.y * scale));
                 ctx.stroke();
 
                 if (isSelected) {
                     ctx.beginPath();
-                    ctx.arc(region.x, region.y, 4, 0, 2 * Math.PI);
+                    ctx.arc((region.x * scale), (region.y * scale), (4 * scale), 0, 2 * Math.PI);
                     ctx.stroke();
                 }
 
@@ -1253,6 +1285,8 @@
             }
             return indexOfClosestLine;
         }
+
+
 
         function distanceToLine(x, y, x1, y1, x2, y2) {
             let A = x - x1;
@@ -2180,7 +2214,7 @@
             <div class="editorcolumn">
                 <div width="512" height="384" id="shapeEditorImageWrapper" style="margin-top:3px;">
 
-                    <img id="shapeEditorImage" draggable="false" src="reference_01.png">
+                    <canvas id="shapeEditorImage" width="256" height="192"  draggable="false"></canvas>
 
                 </div>
             </div>
