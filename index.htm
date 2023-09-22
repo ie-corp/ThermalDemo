@@ -9,7 +9,7 @@
         var shapeEditor = { "imageRotation": 0, "imageFilter": "none", "maxNameLength": 16, "tempDisplayUnit": "F", "imageNativeWidth": 256, "imageNativeHeight": 192, "imageWidth": 256, "imageHeight": 192, "imageScale": 1.0, "regions": [], "selectedRegionIndex": -1 };
         var shapeColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
         var tempRanges = { "LowestCelsius": -20.0, "HighestCelsius": 550.0, "defaultHiCelsius": 250.0, "defaultLoCelsius": 0 };
-        let shapeTypes = ['rectangle', 'ellipse', 'point', 'polygon'];
+        let shapeTypes = ['point', 'polygon'];
         let shapeEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete'];
         let activeTool = 'look';
         let historyStack = [];
@@ -172,30 +172,16 @@
 
 
             document.getElementById("btnDeleteShape").disabled = !hasActiveItem;
-            document.getElementById("btnChangeRegionPrev").disabled = !hasActiveItem;
-            document.getElementById("btnChangeRegionNext").disabled = !hasActiveItem;
+            document.getElementById("btnChangeRegion").disabled = !hasActiveItem;
             document.getElementById("btnChangeShapeName").disabled = !hasActiveItem;
-            document.getElementById("btnChangeColorPrev").disabled = !hasActiveItem;
-            document.getElementById("btnChangeColorNext").disabled = !hasActiveItem;
-            document.getElementById("btnChangeMaxTempAbsMore").disabled = !hasActiveItem;
-            document.getElementById("btnChangeMaxTempAbsLess").disabled = !hasActiveItem;
-            document.getElementById("btnChangeMinTempAbsMore").disabled = !hasActiveItem;
-            document.getElementById("btnChangeMinTempAbsLess").disabled = !hasActiveItem;
-            document.getElementById("btnMoveUpLeft").disabled = !hasActiveItem;
-            document.getElementById("btnMoveUp").disabled = !hasActiveItem;
-            document.getElementById("btnMoveUpRight").disabled = !hasActiveItem;
-            document.getElementById("btnMoveLeft").disabled = !hasActiveItem;
-            document.getElementById("btnMoveRight").disabled = !hasActiveItem;
-            document.getElementById("btnMoveDownLeft").disabled = !hasActiveItem;
-            document.getElementById("btnMoveDown").disabled = !hasActiveItem;
-            document.getElementById("btnMoveDownRight").disabled = !hasActiveItem;
+            document.getElementById("btnChangeColor").disabled = !hasActiveItem;
+            document.getElementById("btnChangeImageMaxTemp").disabled = false;
+            document.getElementById("btnChangeImageMinTemp").disabled = false;
+            document.getElementById("btnChangeShapeMaxTemp").disabled = !hasActiveItem;
+            document.getElementById("btnChangeShapeMinTemp").disabled = !hasActiveItem;
 
-            document.getElementById("btnWidthLess").disabled = !hasActiveItem || !canSize;
-            document.getElementById("btnWidthMore").disabled = !hasActiveItem || !canSize;
-            document.getElementById("btnHeightLess").disabled = !hasActiveItem || !canSize;
-            document.getElementById("btnHeightMore").disabled = !hasActiveItem || !canSize;
-            document.getElementById("btnRotateClockwise").disabled = !hasActiveItem || !canSize;
-            document.getElementById("btnRotateCounterClockwise").disabled = !hasActiveItem || !canSize;
+
+
 
         }
 
@@ -385,18 +371,7 @@
             var canvas = document.createElement("canvas");
             canvas.width = shapeEditor.imageWidth;
             canvas.height = shapeEditor.imageHeight;
-            /*
-            if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
-                canvas.width = shapeEditor.imageNativeWidth;
-                canvas.height = shapeEditor.imageNativeHeight;
-
-            }
-            else {
-                canvas.width = shapeEditor.imageNativeHeight;
-                canvas.height = shapeEditor.imageNativeWidth;
-
-            }
-            */
+            
 
             var ctx = canvas.getContext("2d");
             resetSelectedShapeAttributes();
@@ -421,10 +396,10 @@
                 ctx.translate(canvas.width / 2, canvas.height / 2);
                 ctx.rotate(rotation);
                 // draw image
-                
+
                 ctx.scale(scale, scale);
                 ctx.drawImage(shapeEditorImageRef, (-shapeEditor.imageNativeWidth / 2), (-shapeEditor.imageNativeHeight / 2));
-                ctx.scale(1/scale, 1/scale);
+                ctx.scale(1 / scale, 1 / scale);
                 //ctx.drawImage(shapeEditorImageRef,(-shapeEditor.imageNativeWidth * shapeEditor.imageScale) / 2, (-shapeEditor.imageNativeHeight * shapeEditor.imageScale) / 2);
                 //unrotate
                 ctx.rotate(-rotation);
@@ -446,13 +421,13 @@
                         drawControls = false;
                     }
                 }
-                drawShape(ctx, scale,  region, isSelected, region.color, null, drawControls);
+                drawShape(ctx, scale, region, isSelected, region.color, null, drawControls);
                 if (isSelected) {
                     updateSelectedShapeAttributes(region);
                 }
             }
 
-            
+
             var ctxMain = shapeEditorImage.getContext("2d");
             shapeEditorImage.width = canvas.width;
             shapeEditorImage.height = canvas.height;
@@ -554,11 +529,11 @@
         }
 
 
-        
+
 
         function getRegionTemps(region) {
 
-            let points = getShapePointsOnCanvas(region,false);//This will return only points that are in bounds!
+            let points = getShapePointsOnCanvas(region, false);//This will return only points that are in bounds!
 
             let lowCelsius = 999999
             let highCelsius = -999999
@@ -606,22 +581,17 @@
             }
 
             let regionTemps = getRegionTemps(region);
-            document.getElementById("valHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false);
-            document.getElementById("valHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true);
-            document.getElementById("valLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false);
-            document.getElementById("valLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true);
+            document.getElementById("valHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
+            document.getElementById("valHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
+            document.getElementById("valLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
+            document.getElementById("valLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true) + '&deg;F';
 
 
             document.getElementById("valShapeName").innerHTML = region.name;
-            document.getElementById("valMaxTempC").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, false);
-            document.getElementById("valMaxTempF").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, true);
-            document.getElementById("valMinTempC").innerHTML = getDisplayTempFromCelsius(region.minTempCelsius, false);
-            document.getElementById("valMinTempF").innerHTML = getDisplayTempFromCelsius(region.minTempCelsius, true);
-            document.getElementById("valShapePosX").innerHTML = region.x;
-            document.getElementById("valShapePosY").innerHTML = region.y;
-            document.getElementById("valShapeWidth").innerHTML = region.width;
-            document.getElementById("valShapeHeight").innerHTML = region.height;
-            document.getElementById("valShapeAngle").innerHTML = region.angle;
+            document.getElementById("valMaxTempC").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, false) + '&deg;C';
+            document.getElementById("valMaxTempF").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, true) + '&deg;F';
+            document.getElementById("valMinTempC").innerHTML = getDisplayTempFromCelsius(region.minTempCelsius, false) + '&deg;C';
+            document.getElementById("valMinTempF").innerHTML = getDisplayTempFromCelsius(region.minTempCelsius, true) + '&deg;F';
             document.getElementById("valShapeColor").innerHTML = region.color;
             document.getElementById("valShapeColorDemo").style.backgroundColor = region.color;
         }
@@ -629,21 +599,16 @@
         function resetSelectedShapeAttributes() {
             document.getElementById("valShapeIndex").innerHTML = "0 of 0";
 
-            document.getElementById("valHighTempC").innerHTML = "--";
-            document.getElementById("valHighTempF").innerHTML = "--";
-            document.getElementById("valLowTempC").innerHTML = "--";
-            document.getElementById("valLowTempF").innerHTML = "--";
+            document.getElementById("valHighTempC").innerHTML = "--&deg;C";
+            document.getElementById("valHighTempF").innerHTML = "--&deg;F";
+            document.getElementById("valLowTempC").innerHTML = "--&deg;C";
+            document.getElementById("valLowTempF").innerHTML = "--&deg;F";
 
             document.getElementById("valShapeName").innerHTML = "--";
-            document.getElementById("valMaxTempC").innerHTML = "--";
-            document.getElementById("valMaxTempF").innerHTML = "--";
-            document.getElementById("valMinTempC").innerHTML = "--";
-            document.getElementById("valMaxTempF").innerHTML = "--";
-            document.getElementById("valShapePosX").innerHTML = "--";
-            document.getElementById("valShapePosY").innerHTML = "--";
-            document.getElementById("valShapeWidth").innerHTML = "--";
-            document.getElementById("valShapeHeight").innerHTML = "--";
-            document.getElementById("valShapeAngle").innerHTML = "--";
+            document.getElementById("valMaxTempC").innerHTML = "--&deg;C";
+            document.getElementById("valMaxTempF").innerHTML = "--&deg;F";
+            document.getElementById("valMinTempC").innerHTML = "--&deg;C";
+            document.getElementById("valMaxTempF").innerHTML = "--&deg;F";
             document.getElementById("valShapeColor").innerHTML = "--";
             document.getElementById("valShapeColorDemo").style.backgroundColor = "black";
 
@@ -661,6 +626,14 @@
                 recalcEditor();
                 addHistory('delete ' + region.type, selIndex, true);
             }
+        }
+
+        function changeImageMirror(){
+            alert('not implemented yet')
+        }
+
+        function changeAlarmTemp(){
+            alert('not implemented yet')
         }
 
         function changeImageFilterNext(nextFilter) {
@@ -721,30 +694,7 @@
             // Reset transformation matrix to the identity matrix
             ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-            if (region.type == "rectangle") {
-                ctx.beginPath();
-                // Matrix transformation to plot at center
-                ctx.translate(((region.x * scale) + (region.width * scale) / 2), ((region.y * scale) + (region.height * scale) / 2));
-                ctx.rotate(region.angle * Math.PI / 180);
-                ctx.translate(((region.x * scale) + (region.width * scale) / 2) * -1, ((region.y * scale) + (region.height * scale) / 2) * -1);
-
-                ctx.rect(region.x * scale, region.y * scale, region.width * scale, region.height * scale);
-                if (isSelected) {
-                    ctx.setLineDash([1, 2]);
-                }
-                else {
-                    ctx.setLineDash([]);
-                }
-
-                ctx.lineWidth = 1 * scale;
-                ctx.strokeStyle = strokeColor;
-                if (fillColor != null) {
-                    ctx.fillStyle = fillColor;
-                    ctx.fill();
-                }
-                ctx.stroke();
-            }
-            else if (region.type == "polygon") {
+            if (region.type == "polygon") {
 
                 if (region.points != null && region.points.length > 0) {
                     ctx.beginPath();
@@ -775,47 +725,47 @@
                         for (let i = 0; i < region.points.length; i++) {
                             let point = region.points[i];
                             if (showDeleteNodes) {
-                                
+
                                 ctx.beginPath();
                                 ctx.setLineDash([]);
                                 ctx.lineWidth = 1 * scale;
                                 ctx.strokeStyle = strokeColor;
                                 let slashLength = 3 * scale;
-                                ctx.moveTo((point.x * scale) - slashLength, (point.y*scale) - slashLength);
-                                ctx.lineTo((point.x * scale) + slashLength, (point.y*scale) + slashLength);
+                                ctx.moveTo((point.x * scale) - slashLength, (point.y * scale) - slashLength);
+                                ctx.lineTo((point.x * scale) + slashLength, (point.y * scale) + slashLength);
 
                                 ctx.moveTo((point.x * scale) + slashLength, (point.y * scale) - slashLength);
                                 ctx.lineTo((point.x * scale) - slashLength, (point.y * scale) + slashLength);
                                 ctx.stroke();
                                 ctx.closePath();
-                                
+
                                 ctx.beginPath();
                                 ctx.setLineDash([]);
                                 ctx.strokeStyle = strokeColor;
                                 ctx.arc((point.x * scale), (point.y * scale), (4 * scale), 0, 2 * Math.PI);
                                 ctx.stroke();
                             }
-                            else if(showAddNodes){
+                            else if (showAddNodes) {
                                 ctx.beginPath();
                                 ctx.setLineDash([]);
                                 ctx.lineWidth = 1 * scale;
                                 ctx.strokeStyle = strokeColor;
                                 let slashLength = 3 * scale;
-                                ctx.moveTo((point.x * scale), (point.y*scale) - slashLength);
-                                ctx.lineTo((point.x * scale), (point.y*scale) + slashLength);
+                                ctx.moveTo((point.x * scale), (point.y * scale) - slashLength);
+                                ctx.lineTo((point.x * scale), (point.y * scale) + slashLength);
 
                                 ctx.moveTo((point.x * scale) + slashLength, (point.y * scale));
                                 ctx.lineTo((point.x * scale) - slashLength, (point.y * scale));
                                 ctx.stroke();
                                 ctx.closePath();
-                                
+
                                 ctx.beginPath();
                                 ctx.setLineDash([]);
                                 ctx.strokeStyle = strokeColor;
                                 ctx.arc((point.x * scale), (point.y * scale), (4 * scale), 0, 2 * Math.PI);
                                 ctx.stroke();
                             }
-                            else{
+                            else {
                                 ctx.beginPath();
                                 ctx.arc((point.x * scale), (point.y * scale), (2 * scale), 0, 2 * Math.PI);
                                 ctx.fillStyle = strokeColor;
@@ -830,7 +780,7 @@
                                     ctx.stroke();
                                 }
                             }
-                            
+
 
                         }
                     }
@@ -838,35 +788,6 @@
                 else {
                     console.error('polygon has no points: ' + JSON.stringify(region));
                 }
-            }
-            else if (region.type == 'ellipse') {
-                ctx.beginPath();
-                // Matrix transformation to plot at center
-                ctx.translate(((region.x * scale) + (region.width * scale) / 2), ((region.y * scale) + (region.height * scale) / 2));
-                ctx.rotate(region.angle * Math.PI / 180);
-                ctx.translate(((region.x * scale) + (region.width * scale) / 2) * -1, ((region.y * scale) + (region.height * scale) / 2) * -1);
-
-                let rad = region.angle * Math.PI / 180;
-
-                let cx = (region.x * scale) + (region.width * scale) / 2;
-                let cy = (region.y * scale) + (region.height * scale) / 2;
-                let rx = (region.width * scale) / 2;
-                let ry = (region.height * scale) / 2;
-
-                ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
-                if (isSelected) {
-                    ctx.setLineDash([1, 2]);
-                }
-                else {
-                    ctx.setLineDash([]);
-                }
-                ctx.lineWidth = 1 * scale;
-                ctx.strokeStyle = strokeColor;
-                if (fillColor != null) {
-                    ctx.fillStyle = fillColor;
-                    ctx.fill();
-                }
-                ctx.stroke();
             }
             else if (region.type == 'point') {
                 ctx.beginPath();
@@ -1227,15 +1148,15 @@
             }
             let closetShapeIndex = -1;
             let closestDistance = 999999;
-            for(let i=0; i<shapeEditor.regions.length;i++){
-                
+            for (let i = 0; i < shapeEditor.regions.length; i++) {
+
                 if (ignoreList.includes(i)) {
                     continue;
                 }
                 let region = shapeEditor.regions[i];
-                let points = getShapePointsOnCanvas(region,true);
+                let points = getShapePointsOnCanvas(region, true);
                 let index = findIndexOfClosestPoint(x, y, points);
-                if(index == -1){
+                if (index == -1) {
                     continue;
                 }
                 let point = points[index];
@@ -1500,7 +1421,7 @@
                         tooltip.textContent = 'No temperature reading at this location.';
                     }
                 }
-                else{
+                else {
                     tooltip.style.display = 'none';
                 }
 
@@ -1530,11 +1451,15 @@
         }
 
         function zoomShapeEditor(scale) {
-            shapeEditor.imageScale += scale;
-
-            shapeEditor.imageScale = Math.max(shapeEditor.imageScale, 1.0);
-            shapeEditor.imageScale = Math.min(shapeEditor.imageScale, 5.0);
-
+            let value = shapeEditor.imageScale + scale;
+            if(value < 1){
+                value = 5;
+            }
+            else if(value > 5){
+                value = 1;
+            }
+            console.log('zooming to ' + value);
+            shapeEditor.imageScale = value;
             recalcEditor();
             addHistory('zoom image', null, false);//I don't think this needs a undo.
         }
@@ -1606,7 +1531,9 @@
             if (shapeType == 'polygon' && (shapePoints == null || shapePoints.length == 0)) {
                 let x = shapeX;
                 let y = shapeY;
-                shapePoints = [{ "x": 0 + x, "y": 5 + y }, { "x": 40 + x, "y": 5 + y }, { "x": 40 + x, "y": 20 + y }, { "x": 30 + x, "y": 20 + y }, { "x": 30 + x, "y": 40 + y }, { "x": 10 + x, "y": 40 + y }];
+                let myWidth = 40;
+                let myHeight = 40
+                shapePoints = [{ "x": x, "y": y }, { "x": myWidth + x, "y": y }, { "x": myWidth + x, "y": myHeight + y }, { "x": x, "y": myHeight + y }];
                 let bounds = getPolygonBounds(shapePoints);
                 shapeX = bounds.x;
                 shapeY = bounds.y;
@@ -1630,598 +1557,309 @@
 </head>
 
 <body onload="go()">
-    <div>
-        <div class="editorrow">
-            <div class="editorcolumn">
-                <div id="shapeEditorAddArea">
-                    <table>
-                        <tr>
-                            <td><button id="btnRectangleAdd" onclick="addShape('rectangle')" class="shapebutton">
-                                    <div>
-                                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <rect x="10" y="10" width="24" height="24" stroke="white"
-                                                stroke-width="2" />
-                                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
-                                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
 
-                                        </svg>
+    <div class="editorrow">
 
-                                    </div>
-                                </button></td>
-                            </td>
-                            <td><button id="btnEllipseAdd" onclick="addShape('ellipse')" class="shapebutton">
-                                    <div>
-                                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-
-                                            <circle cx="22" cy="22" r="12" stroke="white" stroke-width="2" />
-                                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
-                                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
-
-                                        </svg>
-
-                                    </div>
-                                </button></td>
-                            <td><button id="btnPointAdd" onclick="addShape('point')" class="shapebutton">
-                                    <div>
-                                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-
-                                            <line x1="22" y1="4" x2="22" y2="20" stroke="white" stroke-width="2" />
-                                            <line x1="22" y1="24" x2="22" y2="41" stroke="white" stroke-width="2" />
-
-                                            <line x1="3" y1="22" x2="20" y2="22" stroke="white" stroke-width="2" />
-                                            <line x1="24" y1="22" x2="41" y2="22" stroke="white" stroke-width="2" />
-
-                                            <circle cx="22" cy="22" r="12" stroke="white" stroke-width="2" />
-                                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
-                                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
-
-                                        </svg>
-
-                                    </div>
-
-                                </button></td>
-                            <td><button id="btnPolygonAdd" onclick="addShape('polygon')" class="shapebutton">
-                                    <div>
-                                        <svg width="48" height="38" viewBox="0 0 48 48" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <polygon points="0,5 40,5 40,20 30,20 30,40 10,40" stroke="white"
-                                                stroke-width="2" />
-                                            />
-                                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
-                                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
-                                        </svg>
-
-                                    </div>
-
-                                </button></td>
-                        </tr>
-                    </table>
-                </div>
+        <button id="btnZoomImage" onclick="zoomShapeEditor(.5)" class="resizebutton">
+            <div style="line-height: 4px;">
+                <span style="margin-left: -5px;" class="shapeeditortext">Zoom</span>
+                <span id="valueZoom" class="shapeeditortext">100%</span>
             </div>
-            <div class="editorcolumn">
-                <div id="shapeEditorZoomArea">
-                    <table>
-                        <tr>
-                            <td><button id="btnShapeToolLook" onclick="selectShapeEditorTool('look')"
-                                    class="resizebutton">
-                                    <div style="line-height: 4px;">
-                                        <span style="margin-left: -5px;" class="shapeeditortext">Look</span>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                d="M7 14C8.10457 14 9 13.1046 9 12C9 10.8954 8.10457 10 7 10C5.89543 10 5 10.8954 5 12C5 13.1046 5.89543 14 7 14ZM10.4649 10C9.77325 8.8044 8.48056 8 7 8C5.13616 8 3.57006 9.27477 3.12602 11H2C1.44772 11 1 11.4477 1 12C1 12.5523 1.44772 13 2 13H3.12602C3.57006 14.7252 5.13616 16 7 16C9.20914 16 11 14.2091 11 12H13C13 14.2091 14.7909 16 17 16C18.8638 16 20.4299 14.7252 20.874 13H22C22.5523 13 23 12.5523 23 12C23 11.4477 22.5523 11 22 11H20.874C20.4299 9.27477 18.8638 8 17 8C15.5194 8 14.2267 8.8044 13.5351 10H10.4649ZM15 12C15 13.1046 15.8954 14 17 14C18.1046 14 19 13.1046 19 12C19 10.8954 18.1046 10 17 10C15.8954 10 15 10.8954 15 12Z"
-                                                fill="white" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-                            <td><button id="btnShapeToolSelect" onclick="selectShapeEditorTool('select')"
-                                    class="resizebutton">
-                                    <div style="line-height: 4px;">
-                                        <span style="margin-left: -5px;" class="shapeeditortext">Select</span>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="white"
-                                                stroke-width="2" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-                            <td><button id="btnShapeToolMove" onclick="selectShapeEditorTool('move')"
-                                    class="resizebutton">
-                                    <div style="line-height: 4px;">
-                                        <span style="margin-left: -5px;" class="shapeeditortext">Move</span>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M14.8284 6.34313L16.2426 4.92892L12 0.686279L7.75735 4.92892L9.17156 6.34313L12 3.51471L14.8284 6.34313Z"
-                                                fill="white" />
-                                            <path
-                                                d="M4.92892 16.2426L6.34313 14.8284L3.51471 12L6.34313 9.17156L4.92892 7.75735L0.686279 12L4.92892 16.2426Z"
-                                                fill="white" />
-                                            <path
-                                                d="M7.75735 19.0711L12 23.3137L16.2426 19.0711L14.8284 17.6568L12 20.4853L9.17156 17.6568L7.75735 19.0711Z"
-                                                fill="white" />
-                                            <path
-                                                d="M17.6568 9.17156L20.4853 12L17.6568 14.8284L19.0711 16.2426L23.3137 12L19.0711 7.75735L17.6568 9.17156Z"
-                                                fill="white" />
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                d="M12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8ZM12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z"
-                                                fill="white" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-                            <td><button id="btnShapeToolPointAdd" onclick="selectShapeEditorTool('pointadd')"
-                                    class="resizebutton">
-                                    <div style="line-height: 4px;">
-                                        <span style="margin-left: -5px;" class="shapeeditortext">Add&nbsp;Pt</span>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                d="M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
-                                                fill="white" />
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                d="M13 7C13 6.44772 12.5523 6 12 6C11.4477 6 11 6.44772 11 7V11H7C6.44772 11 6 11.4477 6 12C6 12.5523 6.44772 13 7 13H11V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V13H17C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H13V7Z"
-                                                fill="white" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-                            <td><button id="btnShapeToolPointMove" onclick="selectShapeEditorTool('pointmove')"
-                                    class="resizebutton">
-                                    <div style="line-height: 4px;">
-                                        <span style="margin-left: -5px;" class="shapeeditortext">Mve&nbsp;Pt</span>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M10 10.0367L8.00002 10.0367L8 16.0367L14 16.0367L14 14.0367L11.4143 14.0366L16.7438 8.7071L15.3296 7.29289L10 12.6224L10 10.0367Z"
-                                                fill="white" />
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-                                                fill="white" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-                            <td><button id="btnShapeToolPointDelete" onclick="selectShapeEditorTool('pointdelete')"
-                                    class="resizebutton">
-                                    <div style="line-height: 4px;">
-                                        <span style="margin-left: -5px;" class="shapeeditortext">Del&nbsp;Pt</span>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M16.3394 9.32245C16.7434 8.94589 16.7657 8.31312 16.3891 7.90911C16.0126 7.50509 15.3798 7.48283 14.9758 7.85938L12.0497 10.5866L9.32245 7.66048C8.94589 7.25647 8.31312 7.23421 7.90911 7.61076C7.50509 7.98731 7.48283 8.62008 7.85938 9.0241L10.5866 11.9502L7.66048 14.6775C7.25647 15.054 7.23421 15.6868 7.61076 16.0908C7.98731 16.4948 8.62008 16.5171 9.0241 16.1405L11.9502 13.4133L14.6775 16.3394C15.054 16.7434 15.6868 16.7657 16.0908 16.3891C16.4948 16.0126 16.5171 15.3798 16.1405 14.9758L13.4133 12.0497L16.3394 9.32245Z"
-                                                fill="currentColor" />
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                d="M1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12ZM12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z"
-                                                fill="currentColor" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext">Zoom</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valueZoom" class="shapeditortextsub">100%</span></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td><button id="btnZoomOut" onmousedown="repeatFunc(zoomShapeEditor.bind(null,-.5))"
-                                    onmouseup="clearFunc()" class="resizebutton">-</button>
-                            </td>
-                            <td><button id="btnZoomIn" onmousedown="repeatFunc(zoomShapeEditor.bind(null,.5))"
-                                    onmouseup="clearFunc()" class="resizebutton">+</button>
-                            </td>
-                            <td>
-                            </td>
-                            <td><button id="btnRotateImage" onclick="rotateImage()" class="resizebutton">
-
-                                    <div style="line-height: 4px;">
-                                        <span style="margin-left: -5px;" class="shapeeditortext">Rotate</span>
-                                        <span id="valImageRotation" class="shapeeditortext">0&deg;</span>
-                                    </div>
-                                </button>
-                            </td>
-                            <td>
-                            </td>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext">Filter</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valueFilter" class="shapeditortextsub3">none</span></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td><button id="btnImageFilterPrev" onclick="changeImageFilterNext(false)"
-                                    onmouseup="clearFunc()" class="resizebutton">&lt;</button>
-                            </td>
-                            <td><button id="btnImageFilterNext" onclick="changeImageFilterNext(true)"
-                                    onmouseup="clearFunc()" class="resizebutton">&gt;</button>
-                            </td>
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                            <td><button id="btnUndo" onclick="undoShapeEditor()" class="resizebutton">
-
-                                    <div style="line-height: 4px;">
-                                        <span class="shapeeditortext">Undo</span>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
-                                                fill="white" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-                            <td><button id="btnRedo" onclick="redoShapeEditor()" class="resizebutton">
-                                    <div style="line-height: 4px;">
-                                        <span class="shapeeditortext">Redo</span>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
-                                                fill="currentColor" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                            <td><button id="btnDeleteShape" onclick="deleteShapeEditor()" class="resizebutton">
-                                    <div style="line-height: 4px;">
-                                        <span style="margin-left: -5px;" class="shapeeditortext">Delete</span>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                d="M17 5V4C17 2.89543 16.1046 2 15 2H9C7.89543 2 7 2.89543 7 4V5H4C3.44772 5 3 5.44772 3 6C3 6.55228 3.44772 7 4 7H5V18C5 19.6569 6.34315 21 8 21H16C17.6569 21 19 19.6569 19 18V7H20C20.5523 7 21 6.55228 21 6C21 5.44772 20.5523 5 20 5H17ZM15 4H9V5H15V4ZM17 7H7V18C7 18.5523 7.44772 19 8 19H16C16.5523 19 17 18.5523 17 18V7Z"
-                                                fill="white" />
-                                            <path d="M9 9H11V17H9V9Z" fill="white" />
-                                            <path d="M13 9H15V17H13V9Z" fill="white" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-
-                        </tr>
-                    </table>
-                </div>
-
+        </button>
+        
+       
+    
+        <button id="btnRotateImage" onclick="rotateImage()" class="resizebutton">
+            <div style="line-height: 4px;">
+                <span style="margin-left: -5px;" class="shapeeditortext">Rotate</span>
+                <span id="valImageRotation" class="shapeeditortext">0&deg;</span>
             </div>
-        </div>
+        </button>
 
-        <div class="editorrow">
-            <div class="editorcolumn">
-
-
-
-                <div id="shapeEditorAttributesArea">
-                    <table>
-                        <tr>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext2">Region</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="shapeditortextsub3">&nbsp;</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valShapeIndex" class="shapeditortextsub3">0 of 0</span></td>
-                                    </tr>
-                                </table>
-
-                            </td>
-                            <td><button id="btnChangeRegionPrev" onclick="changeShapeNext(false)"
-                                    onmouseup="clearFunc()" class="resizebutton">&lt;</button></td>
-                            <td><button id="btnChangeRegionNext" onclick="changeShapeNext(true)" onmouseup="clearFunc()"
-                                    class="resizebutton">&gt;</button></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext2">High</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valHighTempC" class="shapeditortextsub3">--</span><span
-                                                class="shapeditortextsub2">&deg;C</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valHighTempF" class="shapeditortextsub3">--</span><span
-                                                class="shapeditortextsub2">&deg;F</span></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext2">Low</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valLowTempC" class="shapeditortextsub3">--</span><span
-                                                class="shapeditortextsub2">&deg;C</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valLowTempF" class="shapeditortextsub3">--</span><span
-                                                class="shapeditortextsub2">&deg;F</span></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td>
-
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">
-                                <hr />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2">
-                                <table class="shapeditorletterboxwide">
-                                    <tr>
-                                        <td><span class="shapeeditortext">&nbsp;Name</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valShapeName" style="padding-left: 4px;"
-                                                class="shapeditortextsub3">--</span></td>
-                                    </tr>
-                                </table>
-
-                            </td>
-                            <td><button id="btnChangeShapeName" onclick="changeShapeName()" onmouseup="clearFunc()"
-                                    class="resizebutton">
-                                    <div style="line-height: 70px;">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                d="M21.2635 2.29289C20.873 1.90237 20.2398 1.90237 19.8493 2.29289L18.9769 3.16525C17.8618 2.63254 16.4857 2.82801 15.5621 3.75165L4.95549 14.3582L10.6123 20.0151L21.2189 9.4085C22.1426 8.48486 22.338 7.1088 21.8053 5.99367L22.6777 5.12132C23.0682 4.7308 23.0682 4.09763 22.6777 3.70711L21.2635 2.29289ZM16.9955 10.8035L10.6123 17.1867L7.78392 14.3582L14.1671 7.9751L16.9955 10.8035ZM18.8138 8.98525L19.8047 7.99429C20.1953 7.60376 20.1953 6.9706 19.8047 6.58007L18.3905 5.16586C18 4.77534 17.3668 4.77534 16.9763 5.16586L15.9853 6.15683L18.8138 8.98525Z"
-                                                fill="white" />
-                                            <path d="M2 22.9502L4.12171 15.1717L9.77817 20.8289L2 22.9502Z"
-                                                fill="white" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext2">Color</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valShapeColorDemo" style="background-color: red;"
-                                                class="shapeditortextsub2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valShapeColor" class="shapeditortextsub3">Red</span></td>
-                                    </tr>
-                                </table>
-
-                            </td>
-                            <td><button id="btnChangeColorPrev"
-                                    onmousedown="repeatFunc(changeShapeColorNext.bind(null,false))"
-                                    onmouseup="clearFunc()" class="resizebutton">&lt;</button></td>
-                            <td><button id="btnChangeColorNext"
-                                    onmousedown="repeatFunc(changeShapeColorNext.bind(null,true))"
-                                    onmouseup="clearFunc()" class="resizebutton">&gt;</button></td>
-                        </tr>
-
-                        <tr>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext2">Max</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valMaxTempC" class="shapeditortextsub3">--</span><span
-                                                class="shapeditortextsub2">&deg;C</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valMaxTempF" class="shapeditortextsub3">--</span><span
-                                                class="shapeditortextsub2">&deg;F</span></td>
-                                    </tr>
-                                </table>
-
-                            </td>
-                            <td><button id="btnChangeMaxTempAbsMore"
-                                    onmousedown="repeatFunc(changeShapeTempBy.bind(null,true,-0.1))"
-                                    onmouseup="clearFunc()" class="resizebutton">-</button></td>
-                            <td><button id="btnChangeMaxTempAbsLess"
-                                    onmousedown="repeatFunc(changeShapeTempBy.bind(null,true,0.1))"
-                                    onmouseup="clearFunc()" class="resizebutton">+</button></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext2">Min</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valMinTempC" class="shapeditortextsub3">--</span><span
-                                                class="shapeditortextsub3">&deg;C</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valMinTempF" class="shapeditortextsub3">--</span><span
-                                                class="shapeditortextsub3">&deg;F</span></td>
-                                    </tr>
-                                </table>
-
-                            </td>
-                            <td><button id="btnChangeMinTempAbsMore"
-                                    onmousedown="repeatFunc(changeShapeTempBy.bind(null,false,-0.1))"
-                                    onmouseup="clearFunc()" class="resizebutton">-</button></td>
-                            <td><button id="btnChangeMinTempAbsLess"
-                                    onmousedown="repeatFunc(changeShapeTempBy.bind(null,false,0.1))"
-                                    onmouseup="clearFunc()" class="resizebutton">+</button></td>
-                        </tr>
-
-                    </table>
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <div id="shapeEditorMoveArea">
-                    <table>
-                        <tr>
-                            <td colspan="3">
-                                <hr />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><button id="btnMoveUpLeft" onmousedown="repeatFunc(moveShapeBy.bind(null,-1,-1))"
-                                    onmouseup="clearFunc()" class="movebutton"><i
-                                        class="arrowmove arrowupleft"></i></button></td>
-                            <td><button id="btnMoveUp" onmousedown="repeatFunc(moveShapeBy.bind(null,0,-1))"
-                                    onmouseup="clearFunc()" class="movebutton"><i
-                                        class="arrowmove arrowup"></i></button>
-                            </td>
-                            <td><button id="btnMoveUpRight" onmousedown="repeatFunc(moveShapeBy.bind(null,1,-1))"
-                                    onmouseup="clearFunc()" class="movebutton"><i
-                                        class="arrowmove arrowupright"></i></button></td>
-                        </tr>
-                        <tr>
-                            <td><button id="btnMoveLeft" onmousedown="repeatFunc(moveShapeBy.bind(null,-1,0))"
-                                    onmouseup="clearFunc()" class="movebutton"><i
-                                        class="arrowmove arrowleft"></i></button>
-                            </td>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext2">Move</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="shapeditortextsub2">x:</span><span id="valShapePosX"
-                                                class="shapeditortextsub2">1920</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="shapeditortextsub2">y:</span><span id="valShapePosY"
-                                                class="shapeditortextsub2">1080</span></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td><button id="btnMoveRight" onmousedown="repeatFunc(moveShapeBy.bind(null,1,0))"
-                                    onmouseup="clearFunc()" class="movebutton"><i
-                                        class="arrowmove arrowright"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><button id="btnMoveDownLeft" onmousedown="repeatFunc(moveShapeBy.bind(null,-1,1))"
-                                    onmouseup="clearFunc()" class="movebutton"><i
-                                        class="arrowmove arrowdownleft"></i></button></td>
-                            <td><button id="btnMoveDown" onmousedown="repeatFunc(moveShapeBy.bind(null,0,1))"
-                                    onmouseup="clearFunc()" class="movebutton"><i
-                                        class="arrowmove arrowdown"></i></button>
-                            </td>
-                            <td><button id="btnMoveDownRight" onmousedown="repeatFunc(moveShapeBy.bind(null,1,1))"
-                                    onmouseup="clearFunc()" class="movebutton"><i
-                                        class="arrowmove arrowdownright"></button></i></td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div id="shapeEditorResizeArea">
-                    <table>
-                        <tr>
-                            <td colspan="3">
-                                <hr />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext">Width</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valShapeWidth" class="shapeditortextsub">1920</span></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td><button id="btnWidthLess" onmousedown="repeatFunc(resizeShapeBy.bind(null,-1,0))"
-                                    onmouseup="clearFunc()" class="resizebutton">-</button>
-                            </td>
-                            <td><button id="btnWidthMore" onmousedown="repeatFunc(resizeShapeBy.bind(null,1,0))"
-                                    onmouseup="clearFunc()" class="resizebutton">+</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext">Height</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valShapeHeight" class="shapeditortextsub">1080</span></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td><button id="btnHeightLess" onmousedown="repeatFunc(resizeShapeBy.bind(null,0,-1))"
-                                    onmouseup="clearFunc()" class="resizebutton">-</button>
-                            </td>
-                            <td><button id="btnHeightMore" onmousedown="repeatFunc(resizeShapeBy.bind(null,0,1))"
-                                    onmouseup="clearFunc()" class="resizebutton">+</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <table class="shapeditorletterbox">
-                                    <tr>
-                                        <td><span class="shapeeditortext">Angle</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><span id="valShapeAngle" class="shapeditortextsub">0</span><span
-                                                class="shapeditortextsub">&deg;</span></td>
-                                    </tr>
-                                </table>
-
-                            </td>
-                            <td><button id="btnRotateClockwise" onmousedown="repeatFunc(rotateShapeBy.bind(null,-1.0))"
-                                    onmouseup="clearFunc()" class="resizebutton">-</button></td>
-                            <td><button id="btnRotateCounterClockwise"
-                                    onmousedown="repeatFunc(rotateShapeBy.bind(null,1.0))" onmouseup="clearFunc()"
-                                    class="resizebutton">+</button></td>
-                        </tr>
-                    </table>
-                </div>
+        <button id="btnFilterImage" onclick="changeImageFilterNext(true)" class="resizebutton">
+            <div style="line-height: 4px;">
+                <span style="margin-left: -5px;" class="shapeeditortext">Filter</span>
+                <span id="valueFilter" class="shapeeditortext">none</span>
             </div>
-            <div class="editorcolumn">
-                <div width="512" height="384" id="shapeEditorImageWrapper" style="margin-top:3px;">
+        </button>
 
-                    <canvas id="shapeEditorImage" width="256" height="192"  draggable="false"></canvas>
-
-                </div>
+        <button id="btnMirrorImage" onclick="changeImageMirror()" class="resizebutton">
+            <div style="line-height: 4px;">
+                <span style="margin-left: -5px;" class="shapeeditortext">Mirror</span>
+                <span id="valueFilter" class="shapeeditortext">off</span>
             </div>
-            <div class="tooltip">This is a tooltip</div>
-        </div>
+        </button>
+
+        <button class="resizebutton" style="visibility: hidden; width:8px;">
+        </button>
+
+        
+
+        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <div style="line-height: 17px;">
+            <span class="shapeeditortext2">High</span>
+            <span id="valImageHighTempC" class="shapeditortextsub3">--&deg;C</span>
+            <span id="valImageHighTempF" class="shapeditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+
+        <button id="btnChangeImageMaxTemp" onclick="changeAlarmTemp(true,true)" class="resizebutton">
+            <div style="line-height: 17px;">
+            <span class="shapeeditortext2">Alarm</span>
+            <span id="valImageMaxTempC" class="shapeditortextsub3">--&deg;C</span>
+            <span id="valImageMaxTempF" class="shapeditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+
+
+        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <div style="line-height: 17px;">
+            <span class="shapeeditortext2">Low</span>
+            <span id="valImageLowTempC" class="shapeditortextsub3">--&deg;C</span>
+            <span id="valImageLowTempF" class="shapeditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+
+        <button id="btnChangeImageMinTemp" onclick="changeAlarmTemp(true,false)" class="resizebutton">
+            <div style="line-height: 17px;">
+            <span class="shapeeditortext2">Alarm</span>
+            <span id="valImageMinTempC" class="shapeditortextsub3">--&deg;C</span>
+            <span id="valImageMinTempF" class="shapeditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+
+        <button class="resizebutton" style="visibility: hidden; width:8px;">
+        </button>
+    
+        <button id="btnUndo" onclick="undoShapeEditor()" class="resizebutton">
+            <div style="line-height: 4px;">
+                <span class="shapeeditortext">Undo</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
+                        fill="white" />
+                </svg>
+            </div>
+        </button>
+    
+        <button id="btnRedo" onclick="redoShapeEditor()" class="resizebutton">
+            <div style="line-height: 4px;">
+                <span class="shapeeditortext">Redo</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
+                        fill="currentColor" />
+                </svg>
+            </div>
+        </button>
+    
+       
     </div>
-    <img id="shapeEditorImageRef" style="display: none;" src="reference_01.png">
+    <div class="editorrow">
+
+        <button id="btnChangeRegion" onclick="changeShapeNext(true)" class="resizebutton">
+            <div style="line-height: 20px;">
+                <span style="margin-left: -5px;" class="shapeeditortext">Region</span>
+                <span id="valShapeIndex" class="shapeditortextsub3">0 of 0</span>
+            </div>
+        </button>
+
+        <button id="btnChangeShapeName" onclick="changeShapeName()" class="resizebutton2">
+            <div style="line-height: 20px;">
+                <div style="margin-left: -5px;" class="shapeeditortext">Name</div>
+                <div id="valShapeName" class="shapeditortextsub3">--</div>
+            </div>
+        </button>
+
+        <button id="btnChangeColor" onclick="changeShapeColorNext(true)" class="resizebutton">
+            <div style="line-height: 10px;">
+                <span style="margin-left: -5px;line-height: 20px;" class="shapeeditortext">Color</span>
+                <span id="valShapeColorDemo" style="background-color: red;line-height: 20px;"
+                        class="shapeditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span id="valShapeColor" class="shapeditortextsub3">Red</span>
+            </div>
+        </button>
+    
+        <button class="resizebutton" style="visibility: hidden; width:8px;">
+        </button>
+        
+        
+        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <div style="line-height: 17px;">
+            <span class="shapeeditortext2">High</span>
+            <span id="valHighTempC" class="shapeditortextsub3">--&deg;C</span>
+            <span id="valHighTempF" class="shapeditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+
+        <button id="btnChangeShapeMaxTemp" onclick="changeAlarmTemp(false,false)" class="resizebutton">
+            <div style="line-height: 17px;">
+            <span class="shapeeditortext2">Alarm</span>
+            <span id="valMaxTempC" class="shapeditortextsub3">--&deg;C</span>
+            <span id="valMaxTempF" class="shapeditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+
+        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <div style="line-height: 17px;">
+            <span class="shapeeditortext2">Low</span>
+            <span id="valLowTempC" class="shapeditortextsub3">--&deg;C</span>
+            <span id="valLowTempF" class="shapeditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+    
+    
+        <button id="btnChangeShapeMinTemp" onclick="changeAlarmTemp(false,false)" class="resizebutton">
+            <div style="line-height: 17px;">
+            <span class="shapeeditortext2">Alarm</span>
+            <span id="valMinTempC" class="shapeditortextsub3">--&deg;C</span>
+            <span id="valMinTempF" class="shapeditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+    
+        <button class="resizebutton" style="visibility: hidden">
+        </button>
+        <button class="resizebutton" style="visibility: hidden; width:8px;">
+        </button>
+
+        <button id="btnDeleteShape" onclick="deleteShapeEditor()" class="resizebutton">
+            <div style="line-height: 4px;">
+                <span style="margin-left: -5px;" class="shapeeditortext">Delete</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M17 5V4C17 2.89543 16.1046 2 15 2H9C7.89543 2 7 2.89543 7 4V5H4C3.44772 5 3 5.44772 3 6C3 6.55228 3.44772 7 4 7H5V18C5 19.6569 6.34315 21 8 21H16C17.6569 21 19 19.6569 19 18V7H20C20.5523 7 21 6.55228 21 6C21 5.44772 20.5523 5 20 5H17ZM15 4H9V5H15V4ZM17 7H7V18C7 18.5523 7.44772 19 8 19H16C16.5523 19 17 18.5523 17 18V7Z"
+                        fill="white" />
+                    <path d="M9 9H11V17H9V9Z" fill="white" />
+                    <path d="M13 9H15V17H13V9Z" fill="white" />
+                </svg>
+            </div>
+        </button>
+    
+       
+    </div>
+
+    <div class="editorrow">
+    <div class="editorcolumn" style="width:80px;">
+    <button id="btnPolygonAdd" onclick="addShape('polygon')" class="shapebutton">
+        <div>
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="10" width="24" height="24" stroke="white" stroke-width="2" />
+                <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
+            </svg>
+        </div>
+    </button></td>
+
+
+    <button id="btnPointAdd" onclick="addShape('point')" class="shapebutton">
+        <div>
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="22" y1="4" x2="22" y2="20" stroke="white" stroke-width="2" />
+                <line x1="22" y1="24" x2="22" y2="41" stroke="white" stroke-width="2" />
+
+                <line x1="3" y1="22" x2="20" y2="22" stroke="white" stroke-width="2" />
+                <line x1="24" y1="22" x2="41" y2="22" stroke="white" stroke-width="2" />
+
+                <circle cx="22" cy="22" r="12" stroke="white" stroke-width="2" />
+                <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
+            </svg>
+        </div>
+    </button>
+
+    <button id="btnShapeToolLook" onclick="selectShapeEditorTool('look')" class="resizebutton">
+        <div style="line-height: 4px;">
+            <span style="margin-left: -5px;" class="shapeeditortext">Look</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                    d="M7 14C8.10457 14 9 13.1046 9 12C9 10.8954 8.10457 10 7 10C5.89543 10 5 10.8954 5 12C5 13.1046 5.89543 14 7 14ZM10.4649 10C9.77325 8.8044 8.48056 8 7 8C5.13616 8 3.57006 9.27477 3.12602 11H2C1.44772 11 1 11.4477 1 12C1 12.5523 1.44772 13 2 13H3.12602C3.57006 14.7252 5.13616 16 7 16C9.20914 16 11 14.2091 11 12H13C13 14.2091 14.7909 16 17 16C18.8638 16 20.4299 14.7252 20.874 13H22C22.5523 13 23 12.5523 23 12C23 11.4477 22.5523 11 22 11H20.874C20.4299 9.27477 18.8638 8 17 8C15.5194 8 14.2267 8.8044 13.5351 10H10.4649ZM15 12C15 13.1046 15.8954 14 17 14C18.1046 14 19 13.1046 19 12C19 10.8954 18.1046 10 17 10C15.8954 10 15 10.8954 15 12Z"
+                    fill="white" />
+            </svg>
+        </div>
+    </button>
+
+    <button id="btnShapeToolSelect" onclick="selectShapeEditorTool('select')" class="resizebutton">
+        <div style="line-height: 4px;">
+            <span style="margin-left: -5px;" class="shapeeditortext">Select</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="white" stroke-width="2" />
+            </svg>
+        </div>
+    </button>
+
+    <button id="btnShapeToolMove" onclick="selectShapeEditorTool('move')" class="resizebutton">
+        <div style="line-height: 4px;">
+            <span style="margin-left: -5px;" class="shapeeditortext">Move</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M14.8284 6.34313L16.2426 4.92892L12 0.686279L7.75735 4.92892L9.17156 6.34313L12 3.51471L14.8284 6.34313Z"
+                    fill="white" />
+                <path
+                    d="M4.92892 16.2426L6.34313 14.8284L3.51471 12L6.34313 9.17156L4.92892 7.75735L0.686279 12L4.92892 16.2426Z"
+                    fill="white" />
+                <path
+                    d="M7.75735 19.0711L12 23.3137L16.2426 19.0711L14.8284 17.6568L12 20.4853L9.17156 17.6568L7.75735 19.0711Z"
+                    fill="white" />
+                <path
+                    d="M17.6568 9.17156L20.4853 12L17.6568 14.8284L19.0711 16.2426L23.3137 12L19.0711 7.75735L17.6568 9.17156Z"
+                    fill="white" />
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                    d="M12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8ZM12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z"
+                    fill="white" />
+            </svg>
+        </div>
+    </button>
+
+    <button id="btnShapeToolPointAdd" onclick="selectShapeEditorTool('pointadd')" class="resizebutton">
+        <div style="line-height: 4px;">
+            <span style="margin-left: -5px;" class="shapeeditortext">Add&nbsp;Pt</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                    d="M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
+                    fill="white" />
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                    d="M13 7C13 6.44772 12.5523 6 12 6C11.4477 6 11 6.44772 11 7V11H7C6.44772 11 6 11.4477 6 12C6 12.5523 6.44772 13 7 13H11V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V13H17C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H13V7Z"
+                    fill="white" />
+            </svg>
+        </div>
+    </button>
+
+    <button id="btnShapeToolPointMove" onclick="selectShapeEditorTool('pointmove')" class="resizebutton">
+        <div style="line-height: 4px;">
+            <span style="margin-left: -5px;" class="shapeeditortext">Mve&nbsp;Pt</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M10 10.0367L8.00002 10.0367L8 16.0367L14 16.0367L14 14.0367L11.4143 14.0366L16.7438 8.7071L15.3296 7.29289L10 12.6224L10 10.0367Z"
+                    fill="white" />
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                    d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                    fill="white" />
+            </svg>
+        </div>
+    </button>
+
+
+    <button id="btnShapeToolPointDelete" onclick="selectShapeEditorTool('pointdelete')" class="resizebutton">
+        <div style="line-height: 4px;">
+            <span style="margin-left: -5px;" class="shapeeditortext">Del&nbsp;Pt</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M16.3394 9.32245C16.7434 8.94589 16.7657 8.31312 16.3891 7.90911C16.0126 7.50509 15.3798 7.48283 14.9758 7.85938L12.0497 10.5866L9.32245 7.66048C8.94589 7.25647 8.31312 7.23421 7.90911 7.61076C7.50509 7.98731 7.48283 8.62008 7.85938 9.0241L10.5866 11.9502L7.66048 14.6775C7.25647 15.054 7.23421 15.6868 7.61076 16.0908C7.98731 16.4948 8.62008 16.5171 9.0241 16.1405L11.9502 13.4133L14.6775 16.3394C15.054 16.7434 15.6868 16.7657 16.0908 16.3891C16.4948 16.0126 16.5171 15.3798 16.1405 14.9758L13.4133 12.0497L16.3394 9.32245Z"
+                    fill="currentColor" />
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                    d="M1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12ZM12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z"
+                    fill="currentColor" />
+            </svg>
+        </div>
+    </button>
+</div>
+    <div class="editorcolumn" style="margin-left:-16px" >
+        <canvas id="shapeEditorImage" width="256" height="192" draggable="false"></canvas>
+    </div>
+</div>
+
+<div class="tooltip">This is a tooltip</div>
+<img id="shapeEditorImageRef" style="display: none;" src="reference_01.png">
 </body>
 
 </html>

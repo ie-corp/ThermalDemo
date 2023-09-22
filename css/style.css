@@ -2,6 +2,7 @@
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
+   
     
     
   }
@@ -9,8 +10,6 @@
   .editorcolumn {
     
     flex-direction: column;
-    
-   
     width:min-content;
   }
 
@@ -20,6 +19,8 @@
 
 
 .resizebutton{
+    margin-bottom:4px;
+    margin-right:4px;
     user-select: none; 
     width: 60px;
     height: 60px;
@@ -38,6 +39,27 @@
   background-color:grey;
 }
 
+.resizebutton2{
+  margin-bottom:4px;
+  margin-right:4px;
+  user-select: none; 
+  width: 124px;
+  height: 60px;
+  color:white;
+  background-color:#353A3F;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 20px;
+  font-weight: bold;
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 60px;       /* The same as your div height */
+}
+
+.resizebutton2:disabled{
+background-color:grey;
+}
+
   .shapeditorletterbox
   {
     user-select: none; 
@@ -51,9 +73,13 @@
       display: inline-block;
       text-align: center;
       vertical-align: middle;
-      margin:0px;
+      margin-top:0px;
+      margin-bottom:4px;
+      margin-left:0px;
+      margin-right:0px;
       padding: 0px;
       border-spacing:0; 
+      
    
     }
 
@@ -104,6 +130,7 @@
 
     .shapeditortextsub2
     {
+      display:inline-block;
       user-select: none; 
       font-size: 15px;
     }
@@ -116,7 +143,8 @@
 
 
 .shapebutton{
-  user-select: none; 
+  user-select: none;
+  margin-bottom:4px; 
     width: 60px;
     height: 60px;
     background-color:#007CF9;
