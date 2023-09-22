@@ -1,7 +1,7 @@
 .editorrow {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
    
     
     
@@ -11,6 +11,7 @@
     
     flex-direction: column;
     width:min-content;
+    min-width: 80px;
   }
 
 
@@ -19,9 +20,11 @@
 
 
 .resizebutton{
+    padding:0px;
     margin-bottom:4px;
     margin-right:4px;
-    user-select: none; 
+    user-select: none;
+    min-width: 60px;
     width: 60px;
     height: 60px;
     color:white;
@@ -40,9 +43,11 @@
 }
 
 .resizebutton2{
+  padding:0px;
   margin-bottom:4px;
   margin-right:4px;
   user-select: none; 
+  min-width: 124px;
   width: 124px;
   height: 60px;
   color:white;
@@ -63,6 +68,7 @@ background-color:grey;
   .shapeditorletterbox
   {
     user-select: none; 
+    min-width: 60px;
       width: 60px;
       height: 60px;
       color:white;
@@ -104,11 +110,13 @@ background-color:grey;
 
     table.shapeditorletterbox td
     {
+      min-width: 60px;
       width: 60px;
     }
 
     .shapeeditortext
     {
+      white-space: nowrap;
       user-select: none; 
       font-size: 15px;
      line-height: 30px;       
@@ -116,6 +124,7 @@ background-color:grey;
 
     .shapeeditortext2
     {
+      white-space: nowrap;
       user-select: none; 
       font-size: 15px;
      line-height: 6px;       
@@ -123,6 +132,7 @@ background-color:grey;
 
     .shapeditortextsub
     {
+      white-space: nowrap;
       user-select: none; 
       font-size: 15px;
           
@@ -130,6 +140,7 @@ background-color:grey;
 
     .shapeditortextsub2
     {
+      white-space: nowrap;
       display:inline-block;
       user-select: none; 
       font-size: 15px;
@@ -137,14 +148,17 @@ background-color:grey;
 
     .shapeditortextsub3
     {
+      white-space: nowrap;
       user-select: none; 
       font-size: 12px;
     }
 
 
 .shapebutton{
+  padding:0px;
   user-select: none;
   margin-bottom:4px; 
+  min-width: 60px;
     width: 60px;
     height: 60px;
     background-color:#007CF9;
@@ -162,7 +176,9 @@ background-color:grey;
 
 
 .movebutton{
+  padding:0px;
   user-select: none; 
+  min-width: 60px;
     width: 60px;
     height: 60px;
     background-color:#353A3F;

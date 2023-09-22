@@ -16,6 +16,7 @@
         let tempsCelsius = [];
         let historyIndex = -1;
         let selectedPointIndex = -1;
+        
 
         var activeFunc = null;
         var waiterTime = 100;
@@ -155,7 +156,7 @@
                 canSize = region.type != 'point' && region.type != 'polygon';
                 polygonSelected = region.type == 'polygon';
             }
-            let activeToolColor = 'green';
+            let activeToolColor = 'yellow';
             let inactiveToolColor = 'white';
             document.getElementById("btnShapeToolLook").disabled = false;
             document.getElementById("btnShapeToolLook").style.color = (activeTool == 'look' ? activeToolColor : inactiveToolColor);
@@ -528,13 +529,7 @@
             return points;
         }
 
-
-
-
-        function getRegionTemps(region) {
-
-            let points = getShapePointsOnCanvas(region, false);//This will return only points that are in bounds!
-
+        function getTempsFromPointsOnCanvas(points){
             let lowCelsius = 999999
             let highCelsius = -999999
             let lowX = -1;
@@ -571,6 +566,14 @@
             let regionTemps = { "lowCelsius": lowCelsius, "highCelsius": highCelsius, "lowX": lowX, "lowY": lowY, "highX": highX, "highY": highY };
             //console.log('region temps: ' + JSON.stringify(regionTemps));
             return regionTemps;
+        }
+
+
+        function getRegionTemps(region) {
+
+            let points = getShapePointsOnCanvas(region, false);//This will return only points that are in bounds!
+            return getTempsFromPointsOnCanvas(points);
+            
         }
 
         function updateSelectedShapeAttributes(region) {
@@ -705,7 +708,7 @@
                     }
                     ctx.closePath();
                     if (isSelected) {
-                        ctx.setLineDash([1]);
+                        ctx.setLineDash([4]);
                     }
                     else {
                         ctx.setLineDash([]);
@@ -1320,12 +1323,33 @@
 
         }
 
+        function displayImageTemps(){
+            let points = [(shapeEditor.imageNativeHeight * shapeEditor.imageNativeWidth)];
+            for(let x=0; x<shapeEditor.imageNativeWidth; x++){
+                for(let y=0; y<shapeEditor.imageNativeHeight; y++){
+                    let index = x + y;
+                    points[index] = {"x":x, "y":y};
+                }
+            }
+            
+            let regionTemps = getTempsFromPointsOnCanvas(points);
+            
+            document.getElementById("valImageHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
+            document.getElementById("valImageHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
+            document.getElementById("valImageLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
+            document.getElementById("valImageLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true) + '&deg;F';
+        }
+       
+
+
         function go() {
             shapeEditor.imageScale = 4.0;
+            
             recalcEditor();
             addHistory('Initial App State', null, true);
 
             fillTempsWithTestData();
+            displayImageTemps();
             const image = document.querySelector('#shapeEditorImage');
             const tooltip = document.querySelector('.tooltip');
 
@@ -1458,7 +1482,7 @@
             else if(value > 5){
                 value = 1;
             }
-            console.log('zooming to ' + value);
+            
             shapeEditor.imageScale = value;
             recalcEditor();
             addHistory('zoom image', null, false);//I don't think this needs a undo.
@@ -1470,6 +1494,12 @@
                 console.error('unsupported shape type: ' + shapeType);
                 return;
             }
+
+            if(shapeEditor.regions.length >= 99){
+                console.error('You have reached the maximum number of shapes allowed.');
+                return;
+            }
+
             let colorToUse = shapeColors[Math.floor(Math.random() * shapeColors.length)];
 
             let shapePrefix = shapeType;
@@ -1562,7 +1592,7 @@
 
         <button id="btnZoomImage" onclick="zoomShapeEditor(.5)" class="resizebutton">
             <div style="line-height: 4px;">
-                <span style="margin-left: -5px;" class="shapeeditortext">Zoom</span>
+                <span  class="shapeeditortext">Zoom</span>
                 <span id="valueZoom" class="shapeeditortext">100%</span>
             </div>
         </button>
@@ -1571,33 +1601,33 @@
     
         <button id="btnRotateImage" onclick="rotateImage()" class="resizebutton">
             <div style="line-height: 4px;">
-                <span style="margin-left: -5px;" class="shapeeditortext">Rotate</span>
+                <span  class="shapeeditortext">Rotate</span>
                 <span id="valImageRotation" class="shapeeditortext">0&deg;</span>
             </div>
         </button>
 
         <button id="btnFilterImage" onclick="changeImageFilterNext(true)" class="resizebutton">
             <div style="line-height: 4px;">
-                <span style="margin-left: -5px;" class="shapeeditortext">Filter</span>
+                <span  class="shapeeditortext">Filter</span>
                 <span id="valueFilter" class="shapeeditortext">none</span>
             </div>
         </button>
 
         <button id="btnMirrorImage" onclick="changeImageMirror()" class="resizebutton">
             <div style="line-height: 4px;">
-                <span style="margin-left: -5px;" class="shapeeditortext">Mirror</span>
+                <span  class="shapeeditortext">Mirror</span>
                 <span id="valueFilter" class="shapeeditortext">off</span>
             </div>
         </button>
 
-        <button class="resizebutton" style="visibility: hidden; width:8px;">
-        </button>
+        <div style="width:8px;">
+        </div>
 
         
 
         <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">High</span>
+            <span class="shapeeditortext2">Img Hi</span>
             <span id="valImageHighTempC" class="shapeditortextsub3">--&deg;C</span>
             <span id="valImageHighTempF" class="shapeditortextsub3">--&deg;F</span>
             </div>
@@ -1605,7 +1635,7 @@
 
         <button id="btnChangeImageMaxTemp" onclick="changeAlarmTemp(true,true)" class="resizebutton">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Alarm</span>
+            <span class="shapeeditortext2">Alm Hi</span>
             <span id="valImageMaxTempC" class="shapeditortextsub3">--&deg;C</span>
             <span id="valImageMaxTempF" class="shapeditortextsub3">--&deg;F</span>
             </div>
@@ -1614,7 +1644,7 @@
 
         <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Low</span>
+            <span class="shapeeditortext2">Img Lo</span>
             <span id="valImageLowTempC" class="shapeditortextsub3">--&deg;C</span>
             <span id="valImageLowTempF" class="shapeditortextsub3">--&deg;F</span>
             </div>
@@ -1622,14 +1652,14 @@
 
         <button id="btnChangeImageMinTemp" onclick="changeAlarmTemp(true,false)" class="resizebutton">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Alarm</span>
+            <span class="shapeeditortext2">Alm Lo</span>
             <span id="valImageMinTempC" class="shapeditortextsub3">--&deg;C</span>
             <span id="valImageMinTempF" class="shapeditortextsub3">--&deg;F</span>
             </div>
         </button>
 
-        <button class="resizebutton" style="visibility: hidden; width:8px;">
-        </button>
+        <div style="width:8px;">
+        </div>
     
         <button id="btnUndo" onclick="undoShapeEditor()" class="resizebutton">
             <div style="line-height: 4px;">
@@ -1659,14 +1689,14 @@
 
         <button id="btnChangeRegion" onclick="changeShapeNext(true)" class="resizebutton">
             <div style="line-height: 20px;">
-                <span style="margin-left: -5px;" class="shapeeditortext">Region</span>
+                <span  class="shapeeditortext">Region</span>
                 <span id="valShapeIndex" class="shapeditortextsub3">0 of 0</span>
             </div>
         </button>
 
         <button id="btnChangeShapeName" onclick="changeShapeName()" class="resizebutton2">
             <div style="line-height: 20px;">
-                <div style="margin-left: -5px;" class="shapeeditortext">Name</div>
+                <div  class="shapeeditortext">Name</div>
                 <div id="valShapeName" class="shapeditortextsub3">--</div>
             </div>
         </button>
@@ -1674,19 +1704,19 @@
         <button id="btnChangeColor" onclick="changeShapeColorNext(true)" class="resizebutton">
             <div style="line-height: 10px;">
                 <span style="margin-left: -5px;line-height: 20px;" class="shapeeditortext">Color</span>
-                <span id="valShapeColorDemo" style="background-color: red;line-height: 20px;"
-                        class="shapeditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <span id="valShapeColor" class="shapeditortextsub3">Red</span>
+                <div id="valShapeColorDemo" style="background-color: red; font-size:4px; line-height: 8px;"
+                        class="shapeditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div id="valShapeColor" style="line-height:16px" class="shapeditortextsub3">Red</div>
             </div>
         </button>
     
-        <button class="resizebutton" style="visibility: hidden; width:8px;">
-        </button>
+        <div style="width:8px;">
+        </div>
         
         
         <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">High</span>
+            <span class="shapeeditortext2">Rgn Hi</span>
             <span id="valHighTempC" class="shapeditortextsub3">--&deg;C</span>
             <span id="valHighTempF" class="shapeditortextsub3">--&deg;F</span>
             </div>
@@ -1694,7 +1724,7 @@
 
         <button id="btnChangeShapeMaxTemp" onclick="changeAlarmTemp(false,false)" class="resizebutton">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Alarm</span>
+            <span class="shapeeditortext2">Alm Hi</span>
             <span id="valMaxTempC" class="shapeditortextsub3">--&deg;C</span>
             <span id="valMaxTempF" class="shapeditortextsub3">--&deg;F</span>
             </div>
@@ -1702,7 +1732,7 @@
 
         <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Low</span>
+            <span class="shapeeditortext2">Rgn Lo</span>
             <span id="valLowTempC" class="shapeditortextsub3">--&deg;C</span>
             <span id="valLowTempF" class="shapeditortextsub3">--&deg;F</span>
             </div>
@@ -1711,20 +1741,19 @@
     
         <button id="btnChangeShapeMinTemp" onclick="changeAlarmTemp(false,false)" class="resizebutton">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Alarm</span>
+            <span class="shapeeditortext2">Alm Lo</span>
             <span id="valMinTempC" class="shapeditortextsub3">--&deg;C</span>
             <span id="valMinTempF" class="shapeditortextsub3">--&deg;F</span>
             </div>
         </button>
     
-        <button class="resizebutton" style="visibility: hidden">
-        </button>
-        <button class="resizebutton" style="visibility: hidden; width:8px;">
-        </button>
+        <div style="width:72px;">
+        </div>
+        
 
         <button id="btnDeleteShape" onclick="deleteShapeEditor()" class="resizebutton">
             <div style="line-height: 4px;">
-                <span style="margin-left: -5px;" class="shapeeditortext">Delete</span>
+                <span  class="shapeeditortext">Delete</span>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path fill-rule="evenodd" clip-rule="evenodd"
                         d="M17 5V4C17 2.89543 16.1046 2 15 2H9C7.89543 2 7 2.89543 7 4V5H4C3.44772 5 3 5.44772 3 6C3 6.55228 3.44772 7 4 7H5V18C5 19.6569 6.34315 21 8 21H16C17.6569 21 19 19.6569 19 18V7H20C20.5523 7 21 6.55228 21 6C21 5.44772 20.5523 5 20 5H17ZM15 4H9V5H15V4ZM17 7H7V18C7 18.5523 7.44772 19 8 19H16C16.5523 19 17 18.5523 17 18V7Z"
@@ -1766,74 +1795,78 @@
             </svg>
         </div>
     </button>
+<div style="height:8px"></div>
 
+<div style="background-color: #252526;">
+    <div style="width:60px; text-align: center;color:white;user-select: none;">Touch Tool</div>
+    <div style="height:4px"></div>
     <button id="btnShapeToolLook" onclick="selectShapeEditorTool('look')" class="resizebutton">
         <div style="line-height: 4px;">
-            <span style="margin-left: -5px;" class="shapeeditortext">Look</span>
+            <span class="shapeeditortext">Look</span>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" clip-rule="evenodd"
                     d="M7 14C8.10457 14 9 13.1046 9 12C9 10.8954 8.10457 10 7 10C5.89543 10 5 10.8954 5 12C5 13.1046 5.89543 14 7 14ZM10.4649 10C9.77325 8.8044 8.48056 8 7 8C5.13616 8 3.57006 9.27477 3.12602 11H2C1.44772 11 1 11.4477 1 12C1 12.5523 1.44772 13 2 13H3.12602C3.57006 14.7252 5.13616 16 7 16C9.20914 16 11 14.2091 11 12H13C13 14.2091 14.7909 16 17 16C18.8638 16 20.4299 14.7252 20.874 13H22C22.5523 13 23 12.5523 23 12C23 11.4477 22.5523 11 22 11H20.874C20.4299 9.27477 18.8638 8 17 8C15.5194 8 14.2267 8.8044 13.5351 10H10.4649ZM15 12C15 13.1046 15.8954 14 17 14C18.1046 14 19 13.1046 19 12C19 10.8954 18.1046 10 17 10C15.8954 10 15 10.8954 15 12Z"
-                    fill="white" />
+                    fill="currentColor" />
             </svg>
         </div>
     </button>
 
     <button id="btnShapeToolSelect" onclick="selectShapeEditorTool('select')" class="resizebutton">
         <div style="line-height: 4px;">
-            <span style="margin-left: -5px;" class="shapeeditortext">Select</span>
+            <span  class="shapeeditortext">Select</span>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="white" stroke-width="2" />
+                <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="currentColor" stroke-width="2" />
             </svg>
         </div>
     </button>
 
     <button id="btnShapeToolMove" onclick="selectShapeEditorTool('move')" class="resizebutton">
         <div style="line-height: 4px;">
-            <span style="margin-left: -5px;" class="shapeeditortext">Move</span>
+            <span  class="shapeeditortext">Move</span>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="M14.8284 6.34313L16.2426 4.92892L12 0.686279L7.75735 4.92892L9.17156 6.34313L12 3.51471L14.8284 6.34313Z"
-                    fill="white" />
+                    fill="currentColor" />
                 <path
                     d="M4.92892 16.2426L6.34313 14.8284L3.51471 12L6.34313 9.17156L4.92892 7.75735L0.686279 12L4.92892 16.2426Z"
-                    fill="white" />
+                    fill="currentColor" />
                 <path
                     d="M7.75735 19.0711L12 23.3137L16.2426 19.0711L14.8284 17.6568L12 20.4853L9.17156 17.6568L7.75735 19.0711Z"
-                    fill="white" />
+                    fill="currentColor" />
                 <path
                     d="M17.6568 9.17156L20.4853 12L17.6568 14.8284L19.0711 16.2426L23.3137 12L19.0711 7.75735L17.6568 9.17156Z"
-                    fill="white" />
+                    fill="currentColor" />
                 <path fill-rule="evenodd" clip-rule="evenodd"
                     d="M12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8ZM12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z"
-                    fill="white" />
+                    fill="currentColor" />
             </svg>
         </div>
     </button>
 
     <button id="btnShapeToolPointAdd" onclick="selectShapeEditorTool('pointadd')" class="resizebutton">
         <div style="line-height: 4px;">
-            <span style="margin-left: -5px;" class="shapeeditortext">Add&nbsp;Pt</span>
+            <span  class="shapeeditortext">Add&nbsp;Pt</span>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" clip-rule="evenodd"
                     d="M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
-                    fill="white" />
+                    fill="currentColor" />
                 <path fill-rule="evenodd" clip-rule="evenodd"
                     d="M13 7C13 6.44772 12.5523 6 12 6C11.4477 6 11 6.44772 11 7V11H7C6.44772 11 6 11.4477 6 12C6 12.5523 6.44772 13 7 13H11V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V13H17C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H13V7Z"
-                    fill="white" />
+                    fill="currentColor" />
             </svg>
         </div>
     </button>
 
     <button id="btnShapeToolPointMove" onclick="selectShapeEditorTool('pointmove')" class="resizebutton">
         <div style="line-height: 4px;">
-            <span style="margin-left: -5px;" class="shapeeditortext">Mve&nbsp;Pt</span>
+            <span  class="shapeeditortext">Mve&nbsp;Pt</span>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="M10 10.0367L8.00002 10.0367L8 16.0367L14 16.0367L14 14.0367L11.4143 14.0366L16.7438 8.7071L15.3296 7.29289L10 12.6224L10 10.0367Z"
-                    fill="white" />
+                    fill="currentColor" />
                 <path fill-rule="evenodd" clip-rule="evenodd"
                     d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-                    fill="white" />
+                    fill="currentColor" />
             </svg>
         </div>
     </button>
@@ -1841,7 +1874,7 @@
 
     <button id="btnShapeToolPointDelete" onclick="selectShapeEditorTool('pointdelete')" class="resizebutton">
         <div style="line-height: 4px;">
-            <span style="margin-left: -5px;" class="shapeeditortext">Del&nbsp;Pt</span>
+            <span  class="shapeeditortext">Del&nbsp;Pt</span>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="M16.3394 9.32245C16.7434 8.94589 16.7657 8.31312 16.3891 7.90911C16.0126 7.50509 15.3798 7.48283 14.9758 7.85938L12.0497 10.5866L9.32245 7.66048C8.94589 7.25647 8.31312 7.23421 7.90911 7.61076C7.50509 7.98731 7.48283 8.62008 7.85938 9.0241L10.5866 11.9502L7.66048 14.6775C7.25647 15.054 7.23421 15.6868 7.61076 16.0908C7.98731 16.4948 8.62008 16.5171 9.0241 16.1405L11.9502 13.4133L14.6775 16.3394C15.054 16.7434 15.6868 16.7657 16.0908 16.3891C16.4948 16.0126 16.5171 15.3798 16.1405 14.9758L13.4133 12.0497L16.3394 9.32245Z"
@@ -1852,6 +1885,7 @@
             </svg>
         </div>
     </button>
+</div>
 </div>
     <div class="editorcolumn" style="margin-left:-16px" >
         <canvas id="shapeEditorImage" width="256" height="192" draggable="false"></canvas>
