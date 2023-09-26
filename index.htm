@@ -6,46 +6,63 @@
     <title>Home</title>
     <link rel="stylesheet" href="css/style.css">
     <script>
-        var shapeEditor = { "imageRotation": 0, "imageFilter": "none", "maxNameLength": 16, "tempDisplayUnit": "F", "imageNativeWidth": 256, "imageNativeHeight": 192, "imageWidth": 256, "imageHeight": 192, "imageScale": 1.0, "regions": [], "selectedRegionIndex": -1 };
-        var shapeColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
-        var tempRanges = { "LowestCelsius": -20.0, "HighestCelsius": 550.0, "defaultHiCelsius": 250.0, "defaultLoCelsius": 0 };
-        let shapeTypes = ['point', 'polygon'];
-        let shapeEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete'];
+        
+
+        var regionEditor = { 
+        "imageAlarmThresh": {"loPriority" : 1, "hiPriority" : 1, "loTempC" : null, "hiTempC" : null},
+        "imageRotation": 0, 
+        "imageFilter": "none", 
+        "maxNameLength": 16, 
+        "imageNativeWidth": 256, 
+        "imageNativeHeight": 192, 
+        "imageWidth": 256, 
+        "imageHeight": 192, 
+        "imageScale": 1.0, 
+        "regions": [], 
+        "selectedRegionIndex": -1 };
+        var regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
+        var tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
+        let regionTypes = ['point', 'polygon'];
+        let regionEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete'];
         let activeTool = 'look';
         let historyStack = [];
         let tempsCelsius = [];
         let historyIndex = -1;
         let selectedPointIndex = -1;
-        
+        let editAlarmThresh = {"loPriority" : 1, "hiPriority" : 1, "loTempC" : null, "hiTempC" : null};
+        let editAlarmIsImage = true;
+
 
         var activeFunc = null;
         var waiterTime = 100;
 
         let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
 
-        function selectShapeEditorTool(toolName) {
-            if (shapeEditorTools.indexOf(toolName) == -1) {
+        function selectRegionEditorTool(toolName) {
+            if (regionEditorTools.indexOf(toolName) == -1) {
                 console.error('invalid tool name: ' + toolName);
                 recalcEditor();
                 return;
             }
+            this.closeAlarmTemp();//close alarm temp if open
             let oldActiveTool = activeTool;
             //put some logic here
             activeTool = toolName;
             recalcEditor();
         }
 
-        function redoShapeEditor() {
+        function redoRegionEditor() {
             if (historyIndex < 0 || historyStack.length <= 1) {
                 //console.log('nothing to redo');
                 return;
             }
             if (historyIndex < historyStack.length - 1) {
+                this.closeAlarmTemp();//close alarm temp if open
                 historyIndex++;
                 let historyEntry = historyStack[historyIndex];
                 //console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
-                let storedShapeEditor = JSON.parse(historyEntry.shapeEditor);
-                shapeEditor = storedShapeEditor;
+                let storedRegionEditor = JSON.parse(historyEntry.regionEditor);
+                regionEditor = storedRegionEditor;
                 recalcEditor();
             }
             else {
@@ -55,7 +72,7 @@
 
         }
 
-        function undoShapeEditor() {
+        function undoRegionEditor() {
             if (historyStack.length <= 1) {//first entry is initial state
                 //console.log('nothing to undo');
                 return;
@@ -67,13 +84,14 @@
             }
 
             if (historyIndex >= 1) {
+                this.closeAlarmTemp();//close alarm temp if open
                 let currentHistoryEntry = historyStack[historyIndex];
                 //console.log('undoing ' + currentHistoryEntry.historyType + ' with index ' + currentHistoryEntry.selectedIndex);
                 historyIndex--;
                 let historyEntry = historyStack[historyIndex];
                 //console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
-                let storedShapeEditor = JSON.parse(historyEntry.shapeEditor);
-                shapeEditor = storedShapeEditor;
+                let storedRegionEditor = JSON.parse(historyEntry.regionEditor);
+                regionEditor = storedRegionEditor;
                 recalcEditor();
             }
             else {
@@ -85,7 +103,8 @@
         }
 
         function addHistory(historyType, selectedIndex, force) {
-            let historyEntry = { "historyType": historyType, "selectedIndex": selectedIndex, "shapeEditor": JSON.stringify(shapeEditor) };
+            this.closeAlarmTemp();//close alarm temp if open
+            let historyEntry = { "historyType": historyType, "selectedIndex": selectedIndex, "regionEditor": JSON.stringify(regionEditor) };
             let lastHistoryEntry = null;
             if (historyStack.length > 0) {
                 if (historyIndex < 0 || historyIndex > historyStack.length) {
@@ -94,7 +113,7 @@
                 }
                 lastHistoryEntry = historyStack[historyIndex];
                 //even for a force this doesn't make sense.
-                if (historyEntry.shapeEditor == lastHistoryEntry.shapeEditor) {
+                if (historyEntry.regionEditor == lastHistoryEntry.regionEditor) {
                     setButtons();
                     return;
                 }
@@ -150,36 +169,44 @@
             let canRotate = false;
             let polygonSelected = false;
             let region = null;
-            if (shapeEditor.selectedRegionIndex >= 0 && shapeEditor.selectedRegionIndex < shapeEditor.regions.length) {
-                region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+            if (regionEditor.selectedRegionIndex >= 0 && regionEditor.selectedRegionIndex < regionEditor.regions.length) {
+                region = regionEditor.regions[regionEditor.selectedRegionIndex];
                 hasActiveItem = true;
                 canSize = region.type != 'point' && region.type != 'polygon';
                 polygonSelected = region.type == 'polygon';
             }
             let activeToolColor = 'yellow';
             let inactiveToolColor = 'white';
-            document.getElementById("btnShapeToolLook").disabled = false;
-            document.getElementById("btnShapeToolLook").style.color = (activeTool == 'look' ? activeToolColor : inactiveToolColor);
-            document.getElementById("btnShapeToolSelect").disabled = shapeEditor.regions.length <= 1;
-            document.getElementById("btnShapeToolSelect").style.color = (activeTool == 'select' ? activeToolColor : inactiveToolColor);
-            document.getElementById("btnShapeToolMove").disabled = !hasActiveItem;
-            document.getElementById("btnShapeToolMove").style.color = (activeTool == 'move' ? activeToolColor : inactiveToolColor);
-            document.getElementById("btnShapeToolPointAdd").disabled = !polygonSelected;
-            document.getElementById("btnShapeToolPointAdd").style.color = (activeTool == 'pointadd' ? activeToolColor : inactiveToolColor);
-            document.getElementById("btnShapeToolPointMove").disabled = !polygonSelected;
-            document.getElementById("btnShapeToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
-            document.getElementById("btnShapeToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
-            document.getElementById("btnShapeToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnRegionToolLook").disabled = false;
+            document.getElementById("btnRegionToolLook").style.color = (activeTool == 'look' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnRegionToolSelect").disabled = regionEditor.regions.length <= 1;
+            document.getElementById("btnRegionToolSelect").style.color = (activeTool == 'select' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnRegionToolMove").disabled = !hasActiveItem;
+            document.getElementById("btnRegionToolMove").style.color = (activeTool == 'move' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnRegionToolPointAdd").disabled = !polygonSelected;
+            document.getElementById("btnRegionToolPointAdd").style.color = (activeTool == 'pointadd' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnRegionToolPointMove").disabled = !polygonSelected;
+            document.getElementById("btnRegionToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
+            document.getElementById("btnRegionToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
+            document.getElementById("btnRegionToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
 
 
-            document.getElementById("btnDeleteShape").disabled = !hasActiveItem;
+            document.getElementById("btnDeleteRegion").disabled = !hasActiveItem;
             document.getElementById("btnChangeRegion").disabled = !hasActiveItem;
-            document.getElementById("btnChangeShapeName").disabled = !hasActiveItem;
+            document.getElementById("btnChangeRegionName").disabled = !hasActiveItem;
             document.getElementById("btnChangeColor").disabled = !hasActiveItem;
             document.getElementById("btnChangeImageMaxTemp").disabled = false;
             document.getElementById("btnChangeImageMinTemp").disabled = false;
-            document.getElementById("btnChangeShapeMaxTemp").disabled = !hasActiveItem;
-            document.getElementById("btnChangeShapeMinTemp").disabled = !hasActiveItem;
+            document.getElementById("btnChangeImageMaxPriorityLevel").disabled = false;
+            document.getElementById("btnChangeImageMinPriorityLevel").disabled = false;
+
+            document.getElementById("btnChangeRegionMaxTemp").disabled = !hasActiveItem;
+            document.getElementById("btnChangeRegionMinTemp").disabled = !hasActiveItem;
+
+            document.getElementById("btnChangeRegionMaxPriorityLevel").disabled = !hasActiveItem;
+            document.getElementById("btnChangeRegionMinPriorityLevel").disabled = !hasActiveItem;
+
+           
 
 
 
@@ -198,7 +225,7 @@
 
         function fillTempsWithTestData() {
             tempsCelsius = [49152];//256*192
-            let length = shapeEditor.imageNativeWidth * shapeEditor.imageNativeHeight;
+            let length = regionEditor.imageNativeWidth * regionEditor.imageNativeHeight;
             for (let i = 0; i < length; i++) {
                 tempsCelsius[i] = randomNumberGenerator(35, 40, 1, true);
             }
@@ -232,13 +259,13 @@
 
         function recalcEditor() {
 
-            if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
-                shapeEditor.imageWidth = shapeEditor.imageNativeWidth * shapeEditor.imageScale;
-                shapeEditor.imageHeight = shapeEditor.imageNativeHeight * shapeEditor.imageScale;
+            if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+                regionEditor.imageWidth = regionEditor.imageNativeWidth * regionEditor.imageScale;
+                regionEditor.imageHeight = regionEditor.imageNativeHeight * regionEditor.imageScale;
             }
             else {
-                shapeEditor.imageWidth = shapeEditor.imageNativeHeight * shapeEditor.imageScale;
-                shapeEditor.imageHeight = shapeEditor.imageNativeWidth * shapeEditor.imageScale;
+                regionEditor.imageWidth = regionEditor.imageNativeHeight * regionEditor.imageScale;
+                regionEditor.imageHeight = regionEditor.imageNativeWidth * regionEditor.imageScale;
             }
 
 
@@ -247,12 +274,19 @@
 
 
             var valueZoom = document.getElementById("valueZoom");
-            valueZoom.innerHTML = Math.round(shapeEditor.imageScale * 100) + "%";
+            valueZoom.innerHTML = Math.round(regionEditor.imageScale * 100) + "%";
+
+            document.getElementById("valImageMaxTempC").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.hiTempC, false) + '&deg;C';
+            document.getElementById("valImageMaxTempF").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.hiTempC, true) + '&deg;F';
+            document.getElementById("valImageMaxPriorityLevel").innerHTML = regionEditor.imageAlarmThresh.hiTempC == null ? '--' : regionEditor.imageAlarmThresh.hiPriority;
+            document.getElementById("valImageMinTempC").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.loTempC, false) + '&deg;C';
+            document.getElementById("valImageMinTempF").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.loTempC, true) + '&deg;F';
+            document.getElementById("valImageMinPriorityLevel").innerHTML = regionEditor.imageAlarmThresh.loTempC == null ? '--' : regionEditor.imageAlarmThresh.loPriority;
 
 
             var valImageRotation = document.getElementById("valImageRotation");
-            valImageRotation.innerHTML = shapeEditor.imageRotation + "&deg;";
-            drawShapes();
+            valImageRotation.innerHTML = regionEditor.imageRotation + "&deg;";
+            drawRegions();
             setButtons();
 
         }
@@ -277,35 +311,35 @@
 
 
         function rotateImage() {
-            let originalRotation = shapeEditor.imageRotation;
-            shapeEditor.imageRotation += 90;
-            if (shapeEditor.imageRotation >= 360) {
-                shapeEditor.imageRotation = 0;
+            let originalRotation = regionEditor.imageRotation;
+            regionEditor.imageRotation += 90;
+            if (regionEditor.imageRotation >= 360) {
+                regionEditor.imageRotation = 0;
             }
-            if (shapeEditor.regions.length > 0) {
-                //rotate all shapes by 90 degrees. move x and y accordingly
-                for (let i = 0; i < shapeEditor.regions.length; i++) {
-                    let region = shapeEditor.regions[i];
+            if (regionEditor.regions.length > 0) {
+                //rotate all regions by 90 degrees. move x and y accordingly
+                for (let i = 0; i < regionEditor.regions.length; i++) {
+                    let region = regionEditor.regions[i];
                     var pts = [region.x, region.y];
                     if (originalRotation == 0 || originalRotation == 180) {
                         if (region.type == 'point') {
                             //console.log('point');
-                            pts = rotate90(shapeEditor.imageNativeWidth, shapeEditor.imageNativeHeight, region.x, region.y);
+                            pts = rotate90(regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, region.x, region.y);
                         }
                         else if (region.type == 'polygon') {
 
                             for (let index = 0; index < region.points.length; index++) {
                                 let point = region.points[index];
-                                pts = rotate90(shapeEditor.imageNativeWidth, shapeEditor.imageNativeHeight, point.x, point.y);
+                                pts = rotate90(regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, point.x, point.y);
                                 point.x = pts[0];
                                 point.y = pts[1];
                             }
                             region.x = region.points[0].x;
                             region.y = region.points[0].y;
-                            fixShapeOutOfBounds(region);//recalcs width and height.
+                            fixRegionOutOfBounds(region);//recalcs width and height.
                         }
                         else {
-                            pts = rotate90(shapeEditor.imageNativeWidth, shapeEditor.imageNativeHeight, region.x, region.y);
+                            pts = rotate90(regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, region.x, region.y);
                             let nX = pts[0];//85  //80
                             let nY = pts[1];//64  //84
                             //console.log('rotating: ' + region.x + ',' + region.y + ' to ' + nX + ',' + nY);
@@ -320,22 +354,22 @@
                     }
                     else {
                         if (region.type == 'point') {
-                            pts = rotate90(shapeEditor.imageNativeHeight, shapeEditor.imageNativeWidth, region.x, region.y);
+                            pts = rotate90(regionEditor.imageNativeHeight, regionEditor.imageNativeWidth, region.x, region.y);
                         }
                         else if (region.type == 'polygon') {
 
                             for (let index = 0; index < region.points.length; index++) {
                                 let point = region.points[index];
-                                pts = rotate90(shapeEditor.imageNativeHeight, shapeEditor.imageNativeWidth, point.x, point.y);
+                                pts = rotate90(regionEditor.imageNativeHeight, regionEditor.imageNativeWidth, point.x, point.y);
                                 point.x = pts[0];
                                 point.y = pts[1];
                             }
                             region.x = region.points[0].x;
                             region.y = region.points[0].y;
-                            fixShapeOutOfBounds(region);//recalcs width and height.
+                            fixRegionOutOfBounds(region);//recalcs width and height.
                         }
                         else {
-                            pts = rotate90(shapeEditor.imageNativeHeight, shapeEditor.imageNativeWidth, region.x, region.y);
+                            pts = rotate90(regionEditor.imageNativeHeight, regionEditor.imageNativeWidth, region.x, region.y);
                             let nX = pts[0];//85  //80
                             let nY = pts[1];//64  //84
                             //console.log('rotating: ' + region.x + ',' + region.y + ' to ' + nX + ',' + nY);
@@ -364,33 +398,33 @@
             addHistory('rotate image', null, false);//I don't think this needs a undo.
         }
 
-        function drawShapes() {
+        function drawRegions() {
 
-            var shapeEditorImage = document.getElementById("shapeEditorImage");
-            var shapeEditorImageRef = document.getElementById("shapeEditorImageRef");
+            var regionEditorImage = document.getElementById("regionEditorImage");
+            var regionEditorImageRef = document.getElementById("regionEditorImageRef");
 
             var canvas = document.createElement("canvas");
-            canvas.width = shapeEditor.imageWidth;
-            canvas.height = shapeEditor.imageHeight;
-            
+            canvas.width = regionEditor.imageWidth;
+            canvas.height = regionEditor.imageHeight;
+
 
             var ctx = canvas.getContext("2d");
-            resetSelectedShapeAttributes();
+            resetSelectedRegionAttributes();
 
-            let rotation = shapeEditor.imageRotation * Math.PI / 180;
-            if (shapeEditor.imageFilter == 'sepia') {
+            let rotation = regionEditor.imageRotation * Math.PI / 180;
+            if (regionEditor.imageFilter == 'sepia') {
                 ctx.filter = "sepia(1)";
             }
-            else if (shapeEditor.imageFilter == 'contrast') {
+            else if (regionEditor.imageFilter == 'contrast') {
                 ctx.filter = ' contrast(150%) brightness(60%)';
             }
-            else if (shapeEditor.imageFilter == 'invert') {
+            else if (regionEditor.imageFilter == 'invert') {
                 ctx.filter = 'invert(75%)';
             }
             else {
                 ctx.filter = 'none';
             }
-            let scale = shapeEditor.imageScale;
+            let scale = regionEditor.imageScale;
             //fix this
             if (rotation != 0) {
                 // translate context to center of canvas
@@ -399,9 +433,9 @@
                 // draw image
 
                 ctx.scale(scale, scale);
-                ctx.drawImage(shapeEditorImageRef, (-shapeEditor.imageNativeWidth / 2), (-shapeEditor.imageNativeHeight / 2));
+                ctx.drawImage(regionEditorImageRef, (-regionEditor.imageNativeWidth / 2), (-regionEditor.imageNativeHeight / 2));
                 ctx.scale(1 / scale, 1 / scale);
-                //ctx.drawImage(shapeEditorImageRef,(-shapeEditor.imageNativeWidth * shapeEditor.imageScale) / 2, (-shapeEditor.imageNativeHeight * shapeEditor.imageScale) / 2);
+                //ctx.drawImage(regionEditorImageRef,(-regionEditor.imageNativeWidth * regionEditor.imageScale) / 2, (-regionEditor.imageNativeHeight * regionEditor.imageScale) / 2);
                 //unrotate
                 ctx.rotate(-rotation);
                 // un-translate the canvas back to origin==top-left canvas
@@ -409,31 +443,31 @@
 
             }
             else {
-                ctx.drawImage(shapeEditorImageRef, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(regionEditorImageRef, 0, 0, canvas.width, canvas.height);
             }
             ctx.filter = 'none';
 
-            for (var i = 0; i < shapeEditor.regions.length; i++) {
-                var region = shapeEditor.regions[i];
-                var isSelected = i == shapeEditor.selectedRegionIndex;
+            for (var i = 0; i < regionEditor.regions.length; i++) {
+                var region = regionEditor.regions[i];
+                var isSelected = i == regionEditor.selectedRegionIndex;
                 let drawControls = isSelected && region.type == 'polygon' && activeTool.indexOf('point') > -1;
                 if (drawControls) {
                     if (region.points.length <= 3 && activeTool == 'pointdelete') {
                         drawControls = false;
                     }
                 }
-                drawShape(ctx, scale, region, isSelected, region.color, null, drawControls);
+                drawRegion(ctx, scale, region, isSelected, region.color, null, drawControls);
                 if (isSelected) {
-                    updateSelectedShapeAttributes(region);
+                    updateSelectedRegionAttributes(region);
                 }
             }
 
 
-            var ctxMain = shapeEditorImage.getContext("2d");
-            shapeEditorImage.width = canvas.width;
-            shapeEditorImage.height = canvas.height;
-            ctxMain.clearRect(0, 0, shapeEditorImage.width, shapeEditorImage.height);
-            ctxMain.drawImage(canvas, 0, 0, shapeEditorImage.width, shapeEditorImage.height);
+            var ctxMain = regionEditorImage.getContext("2d");
+            regionEditorImage.width = canvas.width;
+            regionEditorImage.height = canvas.height;
+            ctxMain.clearRect(0, 0, regionEditorImage.width, regionEditorImage.height);
+            ctxMain.drawImage(canvas, 0, 0, regionEditorImage.width, regionEditorImage.height);
         }
 
         function getDisplayTempFromCelsius(celsius, displayFahrenheit) {
@@ -450,37 +484,37 @@
 
         }
 
-        function changeShapeNext(nextShape) {
-            if (shapeEditor.regions.length <= 1) {
+        function changeRegionNext(nextRegion) {
+            if (regionEditor.regions.length <= 1) {
                 return;
             }
-
-            let shapeIndex = shapeEditor.selectedRegionIndex;
-            if (nextShape) {
-                shapeIndex++;
+            this.closeAlarmTemp();//close alarm temp if open
+            let regionIndex = regionEditor.selectedRegionIndex;
+            if (nextRegion) {
+                regionIndex++;
             }
             else {
-                shapeIndex--;
+                regionIndex--;
             }
-            if (shapeIndex < 0) {
-                shapeIndex = shapeEditor.regions.length - 1;
+            if (regionIndex < 0) {
+                regionIndex = regionEditor.regions.length - 1;
             }
-            else if (shapeIndex >= shapeEditor.regions.length) {
-                shapeIndex = 0;
+            else if (regionIndex >= regionEditor.regions.length) {
+                regionIndex = 0;
             }
-            setShapeIndex(shapeIndex);
+            setRegionIndex(regionIndex);
 
         }
 
-        function setShapeIndex(shapeIndex) {
-            if (shapeIndex < 0 || shapeIndex >= shapeEditor.regions.length) {
-                console.error('invalid shape index: ' + shapeIndex);
+        function setRegionIndex(regionIndex) {
+            if (regionIndex < 0 || regionIndex >= regionEditor.regions.length) {
+                console.error('invalid region index: ' + regionIndex);
                 return;
             }
-            if (shapeIndex != shapeEditor.selectedRegionIndex) {
-                let shape = shapeEditor.regions[shapeIndex];
-                if (shape.type == 'polygon') {
-                    if (selectedPointIndex < 0 || selectedPointIndex >= shape.points.length) {
+            if (regionIndex != regionEditor.selectedRegionIndex) {
+                let region = regionEditor.regions[regionIndex];
+                if (region.type == 'polygon') {
+                    if (selectedPointIndex < 0 || selectedPointIndex >= region.points.length) {
                         selectedPointIndex = 0;
                     }
                 }
@@ -490,30 +524,30 @@
 
 
             }
-            shapeEditor.selectedRegionIndex = shapeIndex;
+            regionEditor.selectedRegionIndex = regionIndex;
             activeTool = 'select';
             recalcEditor();
             //I don't think this needs a undo.
         }
 
-        function getShapePointsOnCanvas(region, outlineOnly) {
+        function getRegionPointsOnCanvas(region, outlineOnly) {
             if (region.type == 'point') {
                 return [{ "x": region.x, "y": region.y }];//only one point
             }
             let canvas = document.createElement("canvas");
-            if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
-                canvas.width = shapeEditor.imageNativeWidth;
-                canvas.height = shapeEditor.imageNativeHeight;
+            if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+                canvas.width = regionEditor.imageNativeWidth;
+                canvas.height = regionEditor.imageNativeHeight;
 
             }
             else {
-                canvas.width = shapeEditor.imageNativeHeight;
-                canvas.height = shapeEditor.imageNativeWidth;
+                canvas.width = regionEditor.imageNativeHeight;
+                canvas.height = regionEditor.imageNativeWidth;
 
             }
             let ctx = canvas.getContext("2d");
             let fillColor = outlineOnly ? null : 'black';
-            drawShape(ctx, 1, region, false, 'black', fillColor, false);
+            drawRegion(ctx, 1, region, false, 'black', fillColor, false);
             let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             let data = imageData.data;
             let points = [];
@@ -529,7 +563,7 @@
             return points;
         }
 
-        function getTempsFromPointsOnCanvas(points){
+        function getTempsFromPointsOnCanvas(points) {
             let lowCelsius = 999999
             let highCelsius = -999999
             let lowX = -1;
@@ -571,80 +605,281 @@
 
         function getRegionTemps(region) {
 
-            let points = getShapePointsOnCanvas(region, false);//This will return only points that are in bounds!
+            let points = getRegionPointsOnCanvas(region, false);//This will return only points that are in bounds!
             return getTempsFromPointsOnCanvas(points);
-            
+
         }
 
-        function updateSelectedShapeAttributes(region) {
-            resetSelectedShapeAttributes();
-            document.getElementById("valShapeIndex").innerHTML = "0 of 0";
-            if (shapeEditor.selectedRegionIndex > -1 && shapeEditor.regions.length > 0) {
-                document.getElementById("valShapeIndex").innerHTML = (shapeEditor.selectedRegionIndex + 1) + " of " + shapeEditor.regions.length;
+        function updateSelectedRegionAttributes(region) {
+            resetSelectedRegionAttributes();
+            document.getElementById("valRegionIndex").innerHTML = "0 of 0";
+            if (regionEditor.selectedRegionIndex > -1 && regionEditor.regions.length > 0) {
+                document.getElementById("valRegionIndex").innerHTML = (regionEditor.selectedRegionIndex + 1) + " of " + regionEditor.regions.length;
             }
 
             let regionTemps = getRegionTemps(region);
-            document.getElementById("valHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
-            document.getElementById("valHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
-            document.getElementById("valLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
-            document.getElementById("valLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true) + '&deg;F';
+            document.getElementById("valRegionHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
+            document.getElementById("valRegionHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
+            document.getElementById("valRegionLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
+            document.getElementById("valRegionLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true) + '&deg;F';
 
 
-            document.getElementById("valShapeName").innerHTML = region.name;
-            document.getElementById("valMaxTempC").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, false) + '&deg;C';
-            document.getElementById("valMaxTempF").innerHTML = getDisplayTempFromCelsius(region.maxTempCelsius, true) + '&deg;F';
-            document.getElementById("valMinTempC").innerHTML = getDisplayTempFromCelsius(region.minTempCelsius, false) + '&deg;C';
-            document.getElementById("valMinTempF").innerHTML = getDisplayTempFromCelsius(region.minTempCelsius, true) + '&deg;F';
-            document.getElementById("valShapeColor").innerHTML = region.color;
-            document.getElementById("valShapeColorDemo").style.backgroundColor = region.color;
+            document.getElementById("valRegionName").innerHTML = region.name;
+            document.getElementById("valRegionMaxTempC").innerHTML = getDisplayTempFromCelsius(region.alarmThresh.hiTempC, false) + '&deg;C';
+            document.getElementById("valRegionMaxTempF").innerHTML = getDisplayTempFromCelsius(region.alarmThresh.hiTempC, true) + '&deg;F';
+            document.getElementById("valRegionMaxPriorityLevel").innerHTML = region.alarmThresh.hiTempC == null ? '--' : region.alarmThresh.hiPriority;
+            document.getElementById("valRegionMinTempC").innerHTML = getDisplayTempFromCelsius(region.alarmThresh.loTempC, false) + '&deg;C';
+            document.getElementById("valRegionMinTempF").innerHTML = getDisplayTempFromCelsius(region.alarmThresh.loTempC, true) + '&deg;F';
+            document.getElementById("valRegionMinPriorityLevel").innerHTML = region.alarmThresh.loTempC == null ? '--' : region.alarmThresh.loPriority;
+            document.getElementById("valRegionColor").innerHTML = region.color;
+            document.getElementById("valRegionColorDemo").style.backgroundColor = region.color;
         }
 
-        function resetSelectedShapeAttributes() {
-            document.getElementById("valShapeIndex").innerHTML = "0 of 0";
+        function resetSelectedRegionAttributes() {
+            document.getElementById("valRegionIndex").innerHTML = "0 of 0";
 
-            document.getElementById("valHighTempC").innerHTML = "--&deg;C";
-            document.getElementById("valHighTempF").innerHTML = "--&deg;F";
-            document.getElementById("valLowTempC").innerHTML = "--&deg;C";
-            document.getElementById("valLowTempF").innerHTML = "--&deg;F";
+            document.getElementById("valRegionHighTempC").innerHTML = "--&deg;C";
+            document.getElementById("valRegionHighTempF").innerHTML = "--&deg;F";
+            document.getElementById("valRegionLowTempC").innerHTML = "--&deg;C";
+            document.getElementById("valRegionLowTempF").innerHTML = "--&deg;F";
 
-            document.getElementById("valShapeName").innerHTML = "--";
-            document.getElementById("valMaxTempC").innerHTML = "--&deg;C";
-            document.getElementById("valMaxTempF").innerHTML = "--&deg;F";
-            document.getElementById("valMinTempC").innerHTML = "--&deg;C";
-            document.getElementById("valMaxTempF").innerHTML = "--&deg;F";
-            document.getElementById("valShapeColor").innerHTML = "--";
-            document.getElementById("valShapeColorDemo").style.backgroundColor = "black";
+            document.getElementById("valRegionName").innerHTML = "--";
+            document.getElementById("valRegionMaxTempC").innerHTML = "--&deg;C";
+            document.getElementById("valRegionMaxTempF").innerHTML = "--&deg;F";
+            document.getElementById("valRegionMinTempC").innerHTML = "--&deg;C";
+            document.getElementById("valRegionMinTempF").innerHTML = "--&deg;F";
+            document.getElementById("valRegionMaxPriorityLevel").innerHTML = "--";
+            document.getElementById("valRegionMinPriorityLevel").innerHTML = "--";
+            document.getElementById("valRegionColor").innerHTML = "--";
+            document.getElementById("valRegionColorDemo").style.backgroundColor = "grey";
 
         }
 
-        function deleteShapeEditor() {
-            if (shapeEditor.selectedRegionIndex >= 0) {
-                let selIndex = shapeEditor.selectedRegionIndex;
-                let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
-                shapeEditor.regions.splice(shapeEditor.selectedRegionIndex, 1);
-                shapeEditor.selectedRegionIndex--;
-                if (shapeEditor.selectedRegionIndex < 0 && shapeEditor.regions.length > 0) {
-                    shapeEditor.selectedRegionIndex = 0;
+        function deleteRegionEditor() {
+            if (regionEditor.selectedRegionIndex >= 0) {
+                let selIndex = regionEditor.selectedRegionIndex;
+                let region = regionEditor.regions[regionEditor.selectedRegionIndex];
+                regionEditor.regions.splice(regionEditor.selectedRegionIndex, 1);
+                regionEditor.selectedRegionIndex--;
+                if (regionEditor.selectedRegionIndex < 0 && regionEditor.regions.length > 0) {
+                    regionEditor.selectedRegionIndex = 0;
                 }
                 recalcEditor();
                 addHistory('delete ' + region.type, selIndex, true);
             }
         }
 
-        function changeImageMirror(){
+        function changeImageMirror() {
             alert('not implemented yet')
         }
 
-        function changeAlarmTemp(){
-            alert('not implemented yet')
+        function changeAlarmPriority(isMax, value){
+            if(this.editAlarmThresh == null){
+                return;
+            }
+            if(isMax){
+                this.editAlarmThresh.hiPriority += value;
+                if(this.editAlarmThresh.hiPriority > 9){
+                    this.editAlarmThresh.hiPriority = 1;
+                }
+                else if(this.editAlarmThresh.hiPriority < 1){
+                    this.editAlarmThresh.hiPriority = 9;
+                }
+            }
+            else{
+                this.editAlarmThresh.loPriority += value;
+                if(this.editAlarmThresh.loPriority > 9){
+                    this.editAlarmThresh.loPriority = 1;
+                }
+                else if(this.editAlarmThresh.loPriority < 1){
+                    this.editAlarmThresh.loPriority = 9;
+                }
+            }
+            updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
+
+        }
+
+        function changeAlarmTempBy(isMaxTemp, changeAmount){
+           
+            if(this.editAlarmThresh == null){
+                return;
+            }
+            if (isMaxTemp) {
+                
+                let defaultTempC = this.editAlarmThresh.hiTempC;
+                if(defaultTempC == null){
+                    defaultTempC = tempRanges.highCelsius;
+                }
+                let tempCelsius = defaultTempC + changeAmount;
+                tempCelsius = Math.round(tempCelsius * 10) / 10;//round to .1
+                tempCelsius = Math.min(999, tempCelsius);
+                tempCelsius = Math.max(-999, tempCelsius);
+                this.editAlarmThresh.hiTempC = tempCelsius;
+
+            }
+            else {
+                let defaultTempC = this.editAlarmThresh.loTempC;
+                if(defaultTempC == null){
+                    defaultTempC = tempRanges.lowCelsius;
+                }
+                let tempCelsius = defaultTempC + changeAmount;
+                tempCelsius = Math.round(tempCelsius * 10) / 10;//round to .1
+                tempCelsius = Math.min(999, tempCelsius);
+                tempCelsius = Math.max(-999, tempCelsius);
+                this.editAlarmThresh.loTempC = tempCelsius;
+            }
+            
+            updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
+        }
+
+        function clearAlarmThresh(isMaxTemp) {
+            if(this.editAlarmThresh == null){
+                return;
+            }
+            if(isMaxTemp){
+                this.editAlarmThresh.hiTempC = null;
+                this.editAlarmThresh.hiPriority = 1;
+            }
+            else{
+                this.editAlarmThresh.loTempC = null;
+                this.editAlarmThresh.loPriority = 1;
+            }
+            updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
+        }
+
+
+        function updateThreshDisplay(isImage, thresh){
+            if(!isImage && (this.regionEditor.selectedRegionIndex < 0 || this.regionEditor.selectedRegionIndex >= this.regionEditor.regions.length)){
+                this.closeAlarmTemp();
+                return;
+            }
+            
+            let region = isImage ? null : this.regionEditor.regions[this.regionEditor.selectedRegionIndex];
+            let strElm = "edtImage";
+            let strBtnChange = "btnChangeImage";
+            let strBtnClear = "btnClearImage";
+            lblEditThreshTitle.innerHTML = isImage ? "Entire Image Alarm Settings" : 'Region "' + region.name + '" Alarm Settings';
+
+            document.getElementById(strElm + "HighLabel").innerHTML = isImage ? "Img Hi" : "Rgn Hi";
+            document.getElementById(strElm + "LowLabel").innerHTML = isImage ? "Img Lo" : "Rgn Lo";
+
+            if(isImage){
+                document.getElementById(strElm + "HighTempC").innerHTML = document.getElementById("valImageHighTempC").innerHTML;
+                document.getElementById(strElm + "HighTempF").innerHTML =  document.getElementById("valImageHighTempF").innerHTML;
+                document.getElementById(strElm + "LowTempC").innerHTML =  document.getElementById("valImageLowTempC").innerHTML;
+                document.getElementById(strElm + "LowTempF").innerHTML =  document.getElementById("valImageLowTempF").innerHTML;
+            }
+            else
+            {
+                document.getElementById(strElm + "HighTempC").innerHTML = document.getElementById("valRegionHighTempC").innerHTML;
+                document.getElementById(strElm + "HighTempF").innerHTML =  document.getElementById("valRegionHighTempF").innerHTML;
+                document.getElementById(strElm + "LowTempC").innerHTML =  document.getElementById("valRegionLowTempC").innerHTML;
+                document.getElementById(strElm + "LowTempF").innerHTML =  document.getElementById("valRegionLowTempF").innerHTML;
+            }
+            
+            
+            document.getElementById(strElm + "MaxAlarmTempC").innerHTML = getDisplayTempFromCelsius(thresh.hiTempC,false) + '&deg;C';
+            document.getElementById(strElm + "MaxAlarmTempF").innerHTML = getDisplayTempFromCelsius(thresh.hiTempC,true) + '&deg;F';
+            document.getElementById(strElm + "MaxAlarmPriority").innerHTML = (thresh.hiTempC == null ? "--": thresh.hiPriority);
+            document.getElementById(strBtnChange + "MaxAlarmPriorityLess").disabled = thresh.hiTempC == null;
+            document.getElementById(strBtnChange + "MaxAlarmPriorityMore").disabled = thresh.hiTempC == null;
+            document.getElementById(strBtnClear + "MaxAlarmPriority").disabled = thresh.hiTempC == null;
+
+            
+
+            document.getElementById(strElm + "MinAlarmTempC").innerHTML = getDisplayTempFromCelsius(thresh.loTempC,false) + '&deg;C';
+            document.getElementById(strElm + "MinAlarmTempF").innerHTML = getDisplayTempFromCelsius(thresh.loTempC,true) + '&deg;F'; 
+            document.getElementById(strElm + "MinAlarmPriority").innerHTML = (thresh.loTempC == null ? "--": thresh.loPriority);
+            document.getElementById(strBtnChange + "MinAlarmPriorityLess").disabled = thresh.loTempC == null;
+            document.getElementById(strBtnChange + "MinAlarmPriorityMore").disabled = thresh.loTempC == null;
+            document.getElementById(strBtnClear + "MinAlarmPriority").disabled = thresh.loTempC == null;
+
+            let invalidMessage = getAlarmThreshIsValidMessage(this.editAlarmIsImage, this.editAlarmThresh);
+            document.getElementById("btnSaveImageAlarms").disabled = invalidMessage.length > 0;
+            
+            document.getElementById("threshWindowMessage").innerHTML = invalidMessage;
+            
+            
+            document.getElementById("threshwindow").style.display = "block";
+
+           
+        }
+
+        function closeAlarmTemp(){
+            document.getElementById("threshwindow").style.display = "none";
+        }
+
+        function getAlarmThreshIsValidMessage(isImage, thresh){
+            if(thresh == null){
+                return "Thresholds are null";
+            }
+            if(thresh.hiTempC != null && thresh.loTempC != null && thresh.hiTempC < thresh.loTempC){
+                return "Alarm High Temp Is Less Than Alarm Low Temp.";
+            }
+
+            return '';
+        }
+
+        function saveAlarmTemp(){
+            let hadChange = false;
+            if(this.editAlarmThresh != null){
+                let strValidMessage = getAlarmThreshIsValidMessage(this.editAlarmIsImage, this.editAlarmThresh);
+                if(strValidMessage.length > 0){
+                    return;
+                }
+                if(this.editAlarmIsImage){
+                    if(JSON.stringify(this.regionEditor.imageAlarmThresh) != JSON.stringify(this.editAlarmThresh)){
+                        hadChange = true;
+                        this.regionEditor.imageAlarmThresh = JSON.parse(JSON.stringify(this.editAlarmThresh));
+                    }
+
+                   
+                }
+                else{
+                    let region = this.regionEditor.regions[this.regionEditor.selectedRegionIndex];
+                    if(JSON.stringify(region.alarmThresh) != JSON.stringify(this.editAlarmThresh)){
+                        hadChange = true;
+                        region.alarmThresh = JSON.parse(JSON.stringify(this.editAlarmThresh));
+                    }
+                }
+                recalcEditor();
+                if(hadChange){
+                    addHistory('change alarm temp', null, true);//force this
+                }
+            }
+
+            this.closeAlarmTemp();
+        }
+
+        function changeAlarmTemp(isImage, isMax) {
+            console.log('showing alarm settings');
+            if(isImage){
+                this.editAlarmThresh = JSON.parse(JSON.stringify(this.regionEditor.imageAlarmThresh));
+                this.editAlarmIsImage = true;
+            }
+            else{
+                if(this.regionEditor.selectedRegionIndex >= 0 && this.regionEditor.selectedRegionIndex < this.regionEditor.regions.length){
+                    this.editAlarmThresh = JSON.parse(JSON.stringify(this.regionEditor.regions[this.regionEditor.selectedRegionIndex].alarmThresh));
+                    this.editAlarmIsImage = false;
+                }
+                else{
+                    return;
+                }  
+            }
+            selectRegionEditorTool('look');
+            updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
+            
+            //{"loPriority" : 1, "hiPriority" : 1, "loTempC" : null, "hiTempC" : null}
+            
+            
         }
 
         function changeImageFilterNext(nextFilter) {
 
             let imageFilter = imageFilters[0];
             let imageFilterIndex = 0;
-            if (shapeEditor.imageFilter != null) {
-                imageFilterIndex = imageFilters.indexOf(shapeEditor.imageFilter);
+            if (regionEditor.imageFilter != null) {
+                imageFilterIndex = imageFilters.indexOf(regionEditor.imageFilter);
                 if (imageFilterIndex == -1) {
                     imageFilterIndex = 0;
                 }
@@ -663,20 +898,21 @@
                 imageFilterIndex = 0;
             }
             imageFilter = imageFilters[imageFilterIndex];
-            shapeEditor.imageFilter = imageFilter;
+            regionEditor.imageFilter = imageFilter;
             document.getElementById("valueFilter").innerHTML = imageFilter;
             recalcEditor();
             addHistory('change image filter', null, false);//I don't think this needs a undo.
         }
 
-        function changeShapeName() {
-            if (shapeEditor.selectedRegionIndex >= 0) {
-                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
-                var newName = prompt("Please enter a new name with maximum length of " + shapeEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", region.name);
+        function changeRegionName() {
+            if (regionEditor.selectedRegionIndex >= 0) {
+                this.closeAlarmTemp();//close alarm temp if open
+                var region = regionEditor.regions[regionEditor.selectedRegionIndex];
+                var newName = prompt("Please enter a new name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", region.name);
                 if (newName != null && newName.trim() != "") {
                     newName = newName.trim();
-                    if (newName.length > shapeEditor.maxNameLength) {
-                        console.error('name too long, max ' + shapeEditor.maxNameLength + ' characters');
+                    if (newName.length > regionEditor.maxNameLength) {
+                        console.error('name too long, max ' + regionEditor.maxNameLength + ' characters');
                         return;
                     }
                     for (let i = 0; i < newName.length; i++) {
@@ -688,12 +924,12 @@
                     }
                     region.name = newName;
                     recalcEditor();
-                    addHistory('change ' + region.type + ' name', shapeEditor.selectedRegionIndex, true);
+                    addHistory('change ' + region.type + ' name', regionEditor.selectedRegionIndex, true);
                 }
             }
         }
 
-        function drawShape(ctx, scale, region, isSelected, strokeColor, fillColor, drawControls) {
+        function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, drawControls) {
             // Reset transformation matrix to the identity matrix
             ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -854,17 +1090,17 @@
             return bounds;
         }
 
-        function fixShapeOutOfBounds(region) {
+        function fixRegionOutOfBounds(region) {
             if (region.type == 'point') {
                 region.x = Math.max(region.x, 0);
                 region.y = Math.max(region.y, 0);
-                if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
-                    region.x = Math.min(region.x, shapeEditor.imageNativeWidth);
-                    region.y = Math.min(region.y, shapeEditor.imageNativeHeight);
+                if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+                    region.x = Math.min(region.x, regionEditor.imageNativeWidth);
+                    region.y = Math.min(region.y, regionEditor.imageNativeHeight);
                 }
                 else {
-                    region.x = Math.min(region.x, shapeEditor.imageNativeHeight);
-                    region.y = Math.min(region.y, shapeEditor.imageNativeWidth);
+                    region.x = Math.min(region.x, regionEditor.imageNativeHeight);
+                    region.y = Math.min(region.y, regionEditor.imageNativeWidth);
                 }
             }
             else if (region.type == 'polygon') {
@@ -879,21 +1115,21 @@
                 if (bounds.minX < 0) {
                     moveX = 0 - bounds.minX;
                 }
-                else if ((shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) && bounds.maxX > shapeEditor.imageNativeWidth) {
-                    moveX = shapeEditor.imageNativeWidth - bounds.maxX;
+                else if ((regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) && bounds.maxX > regionEditor.imageNativeWidth) {
+                    moveX = regionEditor.imageNativeWidth - bounds.maxX;
                 }
-                else if ((shapeEditor.imageRotation == 90 || shapeEditor.imageRotation == 270) && bounds.maxX > shapeEditor.imageNativeHeight) {
-                    moveX = shapeEditor.imageNativeHeight - bounds.maxX;
+                else if ((regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270) && bounds.maxX > regionEditor.imageNativeHeight) {
+                    moveX = regionEditor.imageNativeHeight - bounds.maxX;
                 }
 
                 if (bounds.minY < 0) {
                     moveY = 0 - bounds.minY;
                 }
-                else if ((shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) && bounds.maxY > shapeEditor.imageNativeHeight) {
-                    moveY = shapeEditor.imageNativeHeight - bounds.maxY;
+                else if ((regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) && bounds.maxY > regionEditor.imageNativeHeight) {
+                    moveY = regionEditor.imageNativeHeight - bounds.maxY;
                 }
-                else if ((shapeEditor.imageRotation == 90 || shapeEditor.imageRotation == 270) && bounds.maxY > shapeEditor.imageNativeWidth) {
-                    moveY = shapeEditor.imageNativeWidth - bounds.maxY;
+                else if ((regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270) && bounds.maxY > regionEditor.imageNativeWidth) {
+                    moveY = regionEditor.imageNativeWidth - bounds.maxY;
                 }
 
                 if (moveX != 0 || moveY != 0) {
@@ -910,29 +1146,29 @@
             }
             else {
 
-                if (shapeEditor.imageRotation == 0 || shapeEditor.imageRotation == 180) {
+                if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
                     region.x = Math.max(region.x, 0 - region.width / 2);
                     region.y = Math.max(region.y, 0 - region.height / 2);
-                    region.x = Math.min(region.x, shapeEditor.imageNativeWidth - region.width / 2);
-                    region.y = Math.min(region.y, shapeEditor.imageNativeHeight - region.height / 2);
+                    region.x = Math.min(region.x, regionEditor.imageNativeWidth - region.width / 2);
+                    region.y = Math.min(region.y, regionEditor.imageNativeHeight - region.height / 2);
                 }
                 else {
                     region.x = Math.max(region.x, 0 - region.height / 2);
                     region.y = Math.max(region.y, 0 - region.width / 2);
-                    region.x = Math.min(region.x, shapeEditor.imageNativeHeight - region.width / 2);
-                    region.y = Math.min(region.y, shapeEditor.imageNativeWidth - region.height / 2);
+                    region.x = Math.min(region.x, regionEditor.imageNativeHeight - region.width / 2);
+                    region.y = Math.min(region.y, regionEditor.imageNativeWidth - region.height / 2);
                 }
             }
         }
 
-        function moveShapeAbsolute(x, y) {
+        function moveRegionAbsolute(x, y) {
             if (x == -1 || y == -1) {
                 return;
             }
 
 
-            if (shapeEditor.selectedRegionIndex >= 0) {
-                let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+            if (regionEditor.selectedRegionIndex >= 0) {
+                let region = regionEditor.regions[regionEditor.selectedRegionIndex];
                 let originalX = region.x;
                 let originalY = region.y;
 
@@ -959,20 +1195,20 @@
                     region.y = y;
                 }
 
-                fixShapeOutOfBounds(region);
+                fixRegionOutOfBounds(region);
                 recalcEditor();
                 let strTag = 'dragged';
-                addHistory('move ' + region.type + ' ' + strTag, shapeEditor.selectedRegionIndex, false);
+                addHistory('move ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
             }
         }
 
 
-        function moveShapeBy(x, y) {
+        function moveRegionBy(x, y) {
             if (x == 0 && y == 0) {
                 return;
             }
-            if (shapeEditor.selectedRegionIndex >= 0) {
-                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+            if (regionEditor.selectedRegionIndex >= 0) {
+                var region = regionEditor.regions[regionEditor.selectedRegionIndex];
                 region.x += x;
                 region.y += y;
 
@@ -984,7 +1220,7 @@
                     region.x = region.points[0].x;
                     region.y = region.points[0].y;
                 }
-                fixShapeOutOfBounds(region);
+                fixRegionOutOfBounds(region);
                 recalcEditor();
                 let strTag = '';
                 if (x != 0 && y != 0) {
@@ -996,17 +1232,17 @@
                 else {
                     strTag = 'vertically';
                 }
-                addHistory('move ' + region.type + ' ' + strTag, shapeEditor.selectedRegionIndex, false);
+                addHistory('move ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
             }
         }
 
 
-        function resizeShapeBy(w, h) {
+        function resizeRegionBy(w, h) {
             if (w == 0 && h == 0) {
                 return;
             }
-            if (shapeEditor.selectedRegionIndex >= 0) {
-                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+            if (regionEditor.selectedRegionIndex >= 0) {
+                var region = regionEditor.regions[regionEditor.selectedRegionIndex];
                 if (region.type == 'point') {
                     clearFunc();
                     return;
@@ -1015,9 +1251,9 @@
                 region.height += h;
                 region.width = Math.max(region.width, 1);
                 region.height = Math.max(region.height, 1);
-                region.width = Math.min(region.width, shapeEditor.imageNativeWidth);
-                region.height = Math.min(region.height, shapeEditor.imageNativeHeight);
-                fixShapeOutOfBounds(region);
+                region.width = Math.min(region.width, regionEditor.imageNativeWidth);
+                region.height = Math.min(region.height, regionEditor.imageNativeHeight);
+                fixRegionOutOfBounds(region);
                 recalcEditor();
                 let strTag = '';
                 if (w != 0 && h != 0) {
@@ -1029,16 +1265,16 @@
                 else {
                     strTag = 'width';
                 }
-                addHistory('resize ' + region.type + ' ' + strTag, shapeEditor.selectedRegionIndex, false);
+                addHistory('resize ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
             }
         }
 
-        function rotateShapeBy(rotateBy) {
+        function rotateRegionBy(rotateBy) {
             if (rotateBy == 0) {
                 return;
             }
-            if (shapeEditor.selectedRegionIndex >= 0) {
-                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
+            if (regionEditor.selectedRegionIndex >= 0) {
+                var region = regionEditor.regions[regionEditor.selectedRegionIndex];
                 if (region.type == 'point') {
                     clearFunc();
                     return;
@@ -1050,16 +1286,17 @@
                 while (region.angle < 0) {
                     region.angle += 360;
                 }
-                fixShapeOutOfBounds(region);
+                fixRegionOutOfBounds(region);
                 recalcEditor();
-                addHistory('rotate ' + region.type, shapeEditor.selectedRegionIndex, false);
+                addHistory('rotate ' + region.type, regionEditor.selectedRegionIndex, false);
             }
         }
 
-        function changeShapeColorNext(goNext) {
-            if (shapeEditor.selectedRegionIndex >= 0) {
-                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
-                var currentIndex = shapeColors.indexOf(region.color);
+        function changeRegionColorNext(goNext) {
+            if (regionEditor.selectedRegionIndex >= 0) {
+                this.closeAlarmTemp();//close alarm temp if open
+                var region = regionEditor.regions[regionEditor.selectedRegionIndex];
+                var currentIndex = regionColors.indexOf(region.color);
                 if (currentIndex == -1) {
                     currentIndex = 0;
                 }
@@ -1071,69 +1308,38 @@
                 }
 
                 if (currentIndex < 0) {
-                    currentIndex = shapeColors.length - 1;
+                    currentIndex = regionColors.length - 1;
                 }
-                else if (currentIndex >= shapeColors.length) {
+                else if (currentIndex >= regionColors.length) {
                     currentIndex = 0;
                 }
-                region.color = shapeColors[currentIndex];
+                region.color = regionColors[currentIndex];
                 recalcEditor();
-                addHistory('change ' + region.type + ' color', shapeEditor.selectedRegionIndex, false);
+                addHistory('change ' + region.type + ' color', regionEditor.selectedRegionIndex, false);
             }
         }
 
-        function changeShapeTempBy(isMaxTemp, changeAmount) {
-            if (shapeEditor.selectedRegionIndex >= 0) {
-                var region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
-                if (isMaxTemp) {
-                    let defaultTemp = tempRanges.defaultHiCelsius;//need to look at last shape with a value?
-                    let tempCelsius = (region.maxTempCelsius ?? defaultTemp) + changeAmount;
-                    tempCelsius = Math.round(tempCelsius * 10) / 10;//round to .1
-                    if (tempCelsius < tempRanges.LowestCelsius) {
-                        tempCelsius = null;
-                    }
-                    else if (tempCelsius > tempRanges.HighestCelsius) {
-                        tempCelsius = null;
-                    }
-                    region.maxTempCelsius = tempCelsius;
-                }
-                else {
-                    let defaultTemp = tempRanges.defaultLoCelsius;//need to look at last shape with a value?
-                    let tempCelsius = (region.minTempCelsius ?? defaultTemp) + changeAmount;
-                    tempCelsius = Math.round(tempCelsius * 10) / 10;//round to .1
-                    if (tempCelsius < tempRanges.LowestCelsius) {
-                        tempCelsius = null;
-                    }
-                    else if (tempCelsius > tempRanges.HighestCelsius) {
-                        tempCelsius = null;
-                    }
-                    region.minTempCelsius = tempCelsius;
-                }
-                recalcEditor();
-                if (isMaxTemp) {
-                    addHistory('change max temp', shapeEditor.selectedRegionIndex, false);
-                }
-                else {
-                    addHistory('change min temp', shapeEditor.selectedRegionIndex, false);
-                }
+        
+        
 
-            }
-        }
+        
+        
+        
 
         function getIndexOfTempFromXY(posX, posY) {
             let indexTempC = -1;
-            if (shapeEditor.imageRotation == 0) {
-                indexTempC = (posY * shapeEditor.imageNativeHeight) + posX;
+            if (regionEditor.imageRotation == 0) {
+                indexTempC = (posY * regionEditor.imageNativeHeight) + posX;
 
             }
-            else if (shapeEditor.imageRotation == 180) {
-                indexTempC = ((shapeEditor.imageNativeHeight - posY) * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posX);
+            else if (regionEditor.imageRotation == 180) {
+                indexTempC = ((regionEditor.imageNativeHeight - posY) * regionEditor.imageNativeHeight) + (regionEditor.imageNativeWidth - posX);
             }
-            else if (shapeEditor.imageRotation == 90) {
-                indexTempC = ((shapeEditor.imageNativeHeight - posX) * shapeEditor.imageNativeHeight) + posY;
+            else if (regionEditor.imageRotation == 90) {
+                indexTempC = ((regionEditor.imageNativeHeight - posX) * regionEditor.imageNativeHeight) + posY;
             }
-            else if (shapeEditor.imageRotation == 270) {
-                indexTempC = (posX * shapeEditor.imageNativeHeight) + (shapeEditor.imageNativeWidth - posY);
+            else if (regionEditor.imageRotation == 270) {
+                indexTempC = (posX * regionEditor.imageNativeHeight) + (regionEditor.imageNativeWidth - posY);
             }
             else {
                 return -1;
@@ -1142,22 +1348,22 @@
             return indexTempC;
         }
 
-        function findIndexOfClosestShape(x, y, ignoreList) {
-            if (shapeEditor.regions.length == 0) {
+        function findIndexOfClosestRegion(x, y, ignoreList) {
+            if (regionEditor.regions.length == 0) {
                 return -1;
             }
             if (ignoreList == null) {
                 ignoreList = [];
             }
-            let closetShapeIndex = -1;
+            let closetRegionIndex = -1;
             let closestDistance = 999999;
-            for (let i = 0; i < shapeEditor.regions.length; i++) {
+            for (let i = 0; i < regionEditor.regions.length; i++) {
 
                 if (ignoreList.includes(i)) {
                     continue;
                 }
-                let region = shapeEditor.regions[i];
-                let points = getShapePointsOnCanvas(region, true);
+                let region = regionEditor.regions[i];
+                let points = getRegionPointsOnCanvas(region, true);
                 let index = findIndexOfClosestPoint(x, y, points);
                 if (index == -1) {
                     continue;
@@ -1166,10 +1372,10 @@
                 let distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
                 if (distance < closestDistance) {
                     closestDistance = distance;
-                    closetShapeIndex = i;
+                    closetRegionIndex = i;
                 }
             }
-            return closetShapeIndex;
+            return closetRegionIndex;
         }
 
         function findIndexOfClosestPoint(dragX, dragY, points, ignoreList) {
@@ -1247,28 +1453,28 @@
         }
 
         function processScreenTouchCoordinates(offsetX, offsetY, isMouseMoveEvent) {
-            if (shapeEditor.selectedRegionIndex < 0 || shapeEditor.selectedRegionIndex >= shapeEditor.regions.length) {
+            if (regionEditor.selectedRegionIndex < 0 || regionEditor.selectedRegionIndex >= regionEditor.regions.length) {
                 return;
             }
-            let region = shapeEditor.regions[shapeEditor.selectedRegionIndex];
-            let dragX = Math.max(-200, Math.round(offsetX / shapeEditor.imageScale));
-            let dragY = Math.max(-200, Math.round(offsetY / shapeEditor.imageScale));
+            let region = regionEditor.regions[regionEditor.selectedRegionIndex];
+            let dragX = Math.max(-200, Math.round(offsetX / regionEditor.imageScale));
+            let dragY = Math.max(-200, Math.round(offsetY / regionEditor.imageScale));
             if (activeTool == 'look') {
                 return;//nothing to do
             }
             else if (!isMouseMoveEvent && activeTool == 'select') {
-                if (shapeEditor.regions.length == 2) {
-                    changeShapeNext(true);
+                if (regionEditor.regions.length == 2) {
+                    changeRegionNext(true);
                 }
-                else if (shapeEditor.regions.length > 2) {
-                    //todo find closest shape that isn't this one.
-                    let indexOfClosestShape = findIndexOfClosestShape(dragX, dragY, [shapeEditor.selectedRegionIndex]);//ignore the current shape.
-                    if (indexOfClosestShape == -1) {
-                        console.log('no other shapes found')
-                        changeShapeNext(true);
+                else if (regionEditor.regions.length > 2) {
+                    //todo find closest region that isn't this one.
+                    let indexOfClosestRegion = findIndexOfClosestRegion(dragX, dragY, [regionEditor.selectedRegionIndex]);//ignore the current region.
+                    if (indexOfClosestRegion == -1) {
+                        console.log('no other regions found')
+                        changeRegionNext(true);
                     }
                     else {
-                        setShapeIndex(indexOfClosestShape);
+                        setRegionIndex(indexOfClosestRegion);
                     }
 
 
@@ -1276,7 +1482,7 @@
 
             }
             else if (isMouseMoveEvent && activeTool == 'move') {
-                moveShapeAbsolute(dragX, dragY);
+                moveRegionAbsolute(dragX, dragY);
             }
             else if (region.type == 'polygon') {
                 if (!isMouseMoveEvent && activeTool == 'pointadd') {
@@ -1288,7 +1494,7 @@
                         selectedPointIndex = insertIndex;
                         activeTool = 'pointmove';
                         recalcEditor();
-                        addHistory('add point to ' + region.type, shapeEditor.selectedRegionIndex, true);//force this
+                        addHistory('add point to ' + region.type, regionEditor.selectedRegionIndex, true);//force this
                     }
 
                 }
@@ -1298,7 +1504,7 @@
                         if (indexOfClosestPoint > -1) {
                             region.points.splice(indexOfClosestPoint, 1);
                             recalcEditor();
-                            addHistory('remove point from ' + region.type, shapeEditor.selectedRegionIndex, true);//force this
+                            addHistory('remove point from ' + region.type, regionEditor.selectedRegionIndex, true);//force this
                         }
                     }
                 }
@@ -1316,48 +1522,52 @@
                         region.points[selectedPointIndex].x = dragX;
                         region.points[selectedPointIndex].y = dragY;
                         recalcEditor();
-                        addHistory('move point in ' + region.type + 'pt:' + selectedPointIndex, shapeEditor.selectedRegionIndex, false);
+                        addHistory('move point in ' + region.type + 'pt:' + selectedPointIndex, regionEditor.selectedRegionIndex, false);
                     }
                 }
             }
 
         }
 
-        function displayImageTemps(){
-            let points = [(shapeEditor.imageNativeHeight * shapeEditor.imageNativeWidth)];
-            for(let x=0; x<shapeEditor.imageNativeWidth; x++){
-                for(let y=0; y<shapeEditor.imageNativeHeight; y++){
+        function displayImageTemps() {
+            let points = [(regionEditor.imageNativeHeight * regionEditor.imageNativeWidth)];
+            for (let x = 0; x < regionEditor.imageNativeWidth; x++) {
+                for (let y = 0; y < regionEditor.imageNativeHeight; y++) {
                     let index = x + y;
-                    points[index] = {"x":x, "y":y};
+                    points[index] = { "x": x, "y": y };
                 }
             }
-            
+
             let regionTemps = getTempsFromPointsOnCanvas(points);
-            
+
             document.getElementById("valImageHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
             document.getElementById("valImageHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
             document.getElementById("valImageLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
             document.getElementById("valImageLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true) + '&deg;F';
+            
+            tempRanges.highCelsius = regionTemps.highCelsius;
+            tempRanges.lowCelsius = regionTemps.lowCelsius;
+        
         }
-       
+
 
 
         function go() {
-            shapeEditor.imageScale = 4.0;
-            
+            regionEditor.imageScale = 4.0;
+
             recalcEditor();
             addHistory('Initial App State', null, true);
 
             fillTempsWithTestData();
             displayImageTemps();
-            const image = document.querySelector('#shapeEditorImage');
+            const image = document.querySelector('#regionEditorImage');
             const tooltip = document.querySelector('.tooltip');
 
             image.addEventListener('mousedown', (e) => {
 
                 if ("buttons" in e) {
                     if (e.buttons == 1) {
-                        if (shapeEditor.selectedRegionIndex >= 0) {
+                        if (regionEditor.selectedRegionIndex >= 0) {
                             processScreenTouchCoordinates(e.offsetX, e.offsetY, false);
                         }
 
@@ -1382,8 +1592,8 @@
                 if (activeTool == 'look') {
 
 
-                    let x = Math.max(0, Math.round(e.offsetX / shapeEditor.imageScale));
-                    let y = Math.max(0, Math.round(e.offsetY / shapeEditor.imageScale));
+                    let x = Math.max(0, Math.round(e.offsetX / regionEditor.imageScale));
+                    let y = Math.max(0, Math.round(e.offsetY / regionEditor.imageScale));
                     let tempX = -1;
                     let tempY = -1;
                     let indexTempC = -1;
@@ -1392,14 +1602,14 @@
 
                     let placementOffsetX = 0;
                     let placementOffsetY = 0;
-                    if (e.offsetX > shapeEditor.imageWidth / 2) {
+                    if (e.offsetX > regionEditor.imageWidth / 2) {
                         placementOffsetX -= 146;//bottom left x
                     }
                     else {
                         placementOffsetX += 10;//left side
                     }
 
-                    if (e.offsetY > shapeEditor.imageHeight / 2) {
+                    if (e.offsetY > regionEditor.imageHeight / 2) {
                         placementOffsetY -= 90;
                     }
                     else {
@@ -1408,29 +1618,29 @@
 
                     tooltip.style.top = `${e.pageY + placementOffsetY}px`;
                     tooltip.style.left = `${e.pageX + placementOffsetX}px`;
-                    if (shapeEditor.imageRotation == 0) {
-                        posX = Math.min(x, shapeEditor.imageNativeWidth);
-                        posY = Math.min(y, shapeEditor.imageNativeHeight);
+                    if (regionEditor.imageRotation == 0) {
+                        posX = Math.min(x, regionEditor.imageNativeWidth);
+                        posY = Math.min(y, regionEditor.imageNativeHeight);
 
                     }
-                    else if (shapeEditor.imageRotation == 180) {
-                        posX = Math.min(x, shapeEditor.imageNativeWidth);
-                        posY = Math.min(y, shapeEditor.imageNativeHeight);
+                    else if (regionEditor.imageRotation == 180) {
+                        posX = Math.min(x, regionEditor.imageNativeWidth);
+                        posY = Math.min(y, regionEditor.imageNativeHeight);
 
                     }
-                    else if (shapeEditor.imageRotation == 90) {
-                        posX = Math.min(x, shapeEditor.imageNativeHeight);
-                        posY = Math.min(y, shapeEditor.imageNativeWidth);
+                    else if (regionEditor.imageRotation == 90) {
+                        posX = Math.min(x, regionEditor.imageNativeHeight);
+                        posY = Math.min(y, regionEditor.imageNativeWidth);
 
                     }
-                    else if (shapeEditor.imageRotation == 270) {
-                        posX = Math.min(x, shapeEditor.imageNativeHeight);
-                        posY = Math.min(y, shapeEditor.imageNativeWidth);
+                    else if (regionEditor.imageRotation == 270) {
+                        posX = Math.min(x, regionEditor.imageNativeHeight);
+                        posY = Math.min(y, regionEditor.imageNativeWidth);
 
                     }
                     else {
-                        console.error('unsupported rotation: ' + shapeEditor.imageRotation);
-                        tooltip.textContent = 'unsupported rotation: ' + shapeEditor.imageRotation;
+                        console.error('unsupported rotation: ' + regionEditor.imageRotation);
+                        tooltip.textContent = 'unsupported rotation: ' + regionEditor.imageRotation;
                         return;
                     }
                     indexTempC = getIndexOfTempFromXY(posX, posY);
@@ -1454,7 +1664,7 @@
 
                 if ("buttons" in e) {
                     if (e.buttons == 1) {
-                        if (shapeEditor.selectedRegionIndex >= 0) {
+                        if (regionEditor.selectedRegionIndex >= 0) {
                             processScreenTouchCoordinates(e.offsetX, e.offsetY, true);
 
                         }
@@ -1474,112 +1684,117 @@
 
         }
 
-        function zoomShapeEditor(scale) {
-            let value = shapeEditor.imageScale + scale;
-            if(value < 1){
+        function zoomRegionEditor(scale) {
+            let value = regionEditor.imageScale + scale;
+            if (value < 1) {
                 value = 5;
             }
-            else if(value > 5){
+            else if (value > 5) {
                 value = 1;
             }
-            
-            shapeEditor.imageScale = value;
+
+            regionEditor.imageScale = value;
             recalcEditor();
             addHistory('zoom image', null, false);//I don't think this needs a undo.
         }
 
-        function addShape(shapeType) {
+        function addRegion(regionType) {
 
-            if (shapeTypes.indexOf(shapeType) == -1) {
-                console.error('unsupported shape type: ' + shapeType);
+            if (regionTypes.indexOf(regionType) == -1) {
+                console.error('unsupported region type: ' + regionType);
                 return;
             }
 
-            if(shapeEditor.regions.length >= 99){
-                console.error('You have reached the maximum number of shapes allowed.');
+            if (regionEditor.regions.length >= 99) {
+                console.error('You have reached the maximum number of regions allowed.');
                 return;
             }
 
-            let colorToUse = shapeColors[Math.floor(Math.random() * shapeColors.length)];
+            let colorToUse = regionColors[Math.floor(Math.random() * regionColors.length)];
 
-            let shapePrefix = shapeType;
-            let shapeName = '';
-            let shapeNameIndex = 0;
-            //create a unique shape name
+            let regionPrefix = regionType;
+            let regionName = '';
+            let regionNameIndex = 0;
+            //create a unique region name
             while (true) {
-                shapeNameIndex++;
-                if (shapeNameIndex < 10) {
-                    shapeName = shapePrefix + '0' + shapeNameIndex;
+                regionNameIndex++;
+                if (regionNameIndex < 10) {
+                    regionName = regionPrefix + '0' + regionNameIndex;
                 }
                 else {
-                    shapeName = shapePrefix + shapeNameIndex;
+                    regionName = regionPrefix + regionNameIndex;
                 }
-                let res = shapeEditor.regions.findIndex(item => shapeName.toLowerCase() === item.name.toLowerCase());
+                let res = regionEditor.regions.findIndex(item => regionName.toLowerCase() === item.name.toLowerCase());
                 if (res == -1) {
                     break;
                 }
             }
-            let shapeX = Math.round(shapeType == 'point' ? shapeEditor.imageNativeWidth / 2 : shapeEditor.imageNativeWidth / 3);
-            let shapeY = Math.round(shapeType == 'point' ? shapeEditor.imageNativeHeight / 2 : shapeEditor.imageNativeHeight / 3);
-            let shapeWidth = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeWidth / 4);
-            let shapeHeight = Math.round(shapeType == 'point' ? 1 : shapeEditor.imageNativeHeight / 4);
-            let shapePoints = null;
-            let shapeAngle = 0.0;
-            let shapeMaxTempCelsius = tempRanges.defaultHiCelsius;
-            let shapeMinTempCelsius = null;
-            if (shapeEditor.regions.length > 0) {
+            let regionX = Math.round(regionType == 'point' ? regionEditor.imageNativeWidth / 2 : regionEditor.imageNativeWidth / 3);
+            let regionY = Math.round(regionType == 'point' ? regionEditor.imageNativeHeight / 2 : regionEditor.imageNativeHeight / 3);
+            let regionWidth = Math.round(regionType == 'point' ? 1 : regionEditor.imageNativeWidth / 4);
+            let regionHeight = Math.round(regionType == 'point' ? 1 : regionEditor.imageNativeHeight / 4);
+            let regionPoints = null;
+            let regionAngle = 0.0;
+            
+            if (regionEditor.regions.length > 0) {
                 let lastRegion = null;
-                let lastResIndex = shapeEditor.regions.findLastIndex(item => shapeType === item.type);
+                let lastResIndex = regionEditor.regions.findLastIndex(item => regionType === item.type);
                 if (lastResIndex != -1) {
-                    //console.log('found last shape of type ' + shapeType + ' at index ' + lastResIndex);
-                    lastRegion = shapeEditor.regions[lastResIndex];
-                    shapeMaxTempCelsius = lastRegion.maxTempCelsius;
-                    shapeMinTempCelsius = lastRegion.minTempCelsius;
-                    shapeWidth = lastRegion.width;
-                    shapeHeight = lastRegion.height;
-                    shapeAngle = lastRegion.angle;
-                    shapeX = lastRegion.x + 10;
-                    shapeY = lastRegion.y + 10;
+                    //console.log('found last region of type ' + regionType + ' at index ' + lastResIndex);
+                    lastRegion = regionEditor.regions[lastResIndex];
+                    regionWidth = lastRegion.width;
+                    regionHeight = lastRegion.height;
+                    regionAngle = lastRegion.angle;
+                    regionX = lastRegion.x + 10;
+                    regionY = lastRegion.y + 10;
                     if (lastRegion.points != null && lastRegion.points.length > 0) {
-                        shapePoints = [];
+                        regionPoints = [];
                         for (let q = 0; q < lastRegion.points.length; q++) {
-                            shapePoints.push({ "x": (lastRegion.points[q].x + 10), "y": (lastRegion.points[q].y + 10) });
+                            regionPoints.push({ "x": (lastRegion.points[q].x + 10), "y": (lastRegion.points[q].y + 10) });
                         }
                     }
 
                 }
                 else {
-                    //console.log('did not find last shape of type ' + shapeType);
-                    lastRegion = shapeEditor.regions[shapeEditor.regions.length - 1];
-                    shapeMaxTempCelsius = lastRegion.maxTempCelsius;
-                    shapeMinTempCelsius = lastRegion.minTempCelsius;
+                    //console.log('did not find last region of type ' + regionType);
+                    lastRegion = regionEditor.regions[regionEditor.regions.length - 1];
+                    
 
 
                 }
             }
 
-            if (shapeType == 'polygon' && (shapePoints == null || shapePoints.length == 0)) {
-                let x = shapeX;
-                let y = shapeY;
+            if (regionType == 'polygon' && (regionPoints == null || regionPoints.length == 0)) {
+                let x = regionX;
+                let y = regionY;
                 let myWidth = 40;
                 let myHeight = 40
-                shapePoints = [{ "x": x, "y": y }, { "x": myWidth + x, "y": y }, { "x": myWidth + x, "y": myHeight + y }, { "x": x, "y": myHeight + y }];
-                let bounds = getPolygonBounds(shapePoints);
-                shapeX = bounds.x;
-                shapeY = bounds.y;
-                shapeWidth = bounds.width;
-                shapeHeight = bounds.height;
+                regionPoints = [{ "x": x, "y": y }, { "x": myWidth + x, "y": y }, { "x": myWidth + x, "y": myHeight + y }, { "x": x, "y": myHeight + y }];
+                let bounds = getPolygonBounds(regionPoints);
+                regionX = bounds.x;
+                regionY = bounds.y;
+                regionWidth = bounds.width;
+                regionHeight = bounds.height;
 
                 selectedPointIndex = 0;
             }
-            let shape = { "name": shapeName, "maxTempCelsius": shapeMaxTempCelsius, "minTempCelsius": shapeMinTempCelsius, "type": shapeType, "color": colorToUse, "x": shapeX, "y": shapeY, "width": shapeWidth, "height": shapeHeight, "angle": shapeAngle, "points": shapePoints };
+            let region = { "name": regionName, 
+            "alarmThresh": {"loPriority" : 1, "hiPriority" : 1, "loTempC" : null, "hiTempC" : null},
+            "type": regionType, 
+            "color": colorToUse, 
+            "x": regionX, 
+            "y": regionY, 
+            "width": regionWidth, 
+            "height": regionHeight, 
+            "angle": regionAngle, 
+            "points": regionPoints };
 
-            fixShapeOutOfBounds(shape);
-            shapeEditor.regions.push(shape);
-            shapeEditor.selectedRegionIndex = shapeEditor.regions.length - 1;
+            fixRegionOutOfBounds(region);
+            regionEditor.regions.push(region);
+            regionEditor.selectedRegionIndex = regionEditor.regions.length - 1;
             activeTool = 'move';//this makes the most sense to me.
             recalcEditor();
-            addHistory('new ' + shapeType, shapeEditor.selectedRegionIndex, true);
+            addHistory('new ' + regionType, regionEditor.selectedRegionIndex, true);
         }
 
 
@@ -1590,80 +1805,101 @@
 
     <div class="editorrow">
 
-        <button id="btnZoomImage" onclick="zoomShapeEditor(.5)" class="resizebutton">
+        <button id="btnZoomImage" onclick="zoomRegionEditor(.5)" class="resizebutton">
             <div style="line-height: 4px;">
-                <span  class="shapeeditortext">Zoom</span>
-                <span id="valueZoom" class="shapeeditortext">100%</span>
+                <span class="regioneditortext">Zoom</span>
+                <span id="valueZoom" class="regioneditortext">100%</span>
             </div>
         </button>
-        
-       
-    
+
+
+
         <button id="btnRotateImage" onclick="rotateImage()" class="resizebutton">
             <div style="line-height: 4px;">
-                <span  class="shapeeditortext">Rotate</span>
-                <span id="valImageRotation" class="shapeeditortext">0&deg;</span>
+                <span class="regioneditortext">Rotate</span>
+                <span id="valImageRotation" class="regioneditortext">0&deg;</span>
             </div>
         </button>
 
         <button id="btnFilterImage" onclick="changeImageFilterNext(true)" class="resizebutton">
             <div style="line-height: 4px;">
-                <span  class="shapeeditortext">Filter</span>
-                <span id="valueFilter" class="shapeeditortext">none</span>
+                <span class="regioneditortext">Filter</span>
+                <span id="valueFilter" class="regioneditortext">none</span>
             </div>
         </button>
 
         <button id="btnMirrorImage" onclick="changeImageMirror()" class="resizebutton">
             <div style="line-height: 4px;">
-                <span  class="shapeeditortext">Mirror</span>
-                <span id="valueFilter" class="shapeeditortext">off</span>
+                <span class="regioneditortext">Mirror</span>
+                <span id="valueFilter" class="regioneditortext">off</span>
             </div>
         </button>
 
         <div style="width:8px;">
         </div>
 
-        
 
-        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+
+        <button disabled class="resizebutton" style="background-color: black;">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Img Hi</span>
-            <span id="valImageHighTempC" class="shapeditortextsub3">--&deg;C</span>
-            <span id="valImageHighTempF" class="shapeditortextsub3">--&deg;F</span>
+                <span class="regioneditortext2">Img Hi</span>
+                <span id="valImageHighTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="valImageHighTempF" class="regionditortextsub3">--&deg;F</span>
             </div>
         </button>
 
         <button id="btnChangeImageMaxTemp" onclick="changeAlarmTemp(true,true)" class="resizebutton">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Alm Hi</span>
-            <span id="valImageMaxTempC" class="shapeditortextsub3">--&deg;C</span>
-            <span id="valImageMaxTempF" class="shapeditortextsub3">--&deg;F</span>
+                <span class="regioneditortext2">Alm Hi</span>
+                <span id="valImageMaxTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="valImageMaxTempF" class="regionditortextsub3">--&deg;F</span>
             </div>
         </button>
 
-
-        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
-            <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Img Lo</span>
-            <span id="valImageLowTempC" class="shapeditortextsub3">--&deg;C</span>
-            <span id="valImageLowTempF" class="shapeditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-
-        <button id="btnChangeImageMinTemp" onclick="changeAlarmTemp(true,false)" class="resizebutton">
-            <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Alm Lo</span>
-            <span id="valImageMinTempC" class="shapeditortextsub3">--&deg;C</span>
-            <span id="valImageMinTempF" class="shapeditortextsub3">--&deg;F</span>
+        
+        <button id="btnChangeImageMaxPriorityLevel" onclick="changeAlarmTemp(true,true)" class="resizebutton">
+            <div style="line-height: 19px;">
+                <span class="regioneditortext2">Alarm</span>
+                <span id="valImageMaxPriorityLevel" class="regioneditortext2">--</span>
+                <span class="regioneditortext2">Level</span>
+                
             </div>
         </button>
 
         <div style="width:8px;">
         </div>
-    
-        <button id="btnUndo" onclick="undoShapeEditor()" class="resizebutton">
+
+        <button disabled class="resizebutton" style="background-color: black;">
+            <div style="line-height: 17px;">
+                <span class="regioneditortext2">Img Lo</span>
+                <span id="valImageLowTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="valImageLowTempF" class="regionditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+
+        <button id="btnChangeImageMinTemp" onclick="changeAlarmTemp(true,false)" class="resizebutton">
+            <div style="line-height: 17px;">
+                <span class="regioneditortext2">Alm Lo</span>
+                <span id="valImageMinTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="valImageMinTempF" class="regionditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+
+        <button id="btnChangeImageMinPriorityLevel" onclick="changeAlarmTemp(true,true)" class="resizebutton">
+            <div style="line-height: 19px;">
+                <span class="regioneditortext2">Alarm</span>
+                <span id="valImageMinPriorityLevel" class="regioneditortext2">--</span>
+                <span class="regioneditortext2">Level</span>
+                
+            </div>
+        </button>
+
+        <div style="width:8px;">
+        </div>
+
+        <button id="btnUndo" onclick="undoRegionEditor()" class="resizebutton">
             <div style="line-height: 4px;">
-                <span class="shapeeditortext">Undo</span>
+                <span class="regioneditortext">Undo</span>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
@@ -1671,10 +1907,10 @@
                 </svg>
             </div>
         </button>
-    
-        <button id="btnRedo" onclick="redoShapeEditor()" class="resizebutton">
+
+        <button id="btnRedo" onclick="redoRegionEditor()" class="resizebutton">
             <div style="line-height: 4px;">
-                <span class="shapeeditortext">Redo</span>
+                <span class="regioneditortext">Redo</span>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
@@ -1682,78 +1918,99 @@
                 </svg>
             </div>
         </button>
-    
-       
+
+
     </div>
     <div class="editorrow">
 
-        <button id="btnChangeRegion" onclick="changeShapeNext(true)" class="resizebutton">
+        <button id="btnChangeRegion" onclick="changeRegionNext(true)" class="resizebutton">
             <div style="line-height: 20px;">
-                <span  class="shapeeditortext">Region</span>
-                <span id="valShapeIndex" class="shapeditortextsub3">0 of 0</span>
+                <span class="regioneditortext">Region</span>
+                <span id="valRegionIndex" class="regionditortextsub3">0 of 0</span>
             </div>
         </button>
 
-        <button id="btnChangeShapeName" onclick="changeShapeName()" class="resizebutton2">
+        <button id="btnChangeRegionName" onclick="changeRegionName()" class="resizebutton2">
             <div style="line-height: 20px;">
-                <div  class="shapeeditortext">Name</div>
-                <div id="valShapeName" class="shapeditortextsub3">--</div>
+                <div class="regioneditortext">Name</div>
+                <div id="valRegionName" class="regionditortextsub3">--</div>
             </div>
         </button>
 
-        <button id="btnChangeColor" onclick="changeShapeColorNext(true)" class="resizebutton">
+        <button id="btnChangeColor" onclick="changeRegionColorNext(true)" class="resizebutton">
             <div style="line-height: 10px;">
-                <span style="margin-left: -5px;line-height: 20px;" class="shapeeditortext">Color</span>
-                <div id="valShapeColorDemo" style="background-color: red; font-size:4px; line-height: 8px;"
-                        class="shapeditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                <div id="valShapeColor" style="line-height:16px" class="shapeditortextsub3">Red</div>
+                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Color</span>
+                <div id="valRegionColorDemo" style="background-color: red; font-size:4px; line-height: 8px;"
+                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div id="valRegionColor" style="line-height:16px" class="regionditortextsub3">Red</div>
             </div>
         </button>
-    
+
         <div style="width:8px;">
         </div>
-        
-        
-        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+
+
+        <button disabled class="resizebutton" style="background-color: black;">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Rgn Hi</span>
-            <span id="valHighTempC" class="shapeditortextsub3">--&deg;C</span>
-            <span id="valHighTempF" class="shapeditortextsub3">--&deg;F</span>
+                <span class="regioneditortext2">Rgn Hi</span>
+                <span id="valRegionHighTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="valRegionHighTempF" class="regionditortextsub3">--&deg;F</span>
             </div>
         </button>
 
-        <button id="btnChangeShapeMaxTemp" onclick="changeAlarmTemp(false,false)" class="resizebutton">
+        <button id="btnChangeRegionMaxTemp" onclick="changeAlarmTemp(false,true)" class="resizebutton">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Alm Hi</span>
-            <span id="valMaxTempC" class="shapeditortextsub3">--&deg;C</span>
-            <span id="valMaxTempF" class="shapeditortextsub3">--&deg;F</span>
+                <span class="regioneditortext2">Alm Hi</span>
+                <span id="valRegionMaxTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="valRegionMaxTempF" class="regionditortextsub3">--&deg;F</span>
             </div>
         </button>
 
-        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
-            <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Rgn Lo</span>
-            <span id="valLowTempC" class="shapeditortextsub3">--&deg;C</span>
-            <span id="valLowTempF" class="shapeditortextsub3">--&deg;F</span>
+        <button id="btnChangeRegionMaxPriorityLevel" onclick="changeAlarmTemp(false,true)" class="resizebutton">
+            <div style="line-height: 19px;">
+                <span class="regioneditortext2">Alarm</span>
+                <span id="valRegionMaxPriorityLevel" class="regioneditortext2">--</span>
+                <span class="regioneditortext2">Level</span>
+                
             </div>
         </button>
-    
-    
-        <button id="btnChangeShapeMinTemp" onclick="changeAlarmTemp(false,false)" class="resizebutton">
+
+        <div style="width:8px;">
+        </div>
+
+        <button disabled class="resizebutton" style="background-color: black;">
             <div style="line-height: 17px;">
-            <span class="shapeeditortext2">Alm Lo</span>
-            <span id="valMinTempC" class="shapeditortextsub3">--&deg;C</span>
-            <span id="valMinTempF" class="shapeditortextsub3">--&deg;F</span>
+                <span class="regioneditortext2">Rgn Lo</span>
+                <span id="valRegionLowTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="valRegionLowTempF" class="regionditortextsub3">--&deg;F</span>
             </div>
         </button>
-    
+
+
+        <button id="btnChangeRegionMinTemp" onclick="changeAlarmTemp(false,false)" class="resizebutton">
+            <div style="line-height: 17px;">
+                <span class="regioneditortext2">Alm Lo</span>
+                <span id="valRegionMinTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="valRegionMinTempF" class="regionditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+
+        <button id="btnChangeRegionMinPriorityLevel" onclick="changeAlarmTemp(false,false)" class="resizebutton">
+            <div style="line-height: 19px;">
+                <span class="regioneditortext2">Alarm</span>
+                <span id="valRegionMinPriorityLevel" class="regioneditortext2">--</span>
+                <span class="regioneditortext2">Level</span>
+                
+            </div>
+        </button>
+
         <div style="width:72px;">
         </div>
-        
 
-        <button id="btnDeleteShape" onclick="deleteShapeEditor()" class="resizebutton">
+
+        <button id="btnDeleteRegion" onclick="deleteRegionEditor()" class="resizebutton">
             <div style="line-height: 4px;">
-                <span  class="shapeeditortext">Delete</span>
+                <span class="regioneditortext">Delete</span>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path fill-rule="evenodd" clip-rule="evenodd"
                         d="M17 5V4C17 2.89543 16.1046 2 15 2H9C7.89543 2 7 2.89543 7 4V5H4C3.44772 5 3 5.44772 3 6C3 6.55228 3.44772 7 4 7H5V18C5 19.6569 6.34315 21 8 21H16C17.6569 21 19 19.6569 19 18V7H20C20.5523 7 21 6.55228 21 6C21 5.44772 20.5523 5 20 5H17ZM15 4H9V5H15V4ZM17 7H7V18C7 18.5523 7.44772 19 8 19H16C16.5523 19 17 18.5523 17 18V7Z"
@@ -1763,137 +2020,255 @@
                 </svg>
             </div>
         </button>
-    
-       
+
+
     </div>
 
     <div class="editorrow">
-    <div class="editorcolumn" style="width:80px;">
-    <button id="btnPolygonAdd" onclick="addShape('polygon')" class="shapebutton">
-        <div>
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="10" y="10" width="24" height="24" stroke="white" stroke-width="2" />
-                <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
-                <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
-            </svg>
+        <div class="editorcolumn" style="width:80px;">
+            <button id="btnPolygonAdd" onclick="addRegion('polygon')" class="regionbutton">
+                <div>
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="24" height="24" stroke="white" stroke-width="2" />
+                        <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                        <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
+                    </svg>
+                </div>
+            </button></td>
+
+
+            <button id="btnPointAdd" onclick="addRegion('point')" class="regionbutton">
+                <div>
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="22" y1="4" x2="22" y2="20" stroke="white" stroke-width="2" />
+                        <line x1="22" y1="24" x2="22" y2="41" stroke="white" stroke-width="2" />
+
+                        <line x1="3" y1="22" x2="20" y2="22" stroke="white" stroke-width="2" />
+                        <line x1="24" y1="22" x2="41" y2="22" stroke="white" stroke-width="2" />
+
+                        <circle cx="22" cy="22" r="12" stroke="white" stroke-width="2" />
+                        <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                        <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
+                    </svg>
+                </div>
+            </button>
+            <div style="height:8px"></div>
+
+            <div style="background-color: #252526;">
+                <div style="width:60px; text-align: center;color:white;user-select: none;">Touch Tool</div>
+                <div style="height:4px"></div>
+                <button id="btnRegionToolLook" onclick="selectRegionEditorTool('look')" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Look</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M7 14C8.10457 14 9 13.1046 9 12C9 10.8954 8.10457 10 7 10C5.89543 10 5 10.8954 5 12C5 13.1046 5.89543 14 7 14ZM10.4649 10C9.77325 8.8044 8.48056 8 7 8C5.13616 8 3.57006 9.27477 3.12602 11H2C1.44772 11 1 11.4477 1 12C1 12.5523 1.44772 13 2 13H3.12602C3.57006 14.7252 5.13616 16 7 16C9.20914 16 11 14.2091 11 12H13C13 14.2091 14.7909 16 17 16C18.8638 16 20.4299 14.7252 20.874 13H22C22.5523 13 23 12.5523 23 12C23 11.4477 22.5523 11 22 11H20.874C20.4299 9.27477 18.8638 8 17 8C15.5194 8 14.2267 8.8044 13.5351 10H10.4649ZM15 12C15 13.1046 15.8954 14 17 14C18.1046 14 19 13.1046 19 12C19 10.8954 18.1046 10 17 10C15.8954 10 15 10.8954 15 12Z"
+                                fill="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+
+                <button id="btnRegionToolSelect" onclick="selectRegionEditorTool('select')" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Select</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="currentColor"
+                                stroke-width="2" />
+                        </svg>
+                    </div>
+                </button>
+
+                <button id="btnRegionToolMove" onclick="selectRegionEditorTool('move')" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Move</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M14.8284 6.34313L16.2426 4.92892L12 0.686279L7.75735 4.92892L9.17156 6.34313L12 3.51471L14.8284 6.34313Z"
+                                fill="currentColor" />
+                            <path
+                                d="M4.92892 16.2426L6.34313 14.8284L3.51471 12L6.34313 9.17156L4.92892 7.75735L0.686279 12L4.92892 16.2426Z"
+                                fill="currentColor" />
+                            <path
+                                d="M7.75735 19.0711L12 23.3137L16.2426 19.0711L14.8284 17.6568L12 20.4853L9.17156 17.6568L7.75735 19.0711Z"
+                                fill="currentColor" />
+                            <path
+                                d="M17.6568 9.17156L20.4853 12L17.6568 14.8284L19.0711 16.2426L23.3137 12L19.0711 7.75735L17.6568 9.17156Z"
+                                fill="currentColor" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8ZM12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z"
+                                fill="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+
+                <button id="btnRegionToolPointAdd" onclick="selectRegionEditorTool('pointadd')" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Add&nbsp;Pt</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
+                                fill="currentColor" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M13 7C13 6.44772 12.5523 6 12 6C11.4477 6 11 6.44772 11 7V11H7C6.44772 11 6 11.4477 6 12C6 12.5523 6.44772 13 7 13H11V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V13H17C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H13V7Z"
+                                fill="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+
+                <button id="btnRegionToolPointMove" onclick="selectRegionEditorTool('pointmove')" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Mve&nbsp;Pt</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M10 10.0367L8.00002 10.0367L8 16.0367L14 16.0367L14 14.0367L11.4143 14.0366L16.7438 8.7071L15.3296 7.29289L10 12.6224L10 10.0367Z"
+                                fill="currentColor" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                                fill="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+
+
+                <button id="btnRegionToolPointDelete" onclick="selectRegionEditorTool('pointdelete')"
+                    class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Del&nbsp;Pt</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M16.3394 9.32245C16.7434 8.94589 16.7657 8.31312 16.3891 7.90911C16.0126 7.50509 15.3798 7.48283 14.9758 7.85938L12.0497 10.5866L9.32245 7.66048C8.94589 7.25647 8.31312 7.23421 7.90911 7.61076C7.50509 7.98731 7.48283 8.62008 7.85938 9.0241L10.5866 11.9502L7.66048 14.6775C7.25647 15.054 7.23421 15.6868 7.61076 16.0908C7.98731 16.4948 8.62008 16.5171 9.0241 16.1405L11.9502 13.4133L14.6775 16.3394C15.054 16.7434 15.6868 16.7657 16.0908 16.3891C16.4948 16.0126 16.5171 15.3798 16.1405 14.9758L13.4133 12.0497L16.3394 9.32245Z"
+                                fill="currentColor" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12ZM12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z"
+                                fill="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+            </div>
         </div>
-    </button></td>
-
-
-    <button id="btnPointAdd" onclick="addShape('point')" class="shapebutton">
-        <div>
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <line x1="22" y1="4" x2="22" y2="20" stroke="white" stroke-width="2" />
-                <line x1="22" y1="24" x2="22" y2="41" stroke="white" stroke-width="2" />
-
-                <line x1="3" y1="22" x2="20" y2="22" stroke="white" stroke-width="2" />
-                <line x1="24" y1="22" x2="41" y2="22" stroke="white" stroke-width="2" />
-
-                <circle cx="22" cy="22" r="12" stroke="white" stroke-width="2" />
-                <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
-                <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
-            </svg>
+        <div class="editorcolumn" style="margin-left:-16px">
+            <canvas id="regionEditorImage" width="256" height="192" draggable="false"></canvas>
         </div>
-    </button>
-<div style="height:8px"></div>
-
-<div style="background-color: #252526;">
-    <div style="width:60px; text-align: center;color:white;user-select: none;">Touch Tool</div>
-    <div style="height:4px"></div>
-    <button id="btnShapeToolLook" onclick="selectShapeEditorTool('look')" class="resizebutton">
-        <div style="line-height: 4px;">
-            <span class="shapeeditortext">Look</span>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" clip-rule="evenodd"
-                    d="M7 14C8.10457 14 9 13.1046 9 12C9 10.8954 8.10457 10 7 10C5.89543 10 5 10.8954 5 12C5 13.1046 5.89543 14 7 14ZM10.4649 10C9.77325 8.8044 8.48056 8 7 8C5.13616 8 3.57006 9.27477 3.12602 11H2C1.44772 11 1 11.4477 1 12C1 12.5523 1.44772 13 2 13H3.12602C3.57006 14.7252 5.13616 16 7 16C9.20914 16 11 14.2091 11 12H13C13 14.2091 14.7909 16 17 16C18.8638 16 20.4299 14.7252 20.874 13H22C22.5523 13 23 12.5523 23 12C23 11.4477 22.5523 11 22 11H20.874C20.4299 9.27477 18.8638 8 17 8C15.5194 8 14.2267 8.8044 13.5351 10H10.4649ZM15 12C15 13.1046 15.8954 14 17 14C18.1046 14 19 13.1046 19 12C19 10.8954 18.1046 10 17 10C15.8954 10 15 10.8954 15 12Z"
-                    fill="currentColor" />
-            </svg>
-        </div>
-    </button>
-
-    <button id="btnShapeToolSelect" onclick="selectShapeEditorTool('select')" class="resizebutton">
-        <div style="line-height: 4px;">
-            <span  class="shapeeditortext">Select</span>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="currentColor" stroke-width="2" />
-            </svg>
-        </div>
-    </button>
-
-    <button id="btnShapeToolMove" onclick="selectShapeEditorTool('move')" class="resizebutton">
-        <div style="line-height: 4px;">
-            <span  class="shapeeditortext">Move</span>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M14.8284 6.34313L16.2426 4.92892L12 0.686279L7.75735 4.92892L9.17156 6.34313L12 3.51471L14.8284 6.34313Z"
-                    fill="currentColor" />
-                <path
-                    d="M4.92892 16.2426L6.34313 14.8284L3.51471 12L6.34313 9.17156L4.92892 7.75735L0.686279 12L4.92892 16.2426Z"
-                    fill="currentColor" />
-                <path
-                    d="M7.75735 19.0711L12 23.3137L16.2426 19.0711L14.8284 17.6568L12 20.4853L9.17156 17.6568L7.75735 19.0711Z"
-                    fill="currentColor" />
-                <path
-                    d="M17.6568 9.17156L20.4853 12L17.6568 14.8284L19.0711 16.2426L23.3137 12L19.0711 7.75735L17.6568 9.17156Z"
-                    fill="currentColor" />
-                <path fill-rule="evenodd" clip-rule="evenodd"
-                    d="M12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8ZM12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z"
-                    fill="currentColor" />
-            </svg>
-        </div>
-    </button>
-
-    <button id="btnShapeToolPointAdd" onclick="selectShapeEditorTool('pointadd')" class="resizebutton">
-        <div style="line-height: 4px;">
-            <span  class="shapeeditortext">Add&nbsp;Pt</span>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" clip-rule="evenodd"
-                    d="M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
-                    fill="currentColor" />
-                <path fill-rule="evenodd" clip-rule="evenodd"
-                    d="M13 7C13 6.44772 12.5523 6 12 6C11.4477 6 11 6.44772 11 7V11H7C6.44772 11 6 11.4477 6 12C6 12.5523 6.44772 13 7 13H11V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V13H17C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H13V7Z"
-                    fill="currentColor" />
-            </svg>
-        </div>
-    </button>
-
-    <button id="btnShapeToolPointMove" onclick="selectShapeEditorTool('pointmove')" class="resizebutton">
-        <div style="line-height: 4px;">
-            <span  class="shapeeditortext">Mve&nbsp;Pt</span>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M10 10.0367L8.00002 10.0367L8 16.0367L14 16.0367L14 14.0367L11.4143 14.0366L16.7438 8.7071L15.3296 7.29289L10 12.6224L10 10.0367Z"
-                    fill="currentColor" />
-                <path fill-rule="evenodd" clip-rule="evenodd"
-                    d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-                    fill="currentColor" />
-            </svg>
-        </div>
-    </button>
-
-
-    <button id="btnShapeToolPointDelete" onclick="selectShapeEditorTool('pointdelete')" class="resizebutton">
-        <div style="line-height: 4px;">
-            <span  class="shapeeditortext">Del&nbsp;Pt</span>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M16.3394 9.32245C16.7434 8.94589 16.7657 8.31312 16.3891 7.90911C16.0126 7.50509 15.3798 7.48283 14.9758 7.85938L12.0497 10.5866L9.32245 7.66048C8.94589 7.25647 8.31312 7.23421 7.90911 7.61076C7.50509 7.98731 7.48283 8.62008 7.85938 9.0241L10.5866 11.9502L7.66048 14.6775C7.25647 15.054 7.23421 15.6868 7.61076 16.0908C7.98731 16.4948 8.62008 16.5171 9.0241 16.1405L11.9502 13.4133L14.6775 16.3394C15.054 16.7434 15.6868 16.7657 16.0908 16.3891C16.4948 16.0126 16.5171 15.3798 16.1405 14.9758L13.4133 12.0497L16.3394 9.32245Z"
-                    fill="currentColor" />
-                <path fill-rule="evenodd" clip-rule="evenodd"
-                    d="M1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12ZM12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z"
-                    fill="currentColor" />
-            </svg>
-        </div>
-    </button>
-</div>
-</div>
-    <div class="editorcolumn" style="margin-left:-16px" >
-        <canvas id="shapeEditorImage" width="256" height="192" draggable="false"></canvas>
     </div>
-</div>
 
-<div class="tooltip">This is a tooltip</div>
-<img id="shapeEditorImageRef" style="display: none;" src="reference_01.png">
+    <div id="threshwindow" style="display:none">
+        <div class="editorrow" style="margin-bottom:4px">
+            <div id="lblEditThreshTitle" style="font-family:Arial, Helvetica, sans-serif;color:black;margin: auto;">--</div>
+        </div>
+    
+        <div class="editorrow">
+
+            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                <div style="line-height: 17px;">
+                    <span id="edtImageHighLabel" class="regioneditortext2">Hi</span>
+                    <span id="edtImageHighTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="edtImageHighTempF" class="regionditortextsub3">--&deg;F</span>
+                </div>
+            </button>
+            <div style="width:4px"></div>
+    
+            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Alm Hi</span>
+                    <span id="edtImageMaxAlarmTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="edtImageMaxAlarmTempF" class="regionditortextsub3">--&deg;F</span>
+                </div>
+            </button>
+            <button id="btnChangeImageMaxAlarmTempLess" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,true,-0.1))"
+                onmouseup="clearFunc()" class="resizebutton">-</button>
+            <button id="btnChangeImageMaxAlarmTempMore" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,true,0.1))"
+                onmouseup="clearFunc()" class="resizebutton">+</button>
+    
+            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Level</span>
+                    <span id="edtImageMaxAlarmPriority" class="regionditortextsub3">1</span>
+                </div>
+            </button>
+            <button id="btnChangeImageMaxAlarmPriorityLess" onmousedown="changeAlarmPriority(true,-1)"
+                onmouseup="clearFunc()" class="resizebutton">-</button>
+            <button id="btnChangeImageMaxAlarmPriorityMore" onmousedown="changeAlarmPriority(true,1)"
+                onmouseup="clearFunc()" class="resizebutton">+</button>
+    
+            <button id="btnClearImageMaxAlarmPriority" onclick="clearAlarmThresh(true)" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Clear</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M14 3V3.28988C16.8915 4.15043 19 6.82898 19 10V17H20V19H4V17H5V10C5 6.82898 7.10851 4.15043 10 3.28988V3C10 1.89543 10.8954 1 12 1C13.1046 1 14 1.89543 14 3ZM7 17H17V10C17 7.23858 14.7614 5 12 5C9.23858 5 7 7.23858 7 10V17ZM14 21V20H10V21C10 22.1046 10.8954 23 12 23C13.1046 23 14 22.1046 14 21Z"
+                            fill="currentColor" />
+                    </svg>
+                </div>
+            </button>
+    
+        </div>
+
+    <div class="editorrow">
+
+        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <div style="line-height: 17px;">
+                <span id="edtImageLowLabel" class="regioneditortext2">Lo</span>
+                <span id="edtImageLowTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="edtImageLowTempF" class="regionditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+        <div style="width:4px"></div>
+
+        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <div style="line-height: 17px;">
+                <span class="regioneditortext2">Alm Lo</span>
+                <span id="edtImageMinAlarmTempC" class="regionditortextsub3">--&deg;C</span>
+                <span id="edtImageMinAlarmTempF" class="regionditortextsub3">--&deg;F</span>
+            </div>
+        </button>
+        <button id="btnChangeImageMinAlarmTempLess" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,-0.1))"
+            onmouseup="clearFunc()" class="resizebutton">-</button>
+        <button id="btnChangeImageMinAlarmTempMore" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,0.1))"
+            onmouseup="clearFunc()" class="resizebutton">+</button>
+
+        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <div style="line-height: 17px;">
+                <span class="regioneditortext2">Level</span>
+                <span id="edtImageMinAlarmPriority" class="regionditortextsub3">1</span>
+            </div>
+        </button>
+        <button id="btnChangeImageMinAlarmPriorityLess" onmousedown="changeAlarmPriority(false,-1)"
+            onmouseup="clearFunc()" class="resizebutton">-</button>
+        <button id="btnChangeImageMinAlarmPriorityMore" onmousedown="changeAlarmPriority(false,1)"
+            onmouseup="clearFunc()" class="resizebutton">+</button>
+
+        <button id="btnClearImageMinAlarmPriority" onclick="clearAlarmThresh(false)" class="resizebutton">
+            <div style="line-height: 4px;">
+                <span class="regioneditortext">Clear</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M14 3V3.28988C16.8915 4.15043 19 6.82898 19 10V17H20V19H4V17H5V10C5 6.82898 7.10851 4.15043 10 3.28988V3C10 1.89543 10.8954 1 12 1C13.1046 1 14 1.89543 14 3ZM7 17H17V10C17 7.23858 14.7614 5 12 5C9.23858 5 7 7.23858 7 10V17ZM14 21V20H10V21C10 22.1046 10.8954 23 12 23C13.1046 23 14 22.1046 14 21Z"
+                        fill="currentColor" />
+                </svg>
+            </div>
+        </button>
+
+    </div>
+    <div id="threshWindowMessage" class="editorrow" style="height: 30px;color:red">
+        The threshold is not valid.
+    </div>
+    <div class="editorrow" style="margin-top:8px;">
+        <button id="btnCancelImageAlarms" onclick="closeAlarmTemp()" class="resizebutton2">
+            <div style="line-height: 4px;">
+                <span class="regioneditortext">Cancel</span>
+            </div>
+        </button>
+        <div style="width:250px;"></div>
+        <button id="btnSaveImageAlarms" onclick="saveAlarmTemp()" class="resizebutton2">
+            <div style="line-height: 4px;">
+                <span class="regioneditortext">Save</span>
+            </div>
+        </button>
+    </div>
+    </div>
+
+    <div class="tooltip">This is a tooltip</div>
+    <img id="regionEditorImageRef" style="display: none;" src="reference_01.png">
 </body>
 
 </html>

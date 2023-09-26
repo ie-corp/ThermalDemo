@@ -65,7 +65,7 @@
 background-color:grey;
 }
 
-  .shapeditorletterbox
+  .regionditorletterbox
   {
     user-select: none; 
     min-width: 60px;
@@ -89,7 +89,7 @@ background-color:grey;
    
     }
 
-    .shapeditorletterboxwide
+    .regionditorletterboxwide
   {
     user-select: none; 
       width: 124px;
@@ -108,13 +108,13 @@ background-color:grey;
    
     }
 
-    table.shapeditorletterbox td
+    table.regionditorletterbox td
     {
       min-width: 60px;
       width: 60px;
     }
 
-    .shapeeditortext
+    .regioneditortext
     {
       white-space: nowrap;
       user-select: none; 
@@ -122,7 +122,7 @@ background-color:grey;
      line-height: 30px;       
     }
 
-    .shapeeditortext2
+    .regioneditortext2
     {
       white-space: nowrap;
       user-select: none; 
@@ -130,7 +130,7 @@ background-color:grey;
      line-height: 6px;       
     }
 
-    .shapeditortextsub
+    .regionditortextsub
     {
       white-space: nowrap;
       user-select: none; 
@@ -138,7 +138,7 @@ background-color:grey;
           
     }
 
-    .shapeditortextsub2
+    .regionditortextsub2
     {
       white-space: nowrap;
       display:inline-block;
@@ -146,7 +146,7 @@ background-color:grey;
       font-size: 15px;
     }
 
-    .shapeditortextsub3
+    .regionditortextsub3
     {
       white-space: nowrap;
       user-select: none; 
@@ -154,7 +154,7 @@ background-color:grey;
     }
 
 
-.shapebutton{
+.regionbutton{
   padding:0px;
   user-select: none;
   margin-bottom:4px; 
@@ -168,7 +168,7 @@ background-color:grey;
     font-weight: bold;
 }
 
-.shapebutton:disabled{
+.regionbutton:disabled{
   
   background-color:grey;
 
@@ -259,6 +259,23 @@ background-color:grey;
     color: #fff;
     font-size: 16px;
     pointer-events: none;
+  }
+
+  #threshwindow {
+    border: 3px solid black; 
+    user-select: none; 
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    position: absolute;
+    top: 140px;
+    left: 270px;
+  
+    padding: 5px;
+    background-color: #DADADA;
+    color: #fff;
+    font-size: 16px;
+   
+    box-shadow: 5px 10px rgba(0, 0, 0, 0.4);
   }
 
   
