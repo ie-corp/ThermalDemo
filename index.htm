@@ -6,20 +6,21 @@
     <title>Home</title>
     <link rel="stylesheet" href="css/style.css">
     <script>
-        
 
-        var regionEditor = { 
-        "imageAlarmThresh": {"loPriority" : 1, "hiPriority" : 1, "loTempC" : null, "hiTempC" : null},
-        "imageRotation": 0, 
-        "imageFilter": "none", 
-        "maxNameLength": 16, 
-        "imageNativeWidth": 256, 
-        "imageNativeHeight": 192, 
-        "imageWidth": 256, 
-        "imageHeight": 192, 
-        "imageScale": 1.0, 
-        "regions": [], 
-        "selectedRegionIndex": -1 };
+
+        var regionEditor = {
+            "imageAlarmThresh": { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null },
+            "imageRotation": 0,
+            "imageFilter": "none",
+            "maxNameLength": 16,
+            "imageNativeWidth": 256,
+            "imageNativeHeight": 192,
+            "imageWidth": 256,
+            "imageHeight": 192,
+            "imageScale": 1.0,
+            "regions": [],
+            "selectedRegionIndex": -1
+        };
         var regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
         var tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
         let regionTypes = ['point', 'polygon'];
@@ -29,7 +30,7 @@
         let tempsCelsius = [];
         let historyIndex = -1;
         let selectedPointIndex = -1;
-        let editAlarmThresh = {"loPriority" : 1, "hiPriority" : 1, "loTempC" : null, "hiTempC" : null};
+        let editAlarmThresh = { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null };
         let editAlarmIsImage = true;
 
 
@@ -206,7 +207,7 @@
             document.getElementById("btnChangeRegionMaxPriorityLevel").disabled = !hasActiveItem;
             document.getElementById("btnChangeRegionMinPriorityLevel").disabled = !hasActiveItem;
 
-           
+
 
 
 
@@ -673,25 +674,25 @@
             alert('not implemented yet')
         }
 
-        function changeAlarmPriority(isMax, value){
-            if(this.editAlarmThresh == null){
+        function changeAlarmPriority(isMax, value) {
+            if (this.editAlarmThresh == null) {
                 return;
             }
-            if(isMax){
+            if (isMax) {
                 this.editAlarmThresh.hiPriority += value;
-                if(this.editAlarmThresh.hiPriority > 9){
+                if (this.editAlarmThresh.hiPriority > 9) {
                     this.editAlarmThresh.hiPriority = 1;
                 }
-                else if(this.editAlarmThresh.hiPriority < 1){
+                else if (this.editAlarmThresh.hiPriority < 1) {
                     this.editAlarmThresh.hiPriority = 9;
                 }
             }
-            else{
+            else {
                 this.editAlarmThresh.loPriority += value;
-                if(this.editAlarmThresh.loPriority > 9){
+                if (this.editAlarmThresh.loPriority > 9) {
                     this.editAlarmThresh.loPriority = 1;
                 }
-                else if(this.editAlarmThresh.loPriority < 1){
+                else if (this.editAlarmThresh.loPriority < 1) {
                     this.editAlarmThresh.loPriority = 9;
                 }
             }
@@ -699,15 +700,15 @@
 
         }
 
-        function changeAlarmTempBy(isMaxTemp, changeAmount){
-           
-            if(this.editAlarmThresh == null){
+        function changeAlarmTempBy(isMaxTemp, changeAmount) {
+
+            if (this.editAlarmThresh == null) {
                 return;
             }
             if (isMaxTemp) {
-                
+
                 let defaultTempC = this.editAlarmThresh.hiTempC;
-                if(defaultTempC == null){
+                if (defaultTempC == null) {
                     defaultTempC = tempRanges.highCelsius;
                 }
                 let tempCelsius = defaultTempC + changeAmount;
@@ -719,7 +720,7 @@
             }
             else {
                 let defaultTempC = this.editAlarmThresh.loTempC;
-                if(defaultTempC == null){
+                if (defaultTempC == null) {
                     defaultTempC = tempRanges.lowCelsius;
                 }
                 let tempCelsius = defaultTempC + changeAmount;
@@ -728,19 +729,19 @@
                 tempCelsius = Math.max(-999, tempCelsius);
                 this.editAlarmThresh.loTempC = tempCelsius;
             }
-            
+
             updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
         }
 
         function clearAlarmThresh(isMaxTemp) {
-            if(this.editAlarmThresh == null){
+            if (this.editAlarmThresh == null) {
                 return;
             }
-            if(isMaxTemp){
+            if (isMaxTemp) {
                 this.editAlarmThresh.hiTempC = null;
                 this.editAlarmThresh.hiPriority = 1;
             }
-            else{
+            else {
                 this.editAlarmThresh.loTempC = null;
                 this.editAlarmThresh.loPriority = 1;
             }
@@ -748,12 +749,12 @@
         }
 
 
-        function updateThreshDisplay(isImage, thresh){
-            if(!isImage && (this.regionEditor.selectedRegionIndex < 0 || this.regionEditor.selectedRegionIndex >= this.regionEditor.regions.length)){
+        function updateThreshDisplay(isImage, thresh) {
+            if (!isImage && (this.regionEditor.selectedRegionIndex < 0 || this.regionEditor.selectedRegionIndex >= this.regionEditor.regions.length)) {
                 this.closeAlarmTemp();
                 return;
             }
-            
+
             let region = isImage ? null : this.regionEditor.regions[this.regionEditor.selectedRegionIndex];
             let strElm = "edtImage";
             let strBtnChange = "btnChangeImage";
@@ -763,87 +764,86 @@
             document.getElementById(strElm + "HighLabel").innerHTML = isImage ? "Img Hi" : "Rgn Hi";
             document.getElementById(strElm + "LowLabel").innerHTML = isImage ? "Img Lo" : "Rgn Lo";
 
-            if(isImage){
+            if (isImage) {
                 document.getElementById(strElm + "HighTempC").innerHTML = document.getElementById("valImageHighTempC").innerHTML;
-                document.getElementById(strElm + "HighTempF").innerHTML =  document.getElementById("valImageHighTempF").innerHTML;
-                document.getElementById(strElm + "LowTempC").innerHTML =  document.getElementById("valImageLowTempC").innerHTML;
-                document.getElementById(strElm + "LowTempF").innerHTML =  document.getElementById("valImageLowTempF").innerHTML;
+                document.getElementById(strElm + "HighTempF").innerHTML = document.getElementById("valImageHighTempF").innerHTML;
+                document.getElementById(strElm + "LowTempC").innerHTML = document.getElementById("valImageLowTempC").innerHTML;
+                document.getElementById(strElm + "LowTempF").innerHTML = document.getElementById("valImageLowTempF").innerHTML;
             }
-            else
-            {
+            else {
                 document.getElementById(strElm + "HighTempC").innerHTML = document.getElementById("valRegionHighTempC").innerHTML;
-                document.getElementById(strElm + "HighTempF").innerHTML =  document.getElementById("valRegionHighTempF").innerHTML;
-                document.getElementById(strElm + "LowTempC").innerHTML =  document.getElementById("valRegionLowTempC").innerHTML;
-                document.getElementById(strElm + "LowTempF").innerHTML =  document.getElementById("valRegionLowTempF").innerHTML;
+                document.getElementById(strElm + "HighTempF").innerHTML = document.getElementById("valRegionHighTempF").innerHTML;
+                document.getElementById(strElm + "LowTempC").innerHTML = document.getElementById("valRegionLowTempC").innerHTML;
+                document.getElementById(strElm + "LowTempF").innerHTML = document.getElementById("valRegionLowTempF").innerHTML;
             }
-            
-            
-            document.getElementById(strElm + "MaxAlarmTempC").innerHTML = getDisplayTempFromCelsius(thresh.hiTempC,false) + '&deg;C';
-            document.getElementById(strElm + "MaxAlarmTempF").innerHTML = getDisplayTempFromCelsius(thresh.hiTempC,true) + '&deg;F';
-            document.getElementById(strElm + "MaxAlarmPriority").innerHTML = (thresh.hiTempC == null ? "--": thresh.hiPriority);
+
+
+            document.getElementById(strElm + "MaxAlarmTempC").innerHTML = getDisplayTempFromCelsius(thresh.hiTempC, false) + '&deg;C';
+            document.getElementById(strElm + "MaxAlarmTempF").innerHTML = getDisplayTempFromCelsius(thresh.hiTempC, true) + '&deg;F';
+            document.getElementById(strElm + "MaxAlarmPriority").innerHTML = (thresh.hiTempC == null ? "--" : thresh.hiPriority);
             document.getElementById(strBtnChange + "MaxAlarmPriorityLess").disabled = thresh.hiTempC == null;
             document.getElementById(strBtnChange + "MaxAlarmPriorityMore").disabled = thresh.hiTempC == null;
             document.getElementById(strBtnClear + "MaxAlarmPriority").disabled = thresh.hiTempC == null;
 
-            
 
-            document.getElementById(strElm + "MinAlarmTempC").innerHTML = getDisplayTempFromCelsius(thresh.loTempC,false) + '&deg;C';
-            document.getElementById(strElm + "MinAlarmTempF").innerHTML = getDisplayTempFromCelsius(thresh.loTempC,true) + '&deg;F'; 
-            document.getElementById(strElm + "MinAlarmPriority").innerHTML = (thresh.loTempC == null ? "--": thresh.loPriority);
+
+            document.getElementById(strElm + "MinAlarmTempC").innerHTML = getDisplayTempFromCelsius(thresh.loTempC, false) + '&deg;C';
+            document.getElementById(strElm + "MinAlarmTempF").innerHTML = getDisplayTempFromCelsius(thresh.loTempC, true) + '&deg;F';
+            document.getElementById(strElm + "MinAlarmPriority").innerHTML = (thresh.loTempC == null ? "--" : thresh.loPriority);
             document.getElementById(strBtnChange + "MinAlarmPriorityLess").disabled = thresh.loTempC == null;
             document.getElementById(strBtnChange + "MinAlarmPriorityMore").disabled = thresh.loTempC == null;
             document.getElementById(strBtnClear + "MinAlarmPriority").disabled = thresh.loTempC == null;
 
             let invalidMessage = getAlarmThreshIsValidMessage(this.editAlarmIsImage, this.editAlarmThresh);
             document.getElementById("btnSaveImageAlarms").disabled = invalidMessage.length > 0;
-            
+
             document.getElementById("threshWindowMessage").innerHTML = invalidMessage;
-            
-            
+
+
             document.getElementById("threshwindow").style.display = "block";
 
-           
+
         }
 
-        function closeAlarmTemp(){
+        function closeAlarmTemp() {
             document.getElementById("threshwindow").style.display = "none";
         }
 
-        function getAlarmThreshIsValidMessage(isImage, thresh){
-            if(thresh == null){
+        function getAlarmThreshIsValidMessage(isImage, thresh) {
+            if (thresh == null) {
                 return "Thresholds are null";
             }
-            if(thresh.hiTempC != null && thresh.loTempC != null && thresh.hiTempC < thresh.loTempC){
+            if (thresh.hiTempC != null && thresh.loTempC != null && thresh.hiTempC < thresh.loTempC) {
                 return "Alarm High Temp Is Less Than Alarm Low Temp.";
             }
 
             return '';
         }
 
-        function saveAlarmTemp(){
+        function saveAlarmTemp() {
             let hadChange = false;
-            if(this.editAlarmThresh != null){
+            if (this.editAlarmThresh != null) {
                 let strValidMessage = getAlarmThreshIsValidMessage(this.editAlarmIsImage, this.editAlarmThresh);
-                if(strValidMessage.length > 0){
+                if (strValidMessage.length > 0) {
                     return;
                 }
-                if(this.editAlarmIsImage){
-                    if(JSON.stringify(this.regionEditor.imageAlarmThresh) != JSON.stringify(this.editAlarmThresh)){
+                if (this.editAlarmIsImage) {
+                    if (JSON.stringify(this.regionEditor.imageAlarmThresh) != JSON.stringify(this.editAlarmThresh)) {
                         hadChange = true;
                         this.regionEditor.imageAlarmThresh = JSON.parse(JSON.stringify(this.editAlarmThresh));
                     }
 
-                   
+
                 }
-                else{
+                else {
                     let region = this.regionEditor.regions[this.regionEditor.selectedRegionIndex];
-                    if(JSON.stringify(region.alarmThresh) != JSON.stringify(this.editAlarmThresh)){
+                    if (JSON.stringify(region.alarmThresh) != JSON.stringify(this.editAlarmThresh)) {
                         hadChange = true;
                         region.alarmThresh = JSON.parse(JSON.stringify(this.editAlarmThresh));
                     }
                 }
                 recalcEditor();
-                if(hadChange){
+                if (hadChange) {
                     addHistory('change alarm temp', null, true);//force this
                 }
             }
@@ -853,25 +853,25 @@
 
         function changeAlarmTemp(isImage, isMax) {
             console.log('showing alarm settings');
-            if(isImage){
+            if (isImage) {
                 this.editAlarmThresh = JSON.parse(JSON.stringify(this.regionEditor.imageAlarmThresh));
                 this.editAlarmIsImage = true;
             }
-            else{
-                if(this.regionEditor.selectedRegionIndex >= 0 && this.regionEditor.selectedRegionIndex < this.regionEditor.regions.length){
+            else {
+                if (this.regionEditor.selectedRegionIndex >= 0 && this.regionEditor.selectedRegionIndex < this.regionEditor.regions.length) {
                     this.editAlarmThresh = JSON.parse(JSON.stringify(this.regionEditor.regions[this.regionEditor.selectedRegionIndex].alarmThresh));
                     this.editAlarmIsImage = false;
                 }
-                else{
+                else {
                     return;
-                }  
+                }
             }
             selectRegionEditorTool('look');
             updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
-            
+
             //{"loPriority" : 1, "hiPriority" : 1, "loTempC" : null, "hiTempC" : null}
-            
-            
+
+
         }
 
         function changeImageFilterNext(nextFilter) {
@@ -1319,12 +1319,12 @@
             }
         }
 
-        
-        
 
-        
-        
-        
+
+
+
+
+
 
         function getIndexOfTempFromXY(posX, posY) {
             let indexTempC = -1;
@@ -1544,13 +1544,110 @@
             document.getElementById("valImageHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
             document.getElementById("valImageLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
             document.getElementById("valImageLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true) + '&deg;F';
-            
+
             tempRanges.highCelsius = regionTemps.highCelsius;
             tempRanges.lowCelsius = regionTemps.lowCelsius;
-        
+
+        }
+
+        function getTouchOffsetPosition(evt, parent) {
+            var position = {
+                x: (evt.targetTouches) ? evt.targetTouches[0].pageX : evt.clientX,
+                y: (evt.targetTouches) ? evt.targetTouches[0].pageY : evt.clientY
+            };
+
+            while (parent.offsetParent) {
+                position.x -= parent.offsetLeft - parent.scrollLeft;
+                position.y -= parent.offsetTop - parent.scrollTop;
+
+                parent = parent.offsetParent;
+            }
+
+            return position;
         }
 
 
+        function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown) {
+            const tooltip = document.querySelector('.tooltip');
+            if (activeTool == 'look') {
+                //const image = document.querySelector('#regionEditorImage');
+
+
+                let x = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
+                let y = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+                let tempX = -1;
+                let tempY = -1;
+                let indexTempC = -1;
+                let posX = -1;
+                let posY = -1;
+
+                let placementOffsetX = 0;
+                let placementOffsetY = 0;
+                if (offsetX > regionEditor.imageWidth / 2) {
+                    placementOffsetX -= 146;//bottom left x
+                }
+                else {
+                    placementOffsetX += 10;//left side
+                }
+
+                if (offsetY > regionEditor.imageHeight / 2) {
+                    placementOffsetY -= 90;
+                }
+                else {
+                    placementOffsetY += 20;
+                }
+
+                tooltip.style.top = `${pageY + placementOffsetY}px`;
+                tooltip.style.left = `${pageX + placementOffsetX}px`;
+                if (regionEditor.imageRotation == 0) {
+                    posX = Math.min(x, regionEditor.imageNativeWidth);
+                    posY = Math.min(y, regionEditor.imageNativeHeight);
+
+                }
+                else if (regionEditor.imageRotation == 180) {
+                    posX = Math.min(x, regionEditor.imageNativeWidth);
+                    posY = Math.min(y, regionEditor.imageNativeHeight);
+
+                }
+                else if (regionEditor.imageRotation == 90) {
+                    posX = Math.min(x, regionEditor.imageNativeHeight);
+                    posY = Math.min(y, regionEditor.imageNativeWidth);
+
+                }
+                else if (regionEditor.imageRotation == 270) {
+                    posX = Math.min(x, regionEditor.imageNativeHeight);
+                    posY = Math.min(y, regionEditor.imageNativeWidth);
+
+                }
+                else {
+                    console.error('unsupported rotation: ' + regionEditor.imageRotation);
+                    tooltip.textContent = 'unsupported rotation: ' + regionEditor.imageRotation;
+                    return;
+                }
+                indexTempC = getIndexOfTempFromXY(posX, posY);
+                if (indexTempC > -1 && indexTempC < tempsCelsius.length) {
+                    let tempC = tempsCelsius[indexTempC];
+                    tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` +
+                        `${getDisplayTempFromCelsius(tempC, false)}&deg;C<br/>` +
+                        `${getDisplayTempFromCelsius(tempC, true)}&deg;F`;
+                }
+                else {
+                    console.error('invalid indexTempC: ' + indexTempC);
+                    tooltip.textContent = 'No temperature reading at this location.';
+                }
+            }
+            else {
+                tooltip.style.display = 'none';
+            }
+
+
+            if (isLeftMouseDown && regionEditor.selectedRegionIndex >= 0) {
+                processScreenTouchCoordinates(offsetX, offsetY, true);
+
+            }
+
+
+        }
 
         function go() {
             regionEditor.imageScale = 4.0;
@@ -1577,9 +1674,37 @@
             });
 
 
+
+            image.addEventListener('touchstart', (e) => {
+
+                var tex = getTouchOffsetPosition(e, image);
+                if (regionEditor.selectedRegionIndex >= 0) {
+                    console.log('touchstart');
+                    processScreenTouchCoordinates(tex.x, tex.y, true);
+
+                }
+
+            });
+
+            image.addEventListener('touchmove', (e) => {
+                e.preventDefault();//stop scrolling of the page
+                var tex = getTouchOffsetPosition(e, image);
+                let pageX = 0;
+                let pageY = 0;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    pageX = e.changedTouches[i].pageX;
+                    pageY = e.changedTouches[i].pageY;
+                    break;
+                }
+                pointerMove(tex.x, tex.y, pageX, pageY, true, true);
+
+            });
+
+
+
+
             image.addEventListener('mouseover', (e) => {
                 tooltip.style.display = 'block';
-                //tooltip.textContent = `X: ${e.offsetX}, Y: ${e.offsetY}`;
             });
 
 
@@ -1588,96 +1713,14 @@
             });
 
             image.addEventListener('mousemove', (e) => {
-
-                if (activeTool == 'look') {
-
-
-                    let x = Math.max(0, Math.round(e.offsetX / regionEditor.imageScale));
-                    let y = Math.max(0, Math.round(e.offsetY / regionEditor.imageScale));
-                    let tempX = -1;
-                    let tempY = -1;
-                    let indexTempC = -1;
-                    let posX = -1;
-                    let posY = -1;
-
-                    let placementOffsetX = 0;
-                    let placementOffsetY = 0;
-                    if (e.offsetX > regionEditor.imageWidth / 2) {
-                        placementOffsetX -= 146;//bottom left x
-                    }
-                    else {
-                        placementOffsetX += 10;//left side
-                    }
-
-                    if (e.offsetY > regionEditor.imageHeight / 2) {
-                        placementOffsetY -= 90;
-                    }
-                    else {
-                        placementOffsetY += 20;
-                    }
-
-                    tooltip.style.top = `${e.pageY + placementOffsetY}px`;
-                    tooltip.style.left = `${e.pageX + placementOffsetX}px`;
-                    if (regionEditor.imageRotation == 0) {
-                        posX = Math.min(x, regionEditor.imageNativeWidth);
-                        posY = Math.min(y, regionEditor.imageNativeHeight);
-
-                    }
-                    else if (regionEditor.imageRotation == 180) {
-                        posX = Math.min(x, regionEditor.imageNativeWidth);
-                        posY = Math.min(y, regionEditor.imageNativeHeight);
-
-                    }
-                    else if (regionEditor.imageRotation == 90) {
-                        posX = Math.min(x, regionEditor.imageNativeHeight);
-                        posY = Math.min(y, regionEditor.imageNativeWidth);
-
-                    }
-                    else if (regionEditor.imageRotation == 270) {
-                        posX = Math.min(x, regionEditor.imageNativeHeight);
-                        posY = Math.min(y, regionEditor.imageNativeWidth);
-
-                    }
-                    else {
-                        console.error('unsupported rotation: ' + regionEditor.imageRotation);
-                        tooltip.textContent = 'unsupported rotation: ' + regionEditor.imageRotation;
-                        return;
-                    }
-                    indexTempC = getIndexOfTempFromXY(posX, posY);
-                    if (indexTempC > -1 && indexTempC < tempsCelsius.length) {
-                        let tempC = tempsCelsius[indexTempC];
-                        tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` +
-                            `${getDisplayTempFromCelsius(tempC, false)}&deg;C<br/>` +
-                            `${getDisplayTempFromCelsius(tempC, true)}&deg;F`;
-                    }
-                    else {
-                        console.error('invalid indexTempC: ' + indexTempC);
-                        tooltip.textContent = 'No temperature reading at this location.';
-                    }
-                }
-                else {
-                    tooltip.style.display = 'none';
-                }
-
-
-
-
+                let isLeftMouseClick = false;
                 if ("buttons" in e) {
                     if (e.buttons == 1) {
-                        if (regionEditor.selectedRegionIndex >= 0) {
-                            processScreenTouchCoordinates(e.offsetX, e.offsetY, true);
-
-                        }
+                        isLeftMouseClick = true;
                     }
                 }
 
-
-
-
-
-
-
-
+                pointerMove(e.offsetX, e.offsetY, e.pageX, e.pageY, false, isLeftMouseClick);
             }
 
             );
@@ -1735,7 +1778,7 @@
             let regionHeight = Math.round(regionType == 'point' ? 1 : regionEditor.imageNativeHeight / 4);
             let regionPoints = null;
             let regionAngle = 0.0;
-            
+
             if (regionEditor.regions.length > 0) {
                 let lastRegion = null;
                 let lastResIndex = regionEditor.regions.findLastIndex(item => regionType === item.type);
@@ -1758,7 +1801,7 @@
                 else {
                     //console.log('did not find last region of type ' + regionType);
                     lastRegion = regionEditor.regions[regionEditor.regions.length - 1];
-                    
+
 
 
                 }
@@ -1778,16 +1821,18 @@
 
                 selectedPointIndex = 0;
             }
-            let region = { "name": regionName, 
-            "alarmThresh": {"loPriority" : 1, "hiPriority" : 1, "loTempC" : null, "hiTempC" : null},
-            "type": regionType, 
-            "color": colorToUse, 
-            "x": regionX, 
-            "y": regionY, 
-            "width": regionWidth, 
-            "height": regionHeight, 
-            "angle": regionAngle, 
-            "points": regionPoints };
+            let region = {
+                "name": regionName,
+                "alarmThresh": { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null },
+                "type": regionType,
+                "color": colorToUse,
+                "x": regionX,
+                "y": regionY,
+                "width": regionWidth,
+                "height": regionHeight,
+                "angle": regionAngle,
+                "points": regionPoints
+            };
 
             fixRegionOutOfBounds(region);
             regionEditor.regions.push(region);
@@ -1856,13 +1901,13 @@
             </div>
         </button>
 
-        
+
         <button id="btnChangeImageMaxPriorityLevel" onclick="changeAlarmTemp(true,true)" class="resizebutton">
             <div style="line-height: 19px;">
                 <span class="regioneditortext2">Alarm</span>
                 <span id="valImageMaxPriorityLevel" class="regioneditortext2">--</span>
                 <span class="regioneditortext2">Level</span>
-                
+
             </div>
         </button>
 
@@ -1890,7 +1935,7 @@
                 <span class="regioneditortext2">Alarm</span>
                 <span id="valImageMinPriorityLevel" class="regioneditortext2">--</span>
                 <span class="regioneditortext2">Level</span>
-                
+
             </div>
         </button>
 
@@ -1971,7 +2016,7 @@
                 <span class="regioneditortext2">Alarm</span>
                 <span id="valRegionMaxPriorityLevel" class="regioneditortext2">--</span>
                 <span class="regioneditortext2">Level</span>
-                
+
             </div>
         </button>
 
@@ -2000,7 +2045,7 @@
                 <span class="regioneditortext2">Alarm</span>
                 <span id="valRegionMinPriorityLevel" class="regioneditortext2">--</span>
                 <span class="regioneditortext2">Level</span>
-                
+
             </div>
         </button>
 
@@ -2153,9 +2198,10 @@
 
     <div id="threshwindow" style="display:none">
         <div class="editorrow" style="margin-bottom:4px">
-            <div id="lblEditThreshTitle" style="font-family:Arial, Helvetica, sans-serif;color:black;margin: auto;">--</div>
+            <div id="lblEditThreshTitle" style="font-family:Arial, Helvetica, sans-serif;color:black;margin: auto;">--
+            </div>
         </div>
-    
+
         <div class="editorrow">
 
             <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
@@ -2166,7 +2212,7 @@
                 </div>
             </button>
             <div style="width:4px"></div>
-    
+
             <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
                 <div style="line-height: 17px;">
                     <span class="regioneditortext2">Alm Hi</span>
@@ -2178,7 +2224,7 @@
                 onmouseup="clearFunc()" class="resizebutton">-</button>
             <button id="btnChangeImageMaxAlarmTempMore" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,true,0.1))"
                 onmouseup="clearFunc()" class="resizebutton">+</button>
-    
+
             <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
                 <div style="line-height: 17px;">
                     <span class="regioneditortext2">Level</span>
@@ -2189,7 +2235,7 @@
                 onmouseup="clearFunc()" class="resizebutton">-</button>
             <button id="btnChangeImageMaxAlarmPriorityMore" onmousedown="changeAlarmPriority(true,1)"
                 onmouseup="clearFunc()" class="resizebutton">+</button>
-    
+
             <button id="btnClearImageMaxAlarmPriority" onclick="clearAlarmThresh(true)" class="resizebutton">
                 <div style="line-height: 4px;">
                     <span class="regioneditortext">Clear</span>
@@ -2200,71 +2246,72 @@
                     </svg>
                 </div>
             </button>
-    
+
         </div>
 
-    <div class="editorrow">
+        <div class="editorrow">
 
-        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
-            <div style="line-height: 17px;">
-                <span id="edtImageLowLabel" class="regioneditortext2">Lo</span>
-                <span id="edtImageLowTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="edtImageLowTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-        <div style="width:4px"></div>
+            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                <div style="line-height: 17px;">
+                    <span id="edtImageLowLabel" class="regioneditortext2">Lo</span>
+                    <span id="edtImageLowTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="edtImageLowTempF" class="regionditortextsub3">--&deg;F</span>
+                </div>
+            </button>
+            <div style="width:4px"></div>
 
-        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Alm Lo</span>
-                <span id="edtImageMinAlarmTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="edtImageMinAlarmTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-        <button id="btnChangeImageMinAlarmTempLess" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,-0.1))"
-            onmouseup="clearFunc()" class="resizebutton">-</button>
-        <button id="btnChangeImageMinAlarmTempMore" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,0.1))"
-            onmouseup="clearFunc()" class="resizebutton">+</button>
+            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Alm Lo</span>
+                    <span id="edtImageMinAlarmTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="edtImageMinAlarmTempF" class="regionditortextsub3">--&deg;F</span>
+                </div>
+            </button>
+            <button id="btnChangeImageMinAlarmTempLess"
+                onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,-0.1))" onmouseup="clearFunc()"
+                class="resizebutton">-</button>
+            <button id="btnChangeImageMinAlarmTempMore" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,0.1))"
+                onmouseup="clearFunc()" class="resizebutton">+</button>
 
-        <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Level</span>
-                <span id="edtImageMinAlarmPriority" class="regionditortextsub3">1</span>
-            </div>
-        </button>
-        <button id="btnChangeImageMinAlarmPriorityLess" onmousedown="changeAlarmPriority(false,-1)"
-            onmouseup="clearFunc()" class="resizebutton">-</button>
-        <button id="btnChangeImageMinAlarmPriorityMore" onmousedown="changeAlarmPriority(false,1)"
-            onmouseup="clearFunc()" class="resizebutton">+</button>
+            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Level</span>
+                    <span id="edtImageMinAlarmPriority" class="regionditortextsub3">1</span>
+                </div>
+            </button>
+            <button id="btnChangeImageMinAlarmPriorityLess" onmousedown="changeAlarmPriority(false,-1)"
+                onmouseup="clearFunc()" class="resizebutton">-</button>
+            <button id="btnChangeImageMinAlarmPriorityMore" onmousedown="changeAlarmPriority(false,1)"
+                onmouseup="clearFunc()" class="resizebutton">+</button>
 
-        <button id="btnClearImageMinAlarmPriority" onclick="clearAlarmThresh(false)" class="resizebutton">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Clear</span>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd"
-                        d="M14 3V3.28988C16.8915 4.15043 19 6.82898 19 10V17H20V19H4V17H5V10C5 6.82898 7.10851 4.15043 10 3.28988V3C10 1.89543 10.8954 1 12 1C13.1046 1 14 1.89543 14 3ZM7 17H17V10C17 7.23858 14.7614 5 12 5C9.23858 5 7 7.23858 7 10V17ZM14 21V20H10V21C10 22.1046 10.8954 23 12 23C13.1046 23 14 22.1046 14 21Z"
-                        fill="currentColor" />
-                </svg>
-            </div>
-        </button>
+            <button id="btnClearImageMinAlarmPriority" onclick="clearAlarmThresh(false)" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Clear</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M14 3V3.28988C16.8915 4.15043 19 6.82898 19 10V17H20V19H4V17H5V10C5 6.82898 7.10851 4.15043 10 3.28988V3C10 1.89543 10.8954 1 12 1C13.1046 1 14 1.89543 14 3ZM7 17H17V10C17 7.23858 14.7614 5 12 5C9.23858 5 7 7.23858 7 10V17ZM14 21V20H10V21C10 22.1046 10.8954 23 12 23C13.1046 23 14 22.1046 14 21Z"
+                            fill="currentColor" />
+                    </svg>
+                </div>
+            </button>
 
-    </div>
-    <div id="threshWindowMessage" class="editorrow" style="height: 30px;color:red">
-        The threshold is not valid.
-    </div>
-    <div class="editorrow" style="margin-top:8px;">
-        <button id="btnCancelImageAlarms" onclick="closeAlarmTemp()" class="resizebutton2">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Cancel</span>
-            </div>
-        </button>
-        <div style="width:250px;"></div>
-        <button id="btnSaveImageAlarms" onclick="saveAlarmTemp()" class="resizebutton2">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Save</span>
-            </div>
-        </button>
-    </div>
+        </div>
+        <div id="threshWindowMessage" class="editorrow" style="height: 30px;color:red">
+            The threshold is not valid.
+        </div>
+        <div class="editorrow" style="margin-top:8px;">
+            <button id="btnCancelImageAlarms" onclick="closeAlarmTemp()" class="resizebutton2">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Cancel</span>
+                </div>
+            </button>
+            <div style="width:250px;"></div>
+            <button id="btnSaveImageAlarms" onclick="saveAlarmTemp()" class="resizebutton2">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Save</span>
+                </div>
+            </button>
+        </div>
     </div>
 
     <div class="tooltip">This is a tooltip</div>
