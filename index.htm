@@ -6,7 +6,8 @@
     <title>Home</title>
     <link rel="stylesheet" href="css/style.css">
     <script>
-
+        let materialMap = [];
+        let distanceMap = [];
 
         var regionEditor = {
             "imageAlarmThresh": { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null },
@@ -34,6 +35,9 @@
         let selectedPointIndex = -1;
         let editAlarmThresh = { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null };
         let editAlarmIsImage = true;
+        let brushSize = 10;
+        let selectedDistance = 1.0;
+        let selectedMaterial = { "name": "Shiny Mirror", "emissivity": 1.0 };
 
 
         var activeFunc = null;
@@ -69,6 +73,17 @@
             activeLayer = layer;
             activeTool = 'look';
             recalcEditor();
+        }
+
+        function changeBrushSizeBy(amount) {
+            brushSize += amount;
+            if (brushSize < 1) {
+                brushSize = 1;
+            }
+            else if (brushSize > 100) {
+                brushSize = 100;
+            }
+            document.getElementById("valBrushSize").innerHTML = brushSize;
         }
 
         function selectRegionEditorTool(toolName) {
@@ -211,11 +226,11 @@
             let activeToolColor = 'yellow';
             let inactiveToolColor = 'white';
 
-            
+
             document.getElementById("rowRegionTools").style.display = (activeLayer != 'Region' ? 'none' : '');
             document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
             document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
-            
+
 
             document.getElementById("btnPolygonAdd").style.display = (activeLayer != 'Region' ? 'none' : '');
             document.getElementById("btnPointAdd").style.display = (activeLayer != 'Region' ? 'none' : '');
@@ -270,8 +285,8 @@
             document.getElementById("btnChangeSizeLess").disabled = !paintOrEraseSelected;
             document.getElementById("btnChangeSizeMore").style.display = (!paintOrEraseSelected ? 'none' : '');
             document.getElementById("btnChangeSizeMore").disabled = !paintOrEraseSelected
-            
-            
+
+
 
             document.getElementById("btnDeleteRegion").disabled = !hasActiveItem;
             document.getElementById("btnChangeRegion").disabled = !hasActiveItem;
@@ -305,11 +320,107 @@
             return num / precision;
         };
 
+
+        function changeDistanceBy(amount) {
+            if (selectedDistance == null) {
+                changeDistance(1.00);
+            }
+            else {
+                changeDistance(selectedDistance + amount);
+            }
+        }
+
+        function changeDistance(distance){
+            
+            if (distance > 999) {
+                distance = 999;
+            }
+            else if (distance <= 0) {
+                distance = 0.01;
+            }
+            selectedDistance = distance;
+            document.getElementById('valDistanceMeters').innerHTML = selectedDistance.toFixed(2) + "m";
+            document.getElementById('valDistanceInches').innerHTML = metersToInches(selectedDistance).toFixed(1) + "in";
+        }
+
+        function metersToInches(meters) {
+            return meters * 39.3701;
+        }
+
+        function clearDistanceMap() {
+
+            distanceMap = new Array(49152);
+            recalcEditor();
+        }
+
+        function pickMaterial(){
+            alert('Not Fully Implemented. A Window would appear with a list of materials to choose from.');
+            let material = selectedMaterial;
+            if(material == null || material.name == null || material.emissivity == null){
+                alert('invalid material');
+                return;
+            }
+            let materialName = prompt('Enter Material Name consisting of only letters, numbers and spaces', "Oxidized Steel");
+            
+            if(materialName == null || materialName.trim() == ''){
+                console.log('invalid material name');
+                return;
+            }
+            else{
+                //validate material name
+                materialName = materialName.trim();
+                if(materialName.length > 20){
+                    alert('invalid material name length');
+                    return;
+                }
+                let regex = /^[a-zA-Z0-9 ]*$/;
+                if(!regex.test(materialName)){
+                    alert('invalid material name characters');
+                    return;
+                }
+            }
+            let emissivity = prompt('Enter Emissivity 0.00-1.00', "0.90");
+            if(emissivity == null || emissivity.trim() == ''){
+                console.log('invalid emissivity');
+                return;
+            }
+            else{
+                //validate emissivity
+                emissivity = parseFloat(emissivity.trim());
+                if(emissivity < 0.00 || emissivity > 1.00){
+                    alert('invalid emissivity');
+                    return;
+                }
+            }
+            let newMaterial = {"name": materialName, "emissivity": emissivity};
+            changeMaterial(newMaterial);
+
+        }
+
+        function changeMaterial(material) {
+            if(material == null || material.name == null || material.emissivity == null){
+                console.error('invalid material');
+                return;
+            }
+
+            selectedMaterial ={"name": material.name, "emissivity": material.emissivity};
+            document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
+            document.getElementById('valMaterialEmissivity').innerHTML = selectedMaterial.emissivity.toFixed(2);
+        }
+
+        function clearMaterialMap() {
+            materialMap = new Array(49152);
+            recalcEditor();
+        }
+
         function fillTempsWithTestData() {
-            tempsCelsius = [49152];//256*192
+            distanceMap = new Array(49152);
+            materialMap = new Array(49152);
+            tempsCelsius = new Array(49152);//256*192
             let length = regionEditor.imageNativeWidth * regionEditor.imageNativeHeight;
             for (let i = 0; i < length; i++) {
                 tempsCelsius[i] = randomNumberGenerator(35, 40, 1, true);
+
             }
         }
 
@@ -353,12 +464,32 @@
 
 
 
-            if (activeTool != 'look') {
+            if (activeTool != 'look' && activeTool != 'sample') {
                 const tooltip = document.querySelector('.tooltip');
                 tooltip.style.display = 'none';
             }
 
             document.getElementById("valActiveLayer").innerHTML = activeLayer;
+            document.getElementById("valBrushSize").innerHTML = brushSize;
+
+            if (selectedDistance != null) {
+                document.getElementById('valDistanceMeters').innerHTML = selectedDistance.toFixed(2) + "m";
+                document.getElementById('valDistanceInches').innerHTML = metersToInches(selectedDistance).toFixed(1) + "in";
+            }
+            else {
+                document.getElementById('valDistanceMeters').innerHTML = "--m";
+                document.getElementById('valDistanceInches').innerHTML = "--in";
+            }
+
+            if (selectedMaterial != null) {
+                document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
+                document.getElementById('valMaterialEmissivity').innerHTML = selectedMaterial.emissivity.toFixed(2);
+            }
+            else {
+                document.getElementById('valMaterialName').innerHTML = "--";
+                document.getElementById('valMaterialEmissivity').innerHTML = "--";
+            }
+
 
             var valueZoom = document.getElementById("valueZoom");
             valueZoom.innerHTML = Math.round(regionEditor.imageScale * 100) + "%";
@@ -533,14 +664,163 @@
                 ctx.drawImage(regionEditorImageRef, 0, 0, canvas.width, canvas.height);
             }
             ctx.filter = 'none';
+            if (activeLayer == 'Matl') {
+                drawMaterialMap(ctx, scale);
+            }
+            else if (activeLayer == 'Dist') {
+                drawDistanceMap(ctx, scale);
+            }
+            else {
+                drawRegionMap(ctx, scale);
+            }
 
+            var ctxMain = regionEditorImage.getContext("2d");
+            regionEditorImage.width = canvas.width;
+            regionEditorImage.height = canvas.height;
+            ctxMain.clearRect(0, 0, regionEditorImage.width, regionEditorImage.height);
+            ctxMain.drawImage(canvas, 0, 0, regionEditorImage.width, regionEditorImage.height);
+        }
+
+
+        
+        function getColorRampValueRGBA(min, max, num, alpha, rgbColors) {
+            // Check if the parameters are valid
+            if (min > max || num < min || num > max || rgbColors.length < 2) {
+                return null; // Invalid input, return null
+            }
+
+            if(min == max){
+                //return the first item in the array
+                return 'rgba(' +
+                Math.round(rgbColors[0][0]) + ',' + // Red
+                Math.round(rgbColors[0][1]) + ',' + // Green
+                Math.round(rgbColors[0][2]) + ',' + //Blue
+                alpha + ')'; // Alpha
+                console.log('min == max')
+            }
+
+            // Calculate the relative position of the number in the range [0, 1]
+            var position = (num - min) / (max - min);
+
+            // Find the index of the lower color in the array
+            var index = Math.floor(position * (rgbColors.length - 1));
+
+            // Find the fraction of the position between the lower and upper colors
+            var fraction = position * (rgbColors.length - 1) - index;
+
+            // Get the lower and upper colors as RGB arrays
+            var lower = rgbColors[index];
+            var upper = rgbColors[index + 1];
+            if(upper == null){
+                upper = rgbColors[index];
+            }
+            try{
+                 // Interpolate between the lower and upper colors using the fraction
+            return 'rgba(' +
+                Math.round(lower[0] + fraction * (upper[0] - lower[0])) + ',' + // Red
+                Math.round(lower[1] + fraction * (upper[1] - lower[1])) + ',' + // Green
+                Math.round(lower[2] + fraction * (upper[2] - lower[2])) + ',' + //Blue
+                alpha + ')'; // Alpha
+            }
+            catch(e){
+                console.error('upper',JSON.stringify(upper));
+                return 'rgba(0,0,0,0)';
+            }
+           
+        }
+
+        
+
+        
+
+       
+
+        function drawDistanceMap(ctx, scale) {
+             
+            //red, //yellow //green //cyan //blue
+
+            const colorRamp = [[255,0,0],[255,255,0],[0,255,0],[0,255,255],[0,0,255]];
+            let min = 999;
+            let max = -999;
+            for (let i = 0; i < distanceMap.length; i++) {
+                let distanceItem = distanceMap[i];
+                if (distanceItem == null) {
+                    continue;
+                }
+                if (distanceItem < min) {
+                    min = distanceItem;
+                }
+                if(distanceItem > max){
+                    max = distanceItem;
+                }
+            }
+
+            for (let i = 0; i < distanceMap.length; i++) {
+                let distanceItem = distanceMap[i];
+                if (distanceItem == null) {
+                    continue;
+                }
+                let x = i % regionEditor.imageNativeWidth;
+                let y = Math.floor(i / regionEditor.imageNativeWidth);
+                ctx.fillStyle = getColorRampValueRGBA(min*100, max*100, distanceItem*100, .2, colorRamp);
+                ctx.fillRect(x * scale, y * scale, scale, scale);
+            }
+
+            document.getElementById("valMinDistanceM").innerHTML = (min == 999 ? '--' : (min.toFixed(2) + "m"));
+            document.getElementById("valMinDistanceIn").innerHTML = (min == 999 ? '--' : (metersToInches(min).toFixed(1) + "in"));
+            document.getElementById("valMinDistanceColor").style.backgroundColor = (min==max ? 'rgb(255,0,0)' : 'rgb(255,0,0)');
+            document.getElementById("valMaxDistanceM").innerHTML = (max == -999 ? '--' : (max.toFixed(2) + "m"));
+            document.getElementById("valMaxDistanceIn").innerHTML = (max == -999 ? '--' : (metersToInches(max).toFixed(1) + "in"));
+            document.getElementById("valMaxDistanceColor").style.backgroundColor = (min==max ? 'rgb(255,0,0)' : 'rgb(0,0,255)');
+        }
+
+        function drawMaterialMap(ctx, scale) {
+
+            const colorRamp = [[255,0,0],[255,255,0],[0,255,0],[0,255,255],[0,0,255]];
+            let min = 999;
+            let max = -999;
+            for (let i = 0; i < materialMap.length; i++) {
+                let materialItem = materialMap[i];
+                if (materialItem == null || materialItem.name == null || materialItem.emissivity == null) {
+                    continue;
+                }
+                if (materialItem.emissivity < min) {
+                    min = materialItem.emissivity;
+                }
+                if(materialItem.emissivity > max){
+                    max = materialItem.emissivity;
+                }
+            }
+
+            for (let i = 0; i < materialMap.length; i++) {
+                let materialItem = materialMap[i];
+                if (materialItem == null || materialItem.name == null || materialItem.emissivity == null) {
+                    continue;
+                }
+                let x = i % regionEditor.imageNativeWidth;
+                let y = Math.floor(i / regionEditor.imageNativeWidth);
+                ctx.fillStyle = getColorRampValueRGBA(min*100, max*100, materialItem.emissivity*100, .2, colorRamp);
+                ctx.fillRect(x * scale, y * scale, scale, scale);
+            }
+
+            document.getElementById("valMinEmissivity").innerHTML = (min == 999 ? '--' : (min.toFixed(2)));
+            document.getElementById("valMinEmissivityColor").style.backgroundColor = (min==max ? 'rgb(255,0,0)' : 'rgb(255,0,0)');
+            document.getElementById("valMaxEmissivity").innerHTML = (max == -999 ? '--' : (max.toFixed(2)));
+            document.getElementById("valMaxEmissivityColor").style.backgroundColor = (min==max ? 'rgb(255,0,0)' : 'rgb(0,0,255)');
+        }
+
+        function drawRegionMap(ctx, scale) {
             for (var i = 0; i < regionEditor.regions.length; i++) {
                 var region = regionEditor.regions[i];
-                var isSelected = i == regionEditor.selectedRegionIndex;
-                let drawControls = isSelected && region.type == 'polygon' && activeTool.indexOf('point') > -1;
-                if (drawControls) {
-                    if (region.points.length <= 3 && activeTool == 'pointdelete') {
-                        drawControls = false;
+                let isSelected = false;
+                let drawControls = false;
+                if (activeLayer == 'Region') {
+                    isSelected = i == regionEditor.selectedRegionIndex;
+                    drawControls = isSelected && region.type == 'polygon' && activeTool.indexOf('point') > -1;
+                    if (drawControls) {
+                        if (region.points.length <= 3 && activeTool == 'pointdelete') {
+                            drawControls = false;
+                        }
                     }
                 }
                 drawRegion(ctx, scale, region, isSelected, region.color, null, drawControls);
@@ -548,13 +828,6 @@
                     updateSelectedRegionAttributes(region);
                 }
             }
-
-
-            var ctxMain = regionEditorImage.getContext("2d");
-            regionEditorImage.width = canvas.width;
-            regionEditorImage.height = canvas.height;
-            ctxMain.clearRect(0, 0, regionEditorImage.width, regionEditorImage.height);
-            ctxMain.drawImage(canvas, 0, 0, regionEditorImage.width, regionEditorImage.height);
         }
 
         function getDisplayTempFromCelsius(celsius, displayFahrenheit) {
@@ -1455,9 +1728,9 @@
                     continue;
                 }
                 let point = points[index];
-                let distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-                if (distance < closestDistance) {
-                    closestDistance = distance;
+                let distanceToPoint = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
+                if (distanceToPoint < closestDistance) {
+                    closestDistance = distanceToPoint;
                     closetRegionIndex = i;
                 }
             }
@@ -1472,9 +1745,9 @@
                     continue;
                 }
                 let point = points[index];
-                let distance = Math.sqrt(Math.pow(point.x - dragX, 2) + Math.pow(point.y - dragY, 2));
-                if (distance < closestDistance) {
-                    closestDistance = distance;
+                let distanceToPoint = Math.sqrt(Math.pow(point.x - dragX, 2) + Math.pow(point.y - dragY, 2));
+                if (distanceToPoint < closestDistance) {
+                    closestDistance = distanceToPoint;
                     indexOfClosestPoint = index;
                 }
             }
@@ -1493,9 +1766,9 @@
                 else {
                     nextPoint = points[0];
                 }
-                let distance = distanceToLine(x, y, point.x, point.y, nextPoint.x, nextPoint.y);
-                if (distance < closestDistance) {
-                    closestDistance = distance;
+                let distanceToLineItem = distanceToLine(x, y, point.x, point.y, nextPoint.x, nextPoint.y);
+                if (distanceToLineItem < closestDistance) {
+                    closestDistance = distanceToLineItem;
                     indexOfClosestLine = index;
                 }
             }
@@ -1538,7 +1811,7 @@
             return Math.sqrt(dx * dx + dy * dy);
         }
 
-        function processScreenTouchCoordinates(offsetX, offsetY, isMouseMoveEvent) {
+        function processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             if (regionEditor.selectedRegionIndex < 0 || regionEditor.selectedRegionIndex >= regionEditor.regions.length) {
                 return;
             }
@@ -1612,7 +1885,143 @@
                     }
                 }
             }
+        }
 
+        function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
+
+            if(activeTool == 'sample') {
+                if(!isMouseMoveEvent){
+                    let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
+                    let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+                    let myIndex = realX + (realY * regionEditor.imageNativeWidth);
+                    if(activeLayer == 'Dist'){
+                        if(myIndex >= 0 && myIndex < distanceMap.length){
+                            let distance = distanceMap[myIndex];
+                            if(distance != null){
+                                changeDistance(distance);
+                               
+                            }
+                        }
+                        
+                    }
+                    else if(activeLayer == 'Matl'){
+                        if(myIndex >= 0 && myIndex < materialMap.length){
+                            let material = materialMap[myIndex];
+                            if(material != null){
+                                changeMaterial(material);
+                               
+                            }
+                        }
+                        
+                    }
+                    
+                }
+            }
+            else if (activeTool == 'paintround' || activeTool == 'paintsquare') {
+                let indexes = getPaintIndexes(offsetX, offsetY, activeTool.indexOf('round') > -1);
+                for (let i = 0; i < indexes.length; i++) {
+                    let index = indexes[i];
+                    if (index < distanceMap.length && index >= 0) {
+                        distanceMap[index] = selectedDistance;
+                    }
+                }
+                recalcEditor();
+            }
+            else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
+                let indexes = getPaintIndexes(offsetX, offsetY, activeTool.indexOf('round') > -1);
+                for (let i = 0; i < indexes.length; i++) {
+                    let index = indexes[i];
+                    if (index < distanceMap.length && index >= 0) {
+                        distanceMap[index] = null;
+                    }
+                }
+                recalcEditor();
+            }
+        }
+
+        function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
+
+            if (activeTool == 'paintround' || activeTool == 'paintsquare') {
+                let indexes = getPaintIndexes(offsetX, offsetY, activeTool.indexOf('round') > -1);
+                for (let i = 0; i < indexes.length; i++) {
+                    let index = indexes[i];
+                    if (index < materialMap.length && index >= 0) {
+                        if (selectedMaterial == null) {
+                            materialMap[index] = null;
+                        }
+                        else {
+                            materialMap[index] = { "name": selectedMaterial.name, "emissivity": selectedMaterial.emissivity };//todo this should be the current material
+                        }
+                    }
+                }
+                recalcEditor();
+            }
+            else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
+                let indexes = getPaintIndexes(offsetX, offsetY, activeTool.indexOf('round') > -1);
+                for (let i = 0; i < indexes.length; i++) {
+                    let index = indexes[i];
+                    if (index < materialMap.length && index >= 0) {
+                        materialMap[index] = null;
+                    }
+                }
+                recalcEditor();
+            }
+
+        }
+
+        function getPaintIndexes(offsetX, offsetY, isRound) {
+            //let dragX = Math.max(-200, Math.round(offsetX / regionEditor.imageScale));
+            //let dragY = Math.max(-200, Math.round(offsetY / regionEditor.imageScale));
+            let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
+            let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+
+            let myIndex = realX + (realY * regionEditor.imageNativeWidth);
+            let myRow = Math.floor(myIndex / regionEditor.imageNativeWidth);
+            if (isRound) {
+                let indexes = [];
+                for (let x = realX - brushSize; x < realX + brushSize; x++) {
+                    if (x < 0 || x >= regionEditor.imageNativeWidth) {
+                        continue;
+                    }
+
+                    for (let y = realY - brushSize; y < realY + brushSize; y++) {
+                        if (y < 0 || y >= regionEditor.imageNativeHeight) {
+                            continue;
+                        }
+                        let distanceItem = Math.sqrt(Math.pow(x - realX, 2) + Math.pow(y - realY, 2));
+                        if (distanceItem < brushSize) {
+                            let index = x + (y * regionEditor.imageNativeWidth);
+
+                            indexes.push(index);
+                        }
+                    }
+                }
+                return indexes;
+            }
+            else {
+                let indexes = [];
+                for (let x = realX - brushSize; x < realX + brushSize; x++) {
+                    for (let y = realY - brushSize; y < realY + brushSize; y++) {
+                        let index = x + (y * regionEditor.imageNativeWidth);
+                        indexes.push(index);
+                    }
+                }
+                return indexes;
+            }
+
+
+        }
+
+        function processScreenTouchCoordinates(offsetX, offsetY, isMouseMoveEvent) {
+            if (activeLayer == 'Region') {
+                processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent);
+            }
+            else if (activeLayer == 'Dist') {
+                processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent);
+            }
+            else if (activeLayer == 'Matl') {
+                processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent);
+            }
         }
 
         function displayImageTemps() {
@@ -1655,7 +2064,7 @@
 
         function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown) {
             const tooltip = document.querySelector('.tooltip');
-            if (activeTool == 'look') {
+            if (activeTool == 'look' || activeTool == 'sample') {
                 //const image = document.querySelector('#regionEditorImage');
 
 
@@ -1715,13 +2124,35 @@
                 //Emissivity is defined as the ratio of the energy radiated from a material's surface to that radiated from a perfect emitter, 
                 //known as a blackbody, at the same temperature and wavelength and under the same viewing conditions. 
                 //It is a dimensionless number between 0 (for a perfect reflector) and 1 (for a perfect emitter).
+                let distanceText = "Not Specified";
+                let materialText = "Not Specified";
+                let emissivityText = "Not Specified";
+                let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
+                let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+                let myIndex = realX + (realY * regionEditor.imageNativeWidth);
+                if(myIndex >= 0 && myIndex < distanceMap.length){
+                    let distance = distanceMap[myIndex];
+                    if(distance != null){
+                        distanceText = distance.toFixed(2) + 'm&nbsp;' + metersToInches(distance).toFixed(1) + 'in';
+                    }
+                }
+
+                if(myIndex >= 0 && myIndex < materialMap.length){
+                    let material = materialMap[myIndex];
+                    if(material != null){
+                        materialText = material.name;
+                        emissivityText = material.emissivity.toFixed(2);
+                    }
+                }
+
+
                 if (indexTempC > -1 && indexTempC < tempsCelsius.length) {
                     let tempC = tempsCelsius[indexTempC];
                     tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` +
-                        `Raw Temp:${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F<br/>` +
-                        `Distance: Not Specified<br/>` +
-                        `Material: Not Specified<br/>` +
-                        `Emissivity: Not Specified<br/>` +
+                        `Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F<br/>` +
+                        `Distance: ${distanceText}<br/>` +
+                        `Material: ${materialText}<br/>` +
+                        `Emissivity: ${emissivityText}<br/>` +
                         `Adj Temp:${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F;`;
 
                 }
@@ -1735,7 +2166,7 @@
             }
 
 
-            if (isLeftMouseDown && regionEditor.selectedRegionIndex >= 0) {
+            if (isLeftMouseDown) {
                 processScreenTouchCoordinates(offsetX, offsetY, true);
 
             }
@@ -1769,11 +2200,7 @@
 
                 if ("buttons" in e) {
                     if (e.buttons == 1) {
-                        if (regionEditor.selectedRegionIndex >= 0) {
-                            console.log('mousedown')
-                            processScreenTouchCoordinates(e.offsetX, e.offsetY, false);
-                        }
-
+                        processScreenTouchCoordinates(e.offsetX, e.offsetY, false);
                     }
                 }
 
@@ -1785,11 +2212,8 @@
                 e.preventDefault();//stop mouse down event from firing
                 tooltip.style.display = 'block';
                 var tex = getTouchOffsetPosition(e, image);
-                if (regionEditor.selectedRegionIndex >= 0) {
-                    //console.log('touchstart');
-                    processScreenTouchCoordinates(tex.x, tex.y, false);//test this by doing move points
 
-                }
+                processScreenTouchCoordinates(tex.x, tex.y, false);//test this by doing move points
 
             });
 
@@ -2181,40 +2605,93 @@
                 </svg>
             </div>
         </button>
-
-
     </div>
 
-    <div id="rowMaterialTools" class="editorrow">
-        <button id="btnChangeMaterial" onclick="changeMaterial()" class="resizebutton2">
-            <div style="line-height: 20px;">
-                <div class="regioneditortext">Material</div>
+    <div id="rowMaterialTools" style="display:none" class="editorrow">
+        <button id="btnChangeMaterial" onclick="pickMaterial()" class="resizebutton2">
+            <div style="line-height: 17px;">
+                <div class="regioneditortext2">Material</div>
                 <div id="valMaterialName" class="regionditortextsub3">--</div>
-            </div>
-        </button>
-
-        <button id="btnClearMaterial" onclick="clearMaterial()" class="resizebutton">
-            <div style="line-height: 20px;">
-                <div class="regioneditortext">Clear</div>
-                <div id="valMaterialName" class="regionditortextsub3">All</div>
+                <div id="valMaterialEmissivity" class="regionditortextsub3">--</div>
             </div>
         </button>
 
         
-    </div>
-    <div id="rowDistanceTools" class="editorrow">
 
-        <button id="btnChangeMaterial" onclick="changeDistance()" class="resizebutton2">
-            <div style="line-height: 20px;">
-                <div class="regioneditortext">Distance</div>
-                <div id="valDistanceName" class="regionditortextsub3">--</div>
+        
+
+        <button disabled  class="resizebutton" style="background-color:black">
+            <div style="line-height: 10px;">
+                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Min</span>
+                <div id="valMinEmissivityColor" style="background-color: black; font-size:4px; line-height: 8px;"
+                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div id="valMinEmissivity" style="line-height:16px" class="regionditortextsub3">--</div>
+                
             </div>
         </button>
 
-        <button id="btnClearDeistance" onclick="clearDistance()" class="resizebutton">
+        <button disabled id="btnDistanceColorRamp" class="resizebutton" style="background-color:black">
+            <div style="line-height: 10px;">
+                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Max</span>
+                <div id="valMaxEmissivityColor" style="background-color: black; font-size:4px; line-height: 8px;"
+                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div id="valMaxEmissivity" style="line-height:16px" class="regionditortextsub3">--</div>
+            </div>
+        </button>
+
+        <div style="width:8px;">
+        </div>
+
+        <button id="btnClearMaterial" onclick="clearMaterialMap()" class="resizebutton">
             <div style="line-height: 20px;">
                 <div class="regioneditortext">Clear</div>
-                <div id="valDistance" class="regionditortextsub3">All</div>
+                <div class="regionditortextsub">Layer</div>
+            </div>
+        </button>
+
+    </div>
+    <div id="rowDistanceTools" style="display:none" class="editorrow">
+
+        <button disabled  class="resizebutton2" style="background-color: black;">
+            <div style="line-height: 17px;">
+                <div class="regioneditortext2">Distance</div>
+                <div id="valDistanceMeters" class="regionditortextsub3">--</div>
+                <div id="valDistanceInches" class="regionditortextsub3">--</div>
+            </div>
+        </button>
+
+        <button id="btnChangeDistanceLess" onmousedown="repeatFunc(changeDistanceBy.bind(null,-.01))"
+            onmouseup="clearFunc()" class="resizebutton">-</button>
+        <button id="btnChangeDistanceMore" onmousedown="repeatFunc(changeDistanceBy.bind(null,.01))"
+            onmouseup="clearFunc()" class="resizebutton">+</button>
+
+        <div style="width:8px;">
+        </div>
+
+        <button disabled id="btnDistanceColorRamp" class="resizebutton" style="background-color:black">
+            <div style="line-height: 10px;">
+                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Min</span>
+                <div id="valMinDistanceColor" style="background-color: black; font-size:4px; line-height: 8px;"
+                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div id="valMinDistanceM" style="line-height:16px" class="regionditortextsub3">--m</div>
+                <div id="valMinDistanceIn" style="line-height:16px" class="regionditortextsub3">--in</div>
+            </div>
+        </button>
+
+        <button disabled id="btnDistanceColorRamp" class="resizebutton" style="background-color:black">
+            <div style="line-height: 10px;">
+                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Max</span>
+                <div id="valMaxDistanceColor" style="background-color: black; font-size:4px; line-height: 8px;"
+                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div id="valMaxDistanceM" style="line-height:16px" class="regionditortextsub3">--m</div>
+                <div id="valMaxDistanceIn" style="line-height:16px" class="regionditortextsub3">--in</div>
+            </div>
+        </button>
+
+        <button id="btnClearDistance" onclick="clearDistanceMap()" class="resizebutton">
+            <div style="line-height: 20px;">
+                <div class="regioneditortext">Clear</div>
+                <div class="regionditortextsub">Layer</div>
             </div>
         </button>
 
@@ -2415,20 +2892,16 @@
                     </div>
                 </button>
                 <button id="btnChangeSizeInfo" disabled class="resizebutton" style="background-color: black;">
-                    <div  style="line-height: 17px;">
+                    <div style="line-height: 17px;">
                         <span class="regioneditortext2">Size</span>
-                        <span id="valSize" class="regionditortextsub2">10</span>
+                        <span id="valBrushSize" class="regionditortextsub2">--</span>
                     </div>
                 </button>
-        
-                <button id="btnChangeSizeLess" onmousedown="changeSizeBy(-1)"
-                        onmouseup="clearFunc()" class="resizebutton">-</button>
-                <button id="btnChangeSizeMore" onmousedown="changeSizeBy(1)"
-                    onmouseup="clearFunc()" class="resizebutton">+</button>
-        
-                
-        
 
+                <button id="btnChangeSizeLess" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,-1))"
+                    onmouseup="clearFunc()" class="resizebutton">-</button>
+                <button id="btnChangeSizeMore" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,1))"
+                    onmouseup="clearFunc()" class="resizebutton">+</button>
 
             </div>
         </div>
