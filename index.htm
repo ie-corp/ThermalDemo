@@ -1665,6 +1665,7 @@
                 if ("buttons" in e) {
                     if (e.buttons == 1) {
                         if (regionEditor.selectedRegionIndex >= 0) {
+                            console.log('mousedown')
                             processScreenTouchCoordinates(e.offsetX, e.offsetY, false);
                         }
 
@@ -1676,17 +1677,18 @@
 
 
             image.addEventListener('touchstart', (e) => {
-
+                e.preventDefault();//stop mouse down event from firing
                 var tex = getTouchOffsetPosition(e, image);
                 if (regionEditor.selectedRegionIndex >= 0) {
-                    console.log('touchstart');
-                    processScreenTouchCoordinates(tex.x, tex.y, true);
+                    //console.log('touchstart');
+                    processScreenTouchCoordinates(tex.x, tex.y, false);//test this by doing move points
 
                 }
 
             });
 
             image.addEventListener('touchmove', (e) => {
+                
                 e.preventDefault();//stop scrolling of the page
                 var tex = getTouchOffsetPosition(e, image);
                 let pageX = 0;
