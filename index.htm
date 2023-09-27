@@ -24,8 +24,10 @@
         var regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
         var tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
         let regionTypes = ['point', 'polygon'];
-        let regionEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete'];
+        let regionEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete', 'sample', 'paintround', 'paintsquare', 'eraseround', 'erasesquare'];
+        let regionEditorLayers = ['Region', 'Matl', 'Dist'];
         let activeTool = 'look';
+        let activeLayer = 'Region';
         let historyStack = [];
         let tempsCelsius = [];
         let historyIndex = -1;
@@ -38,6 +40,36 @@
         var waiterTime = 100;
 
         let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
+
+        function changeLayerNext(doNext) {
+            let index = regionEditorLayers.indexOf(activeLayer);
+            if (doNext) {
+                index++;
+            }
+            else {
+                index--;
+            }
+            if (index < 0) {
+                index = regionEditorLayers.length - 1;
+            }
+            else if (index >= regionEditorLayers.length) {
+                index = 0;
+            }
+            setActiveLayer(regionEditorLayers[index]);
+
+
+        }
+
+        function setActiveLayer(layer) {
+            if (regionEditorLayers.indexOf(layer) == -1) {
+                console.error('invalid layer: ' + layer);
+                return;
+            }
+            this.closeAlarmTemp();
+            activeLayer = layer;
+            activeTool = 'look';
+            recalcEditor();
+        }
 
         function selectRegionEditorTool(toolName) {
             if (regionEditorTools.indexOf(toolName) == -1) {
@@ -178,19 +210,68 @@
             }
             let activeToolColor = 'yellow';
             let inactiveToolColor = 'white';
+
+            
+            document.getElementById("rowRegionTools").style.display = (activeLayer != 'Region' ? 'none' : '');
+            document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
+            document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
+            
+
+            document.getElementById("btnPolygonAdd").style.display = (activeLayer != 'Region' ? 'none' : '');
+            document.getElementById("btnPointAdd").style.display = (activeLayer != 'Region' ? 'none' : '');
+
+
             document.getElementById("btnRegionToolLook").disabled = false;
             document.getElementById("btnRegionToolLook").style.color = (activeTool == 'look' ? activeToolColor : inactiveToolColor);
+
+            document.getElementById("btnRegionToolSelect").style.display = (activeLayer != 'Region' ? 'none' : '');
             document.getElementById("btnRegionToolSelect").disabled = regionEditor.regions.length <= 1;
             document.getElementById("btnRegionToolSelect").style.color = (activeTool == 'select' ? activeToolColor : inactiveToolColor);
+
+            document.getElementById("btnRegionToolMove").style.display = (activeLayer != 'Region' ? 'none' : '');
             document.getElementById("btnRegionToolMove").disabled = !hasActiveItem;
             document.getElementById("btnRegionToolMove").style.color = (activeTool == 'move' ? activeToolColor : inactiveToolColor);
+
+            document.getElementById("btnRegionToolPointAdd").style.display = (activeLayer != 'Region' ? 'none' : '');
             document.getElementById("btnRegionToolPointAdd").disabled = !polygonSelected;
             document.getElementById("btnRegionToolPointAdd").style.color = (activeTool == 'pointadd' ? activeToolColor : inactiveToolColor);
+
+            document.getElementById("btnRegionToolPointMove").style.display = (activeLayer != 'Region' ? 'none' : '');
             document.getElementById("btnRegionToolPointMove").disabled = !polygonSelected;
             document.getElementById("btnRegionToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
+
+            document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer != 'Region' ? 'none' : '');
             document.getElementById("btnRegionToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
             document.getElementById("btnRegionToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
 
+            document.getElementById("btnRegionToolSample").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolSample").disabled = activeLayer == 'Region';
+            document.getElementById("btnRegionToolSample").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
+
+            document.getElementById("btnRegionToolPaintRound").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolPaintRound").disabled = activeLayer == 'Region';
+            document.getElementById("btnRegionToolPaintRound").style.color = (activeTool == 'paintround' ? activeToolColor : inactiveToolColor);
+
+            document.getElementById("btnRegionToolPaintSquare").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolPaintSquare").disabled = activeLayer == 'Region';
+            document.getElementById("btnRegionToolPaintSquare").style.color = (activeTool == 'paintsquare' ? activeToolColor : inactiveToolColor);
+
+            document.getElementById("btnRegionToolEraseRound").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolEraseRound").disabled = activeLayer == 'Region';
+            document.getElementById("btnRegionToolEraseRound").style.color = (activeTool == 'eraseround' ? activeToolColor : inactiveToolColor);
+
+            document.getElementById("btnRegionToolEraseSquare").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolEraseSquare").disabled = activeLayer == 'Region';
+            document.getElementById("btnRegionToolEraseSquare").style.color = (activeTool == 'erasesquare' ? activeToolColor : inactiveToolColor);
+
+            let paintOrEraseSelected = activeLayer != 'Region' && (activeTool.indexOf('paint') > -1 || activeTool.indexOf('erase') > -1);
+            document.getElementById("btnChangeSizeInfo").style.display = (!paintOrEraseSelected ? 'none' : '');
+            document.getElementById("btnChangeSizeLess").style.display = (!paintOrEraseSelected ? 'none' : '');
+            document.getElementById("btnChangeSizeLess").disabled = !paintOrEraseSelected;
+            document.getElementById("btnChangeSizeMore").style.display = (!paintOrEraseSelected ? 'none' : '');
+            document.getElementById("btnChangeSizeMore").disabled = !paintOrEraseSelected
+            
+            
 
             document.getElementById("btnDeleteRegion").disabled = !hasActiveItem;
             document.getElementById("btnChangeRegion").disabled = !hasActiveItem;
@@ -272,10 +353,12 @@
 
 
 
-            if(activeTool != 'look'){
+            if (activeTool != 'look') {
                 const tooltip = document.querySelector('.tooltip');
                 tooltip.style.display = 'none';
             }
+
+            document.getElementById("valActiveLayer").innerHTML = activeLayer;
 
             var valueZoom = document.getElementById("valueZoom");
             valueZoom.innerHTML = Math.round(regionEditor.imageScale * 100) + "%";
@@ -1640,7 +1723,7 @@
                         `Material: Not Specified<br/>` +
                         `Emissivity: Not Specified<br/>` +
                         `Adj Temp:${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F;`;
-                       
+
                 }
                 else {
                     console.error('invalid indexTempC: ' + indexTempC);
@@ -1661,8 +1744,8 @@
         }
 
 
-        function isTouchEventWithElement(element, e){
-            
+        function isTouchEventWithElement(element, e) {
+
             const item = e.changedTouches.item(0);
             if (element === null || item === null) return false;
             return element.getBoundingClientRect().right > item.clientX &&
@@ -1711,10 +1794,10 @@
             });
 
             image.addEventListener('touchmove', (e) => {
-                
+
                 e.preventDefault();//stop scrolling of the page
 
-                if(!isTouchEventWithElement(image, e)){
+                if (!isTouchEventWithElement(image, e)) {
                     return;
                 }
 
@@ -1999,7 +2082,7 @@
 
 
     </div>
-    <div class="editorrow">
+    <div id="rowRegionTools" class="editorrow">
 
         <button id="btnChangeRegion" onclick="changeRegionNext(true)" class="resizebutton">
             <div style="line-height: 20px;">
@@ -2102,8 +2185,52 @@
 
     </div>
 
+    <div id="rowMaterialTools" class="editorrow">
+        <button id="btnChangeMaterial" onclick="changeMaterial()" class="resizebutton2">
+            <div style="line-height: 20px;">
+                <div class="regioneditortext">Material</div>
+                <div id="valMaterialName" class="regionditortextsub3">--</div>
+            </div>
+        </button>
+
+        <button id="btnClearMaterial" onclick="clearMaterial()" class="resizebutton">
+            <div style="line-height: 20px;">
+                <div class="regioneditortext">Clear</div>
+                <div id="valMaterialName" class="regionditortextsub3">All</div>
+            </div>
+        </button>
+
+        
+    </div>
+    <div id="rowDistanceTools" class="editorrow">
+
+        <button id="btnChangeMaterial" onclick="changeDistance()" class="resizebutton2">
+            <div style="line-height: 20px;">
+                <div class="regioneditortext">Distance</div>
+                <div id="valDistanceName" class="regionditortextsub3">--</div>
+            </div>
+        </button>
+
+        <button id="btnClearDeistance" onclick="clearDistance()" class="resizebutton">
+            <div style="line-height: 20px;">
+                <div class="regioneditortext">Clear</div>
+                <div id="valDistance" class="regionditortextsub3">All</div>
+            </div>
+        </button>
+
+    </div>
     <div class="editorrow">
         <div class="editorcolumn" style="width:80px;">
+
+            <button id="btnChangeLayer" onclick="changeLayerNext(true)" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Layer</span>
+                    <span id="valActiveLayer" class="regioneditortext">--</span>
+                </div>
+            </button>
+
+
+
             <button id="btnPolygonAdd" onclick="addRegion('polygon')" class="regionbutton">
                 <div>
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2112,7 +2239,7 @@
                         <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
                     </svg>
                 </div>
-            </button></td>
+            </button>
 
 
             <button id="btnPointAdd" onclick="addRegion('point')" class="regionbutton">
@@ -2197,7 +2324,7 @@
                     <div style="line-height: 4px;">
                         <span class="regioneditortext">Mve&nbsp;Pt</span>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="5" fill="currentColor"/>
+                            <circle cx="12" cy="12" r="5" fill="currentColor" />
                             <path fill-rule="evenodd" clip-rule="evenodd"
                                 d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
                                 fill="currentColor" />
@@ -2220,6 +2347,89 @@
                         </svg>
                     </div>
                 </button>
+
+                <button id="btnRegionToolSample" onclick="selectRegionEditorTool('sample')" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Sample</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M20.3847 2.87868C19.2132 1.70711 17.3137 1.70711 16.1421 2.87868L14.0202 5.00052L13.313 4.29332C12.9225 3.9028 12.2894 3.9028 11.8988 4.29332C11.5083 4.68385 11.5083 5.31701 11.8988 5.70754L17.5557 11.3644C17.9462 11.7549 18.5794 11.7549 18.9699 11.3644C19.3604 10.9739 19.3604 10.3407 18.9699 9.95018L18.2629 9.24316L20.3847 7.12132C21.5563 5.94975 21.5563 4.05025 20.3847 2.87868Z"
+                                fill="currentColor" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M11.9297 7.09116L4.1515 14.8693C3.22786 15.793 3.03239 17.169 3.5651 18.2842L1.99994 19.8493L3.41415 21.2635L4.97931 19.6984C6.09444 20.2311 7.4705 20.0356 8.39414 19.112L16.1723 11.3338L11.9297 7.09116ZM13.3439 11.3338L11.9297 9.91959L5.56571 16.2835C5.17518 16.6741 5.17518 17.3072 5.56571 17.6978C5.95623 18.0883 6.5894 18.0883 6.97992 17.6978L13.3439 11.3338Z"
+                                fill="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+
+                <button id="btnRegionToolPaintRound" onclick="selectRegionEditorTool('paintround')"
+                    class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Paint</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" fill="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+
+                <button id="btnRegionToolPaintSquare" onclick="selectRegionEditorTool('paintsquare')"
+                    class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Paint</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="20" height="20" fill="currentColor">
+                        </svg>
+                    </div>
+                </button>
+
+                <button id="btnRegionToolEraseRound" onclick="selectRegionEditorTool('eraseround')"
+                    class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Erase</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <pattern id="diagonalHatchEraseRound" width="4" height="4"
+                                    patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                                    <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor" style="stroke-width:1" />
+                                </pattern>
+                            </defs>
+                            <circle cx="12" cy="12" r="10" fill="url(#diagonalHatchEraseRound)" stroke="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+
+                <button id="btnRegionToolEraseSquare" onclick="selectRegionEditorTool('erasesquare')"
+                    class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Erase</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <pattern id="diagonalHatchEraseSquare" width="4" height="4"
+                                    patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                                    <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor" style="stroke-width:1" />
+                                </pattern>
+                            </defs>
+                            <rect x="2" y="2" width="20" height="20" fill="url(#diagonalHatchEraseRound)"
+                                stroke="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+                <button id="btnChangeSizeInfo" disabled class="resizebutton" style="background-color: black;">
+                    <div  style="line-height: 17px;">
+                        <span class="regioneditortext2">Size</span>
+                        <span id="valSize" class="regionditortextsub2">10</span>
+                    </div>
+                </button>
+        
+                <button id="btnChangeSizeLess" onmousedown="changeSizeBy(-1)"
+                        onmouseup="clearFunc()" class="resizebutton">-</button>
+                <button id="btnChangeSizeMore" onmousedown="changeSizeBy(1)"
+                    onmouseup="clearFunc()" class="resizebutton">+</button>
+        
+                
+        
+
+
             </div>
         </div>
         <div class="editorcolumn" style="margin-left:-16px">
