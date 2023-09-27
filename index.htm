@@ -272,7 +272,10 @@
 
 
 
-
+            if(activeTool != 'look'){
+                const tooltip = document.querySelector('.tooltip');
+                tooltip.style.display = 'none';
+            }
 
             var valueZoom = document.getElementById("valueZoom");
             valueZoom.innerHTML = Math.round(regionEditor.imageScale * 100) + "%";
@@ -1649,6 +1652,17 @@
 
         }
 
+
+        function isTouchEventWithElement(element, e){
+            
+            const item = e.changedTouches.item(0);
+            if (element === null || item === null) return false;
+            return element.getBoundingClientRect().right > item.clientX &&
+                element.getBoundingClientRect().left < item.clientX &&
+                element.getBoundingClientRect().top < item.clientY &&
+                element.getBoundingClientRect().bottom > item.clientY;
+        }
+
         function go() {
             regionEditor.imageScale = 4.0;
 
@@ -1678,6 +1692,7 @@
 
             image.addEventListener('touchstart', (e) => {
                 e.preventDefault();//stop mouse down event from firing
+                tooltip.style.display = 'block';
                 var tex = getTouchOffsetPosition(e, image);
                 if (regionEditor.selectedRegionIndex >= 0) {
                     //console.log('touchstart');
@@ -1690,12 +1705,20 @@
             image.addEventListener('touchmove', (e) => {
                 
                 e.preventDefault();//stop scrolling of the page
+
+                if(!isTouchEventWithElement(image, e)){
+                    return;
+                }
+
+                tooltip.style.display = 'block';
                 var tex = getTouchOffsetPosition(e, image);
                 let pageX = 0;
                 let pageY = 0;
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     pageX = e.changedTouches[i].pageX;
                     pageY = e.changedTouches[i].pageY;
+                    console.log('touchmove offset:' + tex.x + ', ' + tex.y)
+                    console.log('touchmove: ' + pageX + ', ' + pageY);
                     break;
                 }
                 pointerMove(tex.x, tex.y, pageX, pageY, true, true);
@@ -1711,7 +1734,7 @@
 
 
             image.addEventListener('mouseout', () => {
-                tooltip.style.display = 'none';
+                //tooltip.style.display = 'none';
             });
 
             image.addEventListener('mousemove', (e) => {

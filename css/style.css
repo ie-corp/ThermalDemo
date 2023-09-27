@@ -259,6 +259,7 @@ background-color:grey;
     color: #fff;
     font-size: 16px;
     pointer-events: none;
+    z-index: 0;
   }
 
   #threshwindow {
@@ -269,7 +270,7 @@ background-color:grey;
     position: absolute;
     top: 140px;
     left: 270px;
-  
+  z-index: 1;
     padding: 5px;
     background-color: #DADADA;
     color: #fff;
