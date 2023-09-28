@@ -472,7 +472,7 @@
 
 
 
-            if (activeTool != 'look' && activeTool != 'sample' & activeTool != 'fill'  & activeTool != 'change') {
+            if (activeTool != 'look' && activeTool != 'sample' & activeTool != 'fill' & activeTool != 'change') {
                 const tiptarget = document.getElementById('tiptarget');
                 const tooltip = document.getElementById('tooltip');
                 tiptarget.style.display = 'none';
@@ -1950,7 +1950,7 @@
                     let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
                     let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
                     let myIndex = realX + (realY * regionEditor.imageNativeWidth);
-                    
+
                     if (myIndex >= 0 && myIndex < distanceMap.length) {
                         let distance = distanceMap[myIndex];
                         if (distance != null) {
@@ -1963,35 +1963,57 @@
                 }
             }
             else if (activeTool == 'fill') {
-                console.log('todo fill Distance');
-                let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
+                //we really only want to do this on touch up
 
-            }
-            else if (activeTool == 'change') {
-                if(selectedDistance == null){
-                    return;
-                }   
-                
+                console.log('todo fill Material');
                 let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
                 if (indexes.length == 0) {
                     return;
                 }
                 let index = indexes[0];
                 if (index < distanceMap.length && index >= 0) {
-                      let foundDistance =  distanceMap[index];
-                      if(foundDistance == null){
+                    if (selectedDistance == null) {
                         return;
-                      }
-                      for(let i=0;i<distanceMap.length;i++){
-                            let distance = distanceMap[i];
-                            if(distance == null){
-                                continue;
-                            }
-                            if(distance == foundDistance){
-                                distanceMap[i] = selectedDistance;
-                            }
-                      }
-                      recalcEditor();
+                    }
+
+                    for (let i = 0; i < distanceMap.length; i++) {
+                        let distance = distanceMap[i];
+                        if (distance != null) {
+                            continue;
+                        }
+
+                        distanceMap[i] = selectedDistance;
+
+                    }
+                    recalcEditor();
+                }
+
+            }
+            else if (activeTool == 'change') {
+                if (selectedDistance == null) {
+                    return;
+                }
+
+                let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
+                if (indexes.length == 0) {
+                    return;
+                }
+                let index = indexes[0];
+                if (index < distanceMap.length && index >= 0) {
+                    let foundDistance = distanceMap[index];
+                    if (foundDistance == null) {
+                        return;
+                    }
+                    for (let i = 0; i < distanceMap.length; i++) {
+                        let distance = distanceMap[i];
+                        if (distance == null) {
+                            continue;
+                        }
+                        if (distance == foundDistance) {
+                            distanceMap[i] = selectedDistance;
+                        }
+                    }
+                    recalcEditor();
                 }
 
             }
@@ -2024,7 +2046,7 @@
                     let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
                     let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
                     let myIndex = realX + (realY * regionEditor.imageNativeWidth);
-                    
+
                     if (myIndex >= 0 && myIndex < materialMap.length) {
                         let material = materialMap[myIndex];
                         if (material != null) {
@@ -2044,40 +2066,47 @@
                 }
                 let index = indexes[0];
                 if (index < materialMap.length && index >= 0) {
-                    if (selectedMaterial == null) {
-                        materialMap[index] = null;
+
+                    for (let i = 0; i < materialMap.length; i++) {
+                        let material = materialMap[i];
+                        if (material != null) {
+                            continue;
+                        }
+
+                        materialMap[i] = selectedMaterial;
+
                     }
-                    else {
-                        materialMap[index] = { "name": selectedMaterial.name, "emissivity": selectedMaterial.emissivity };//todo this should be the current material
-                    }
+                    recalcEditor();
+
+
                 }
             }
             else if (activeTool == 'change') {
-                
-                if(selectedMaterial == null || selectedMaterial.name == null || selectedMaterial.emissivity == null){
+
+                if (selectedMaterial == null || selectedMaterial.name == null || selectedMaterial.emissivity == null) {
                     return;
-                }   
-                
+                }
+
                 let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
                 if (indexes.length == 0) {
                     return;
                 }
                 let index = indexes[0];
                 if (index < materialMap.length && index >= 0) {
-                      let foundMaterial =  materialMap[index];
-                      if(foundMaterial == null || foundMaterial.name == null || foundMaterial.emissivity == null){
+                    let foundMaterial = materialMap[index];
+                    if (foundMaterial == null || foundMaterial.name == null || foundMaterial.emissivity == null) {
                         return;
-                      }
-                      for(let i=0;i<materialMap.length;i++){
-                            let material = materialMap[i];
-                            if(material == null || material.name == null || material.emissivity == null){
-                                continue;
-                            }
-                            if(material.name.toLowerCase() == foundMaterial.name.toLowerCase() && material.emissivity == foundMaterial.emissivity){
-                                materialMap[i] = { "name": selectedMaterial.name, "emissivity": selectedMaterial.emissivity };
-                            }
-                      }
-                      recalcEditor();
+                    }
+                    for (let i = 0; i < materialMap.length; i++) {
+                        let material = materialMap[i];
+                        if (material == null || material.name == null || material.emissivity == null) {
+                            continue;
+                        }
+                        if (material.name.toLowerCase() == foundMaterial.name.toLowerCase() && material.emissivity == foundMaterial.emissivity) {
+                            materialMap[i] = { "name": selectedMaterial.name, "emissivity": selectedMaterial.emissivity };
+                        }
+                    }
+                    recalcEditor();
                 }
             }
             else if (activeTool == 'paintround' || activeTool == 'paintsquare') {
@@ -2833,7 +2862,7 @@
             </div>
         </button>
 
-        <button disabled  class="resizebutton" style="background-color:black">
+        <button disabled class="resizebutton" style="background-color:black">
             <div style="line-height: 10px;">
                 <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Max</span>
                 <div id="valMaxEmissivityColor" style="background-color: black; font-size:4px; line-height: 8px;"
