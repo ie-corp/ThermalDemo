@@ -246,7 +246,7 @@ background-color:grey;
     border: 3px solid #ffffff;
   }
 
-  .tooltip {
+  #tooltip {
     user-select: none; 
     font-family: 'Courier New', Courier, monospace;
     font-weight: bold;
@@ -260,6 +260,23 @@ background-color:grey;
     font-size: 16px;
     pointer-events: none;
     z-index: 0;
+  }
+
+  #tiptarget {
+    user-select: none; 
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    position: absolute;
+    top: -30px;
+    left: 0;
+    display: none;
+    padding: 5px;
+    background-color: rgba(0,0,0,0);
+    color: #fff;
+    font-size: 22px;
+    pointer-events: none;
+    z-index: 0;
+    text-shadow: 2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000, -2px 0 0 #000;
   }
 
   #threshwindow {
