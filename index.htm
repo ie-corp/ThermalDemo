@@ -473,8 +473,11 @@
 
 
             if (activeTool != 'look' && activeTool != 'sample' & activeTool != 'fill' & activeTool != 'change') {
+
+                const tipmagnifier = document.getElementById('tipmagnifier');
                 const tiptarget = document.getElementById('tiptarget');
                 const tooltip = document.getElementById('tooltip');
+                tipmagnifier.style.display = 'none';
                 tiptarget.style.display = 'none';
                 tooltip.style.display = 'none';
             }
@@ -2284,9 +2287,185 @@
             return position;
         }
 
+        function getRGBAFromCanvasData(data,x,y) {
+            let index = (x + (y * regionEditor.imageNativeWidth)) * 4;
+            let r = data[index];
+            let g = data[index + 1];
+            let b = data[index + 2];
+            let a = data[index + 3];
+            return `rgba(${r},${g},${b},1)`;
+            
+        }
+
+        let storedImageData = null;
+
+        function drawTipMagnifier(x,y) {
+            
+            let regionEditorImageRef = document.getElementById('regionEditorImage');
+            const tipmagnifier = document.getElementById('tipmagnifier');
+            const magnifierCanvas = document.getElementById('magnifierCanvas');
+
+            if(storedImageData == null){
+                let dummyCanvas = document.createElement('canvas');
+                dummyCanvas.width = regionEditor.imageNativeWidth;
+                dummyCanvas.height = regionEditor.imageNativeHeight;
+                let ctxSource = dummyCanvas.getContext('2d');//, {willReadFrequently: true});
+                ctxSource.drawImage(regionEditorImageRef, 0, 0, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
+                storedImageData = ctxSource.getImageData(0, 0, dummyCanvas.width, dummyCanvas.height).data;
+            }
+            
+
+            let ctx = magnifierCanvas.getContext('2d');
+            ctx.clearRect(0, 0, magnifierCanvas.width, magnifierCanvas.height);
+
+            
+            ctx.save();
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = 'black'
+            ctx.ellipse(100, 100, 75, 75, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+            ctx.restore();
+
+            
+            let pixelList = [];
+            let pixelDist = 9;
+
+           
+            
+            
+            for(let pointx = x - pixelDist; pointx < x + pixelDist; pointx++) {
+                for(let pointy = y - pixelDist; pointy < y + pixelDist; pointy++) {
+                    let rgba = "white";
+                    if(pointx<0 || pointy<0 || pointx>regionEditor.imageNativeWidth || pointy>regionEditor.imageNativeHeight) {
+                        rgba = "white";
+        
+                    }
+                    else{
+                        //90 90 is the center pixel of the magnifier.
+                        rgba = getRGBAFromCanvasData(storedImageData,pointx,pointy);
+                    }
+                    
+                    let magX = 90 + ((pointx - x)*10);
+                    let magY = 90 + ((pointy - y)*10);
+                    let pixel = { "x": magX, "y": magY, "color":rgba}
+                    pixelList.push(pixel);
+                    //rgba == "orange" ? rgba = "cyan" : rgba = "orange";
+                }
+            }
+
+
+            
+
+            drawPixels(ctx, 10, pixelList);
+
+             drawLines(ctx, 1, "green", [
+                { "x": 0, "y": 30, "length": 200 },
+                { "x": 0, "y": 40, "length": 200 },
+                { "x": 0, "y": 50, "length": 200 },
+                { "x": 0, "y": 60, "length": 200 },
+                { "x": 0, "y": 70, "length": 200 },
+                { "x": 0, "y": 80, "length": 200 },
+                { "x": 0, "y": 90, "length": 200 },
+                { "x": 0, "y": 110, "length": 200 },
+                { "x": 0, "y": 120, "length": 200 },
+                { "x": 0, "y": 130, "length": 200 },
+                { "x": 0, "y": 140, "length": 200 },
+                { "x": 0, "y": 150, "length": 200 },
+                { "x": 0, "y": 160, "length": 200 },
+                { "x": 0, "y": 170, "length": 200 },
+            
+            ], false);//horizontal
+
+            drawLines(ctx, 1, "green", [
+                { "x": 30, "y": 0, "length": 200 },
+                { "x": 40, "y": 0, "length": 200 },
+                { "x": 50, "y": 0, "length": 200 },
+                { "x": 60, "y": 0, "length": 200 },
+                { "x": 70, "y": 0, "length": 200 },
+                { "x": 80, "y": 0, "length": 200 },
+                { "x": 90, "y": 0, "length": 200 },
+                { "x": 110, "y": 0, "length": 200 },
+                { "x": 120, "y": 0, "length": 200 },
+                { "x": 130, "y": 0, "length": 200 },
+                { "x": 140, "y": 0, "length": 200 },
+                { "x": 150, "y": 0, "length": 200 },
+                { "x": 160, "y": 0, "length": 200 },
+                { "x": 170, "y": 0, "length": 200 },
+            
+            ], true);//horizontal 
+
+            
+            drawLines(ctx, 1, "gold", [{ "x": 0, "y": 100, "length": 200 }], false);//horizontal
+            drawLines(ctx, 1, "gold", [{ "x": 100, "y": 0, "length": 200 }], true);//vertical
+            
+           
+            drawHotSpot(ctx, 90, 90, 10, 2);
+        }
+
+        function drawHotSpot(ctx, x, y, width, lineWidth) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = 'red'
+            ctx.lineWidth = lineWidth;
+            ctx.rect(x, y, width, width, 0, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.closePath();
+            ctx.restore();
+        }
+
+        function drawPixels(ctx, width, points) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(100, 100, 73, 0, Math.PI * 2, true);
+            ctx.clip();
+            //ctx.beginPath();
+            for (let i = 0; i < points.length; i++) {
+                ctx.beginPath();
+                let point = points[i];
+                ctx.fillStyle = point.color;
+                ctx.rect(point.x, point.y, width,width);
+                ctx.fill();
+                ctx.closePath();
+            }
+           
+            ctx.restore();
+        }
+
+        function drawLines(ctx, lineWidth, strokeStyle, lineInfos,isVertical) {
+            ctx.save();
+           
+            ctx.arc(100, 100, 73, 0, Math.PI * 2, true);
+            ctx.clip();
+            for (let i = 0; i < lineInfos.length; i++) {
+                ctx.beginPath();
+                let lineInfo = lineInfos[i];
+
+                ctx.lineWidth = lineWidth;
+                ctx.strokeStyle = strokeStyle;
+                ctx.fillStyle = '';
+                ctx.moveTo(lineInfo.x, lineInfo.y);
+                if(isVertical){
+                    ctx.lineTo(lineInfo.x, lineInfo.y + lineInfo.length);
+                }
+                else{
+                    ctx.lineTo(lineInfo.x + lineInfo.length, lineInfo.y);
+                }
+                ctx.stroke();
+                ctx.closePath();
+
+            }
+           
+            ctx.restore();
+
+        }
 
         function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown) {
             const tooltip = document.getElementById('tooltip');
+            const tipmagnifier = document.getElementById('tipmagnifier');
             const tiptarget = document.getElementById('tiptarget');
             if (activeTool == 'look' || activeTool == 'sample' || activeTool == 'fill' || activeTool == 'change') {
                 //const image = document.querySelector('#regionEditorImage');
@@ -2315,6 +2494,8 @@
                 else {
                     placementOffsetY += 20;
                 }
+
+                
 
                 tiptarget.style.top = `${pageY - 12}px`;
                 tiptarget.style.left = `${pageX - 10}px`;
@@ -2346,6 +2527,11 @@
                     tooltip.textContent = 'unsupported rotation: ' + regionEditor.imageRotation;
                     return;
                 }
+
+                tipmagnifier.style.top = `${pageY - 100}px`;
+                tipmagnifier.style.left = `${pageX - 100}px`;
+                drawTipMagnifier(posX,posY);
+
                 indexTempC = getIndexOfTempFromXY(posX, posY);
 
                 //Emissivity is defined as the ratio of the energy radiated from a material's surface to that radiated from a perfect emitter, 
@@ -2390,6 +2576,7 @@
             }
             else {
                 tiptarget.style.display = 'none';
+                tipmagnifier.style.display = 'none';
                 tooltip.style.display = 'none';
             }
 
@@ -2423,6 +2610,7 @@
             displayImageTemps();
             const image = document.querySelector('#regionEditorImage');
             const tooltip = document.getElementById('tooltip');
+            const tipmagnifier = document.getElementById('tipmagnifier');
             const tiptarget = document.getElementById('tiptarget');
 
             image.addEventListener('mousedown', (e) => {
@@ -2440,6 +2628,7 @@
             image.addEventListener('touchstart', (e) => {
                 e.preventDefault();//stop mouse down event from firing
                 tiptarget.style.display = 'block';
+                tipmagnifier.style.display = 'block';
                 tooltip.style.display = 'block';
 
                 var tex = getTouchOffsetPosition(e, image);
@@ -2456,6 +2645,7 @@
                     return;
                 }
                 tiptarget.style.display = 'block';
+                tipmagnifier.style.display = 'block';
                 tooltip.style.display = 'block';
                 var tex = getTouchOffsetPosition(e, image);
                 let pageX = 0;
@@ -2476,6 +2666,7 @@
 
             image.addEventListener('mouseover', (e) => {
                 tiptarget.style.display = 'block';
+                tipmagnifier.style.display = 'block';
                 tooltip.style.display = 'block';
             });
 
@@ -3289,6 +3480,9 @@
     </div>
 
     <div id="tiptarget">O</div>
+    <div id="tipmagnifier">
+        <canvas id="magnifierCanvas" width="200" height="200"></canvas>
+    </div>
     <div id="tooltip">This is a tooltip</div>
     <img id="regionEditorImageRef" style="display: none;" src="reference_01.png">
 </body>
