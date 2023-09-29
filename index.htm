@@ -2371,7 +2371,7 @@
             for(let pointx = x - pixelDist; pointx < x + pixelDist; pointx++) {
                 for(let pointy = y - pixelDist; pointy < y + pixelDist; pointy++) {
                     let rgba = "white";
-                    if(pointx<0 || pointy<0 || pointx>storedImageWidth || pointy>storedImageWidth) {
+                    if(pointx<0 || pointy<0 || pointx>storedImageWidth || pointy>storedImageHeight) {
                         rgba = "white";
         
                     }
