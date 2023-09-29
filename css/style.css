@@ -264,19 +264,15 @@ background-color:grey;
 
   #tiptarget {
     user-select: none; 
-    font-family: 'Courier New', Courier, monospace;
-    font-weight: bold;
     position: absolute;
     top: -30px;
     left: 0;
     display: none;
-    padding: 5px;
     background-color: rgba(0,0,0,0);
     color: #fff;
     font-size: 22px;
     pointer-events: none;
     z-index: 0;
-    text-shadow: 2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000, -2px 0 0 #000;
   }
 
   #tipmagnifier {
@@ -285,7 +281,7 @@ background-color:grey;
     top: -30px;
     left: 0;
     display: none;
-    padding: 5px;
+    padding: 0px;
     background-color: rgba(0,0,0,0);
     color: #fff;
     font-size: 22px;
