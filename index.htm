@@ -457,13 +457,13 @@
             }, waiterTime);
         }
 
-        function hideTips(){
-                const tipmagnifier = document.getElementById('tipmagnifier');
-                const tiptarget = document.getElementById('tiptarget');
-                const tooltip = document.getElementById('tooltip');
-                tipmagnifier.style.display = 'none';
-                tiptarget.style.display = 'none';
-                tooltip.style.display = 'none';
+        function hideTips() {
+            const tipmagnifier = document.getElementById('tipmagnifier');
+            const tiptarget = document.getElementById('tiptarget');
+            const tooltip = document.getElementById('tooltip');
+            tipmagnifier.style.display = 'none';
+            tiptarget.style.display = 'none';
+            tooltip.style.display = 'none';
         }
 
         function recalcEditor() {
@@ -1099,7 +1099,38 @@
 
         function changeImageMirror() {
             regionEditor.imageMirrorHorizontally = !regionEditor.imageMirrorHorizontally;
-            
+            if (regionEditor.regions != null && regionEditor.regions.length > 0) {
+                for (let i = 0; i < regionEditor.regions.length; i++) {
+                    let region = regionEditor.regions[i];
+                    if (region.type == 'point') {
+                        if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+                            region.x = regionEditor.imageNativeWidth - region.x;
+                        }
+                        else {
+                            region.y = regionEditor.imageNativeWidth - region.y//mirror is always on horizontal axis
+                        }
+
+                    }
+                    else if (region.type == 'polygon') {
+                        for (let j = 0; j < region.points.length; j++) {
+                            let point = region.points[j];
+                            if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+                                point.x = regionEditor.imageNativeWidth - point.x;
+                            }
+                            else {
+                                point.y = regionEditor.imageNativeWidth - point.y;//mirror is always on horizontal axis
+                               
+                            }
+                        }
+                        region.x = region.points[0].x;
+                        region.y = region.points[0].y;
+                        fixRegionOutOfBounds(region);//recalcs width and height.
+                    }
+                    else {
+                        console.error('cannot mirror, unknown region type: ' + region.type);
+                    }
+                }
+            }
             hideTips();
             addHistory('image mirror horizontally', null, false);
             recalcEditor();
@@ -1330,7 +1361,7 @@
             }
             imageFilter = imageFilters[imageFilterIndex];
             regionEditor.imageFilter = imageFilter;
-            
+
             recalcEditor();
             addHistory('change image filter', null, false);//I don't think this needs a undo.
         }
@@ -2301,15 +2332,15 @@
             return position;
         }
 
-        function getRGBAFromCanvasData(data,imageWidth, x,y) {
-            
+        function getRGBAFromCanvasData(data, imageWidth, x, y) {
+
             let index = (x + (y * imageWidth)) * 4;
             let r = data[index];
             let g = data[index + 1];
             let b = data[index + 2];
             let a = data[index + 3];
             return `rgba(${r},${g},${b},1)`;
-            
+
         }
 
         let storedImageData = null;
@@ -2318,28 +2349,28 @@
         let storedImageHeight = null;
         let storedImageMirrorHorizontally = null;
 
-        function drawTipMagnifier(x,y) {
-            
+        function drawTipMagnifier(x, y) {
+
             let regionEditorImageRef = document.getElementById('regionEditorImage');
             const tipmagnifier = document.getElementById('tipmagnifier');
             const magnifierCanvas = document.getElementById('magnifierCanvas');
             //jamesjay
-            if(storedImageData == null || storedImageRotation != regionEditor.imageRotation || storedImageMirrorHorizontally != regionEditor.imageMirrorHorizontally){
+            if (storedImageData == null || storedImageRotation != regionEditor.imageRotation || storedImageMirrorHorizontally != regionEditor.imageMirrorHorizontally) {
                 let dummyCanvas = document.createElement('canvas');
                 let ctxSource = dummyCanvas.getContext('2d');//, {willReadFrequently: true});
-                if(regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270){
+                if (regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270) {
                     dummyCanvas.width = regionEditor.imageNativeHeight;
                     dummyCanvas.height = regionEditor.imageNativeWidth;
                 }
-                else{
+                else {
                     dummyCanvas.width = regionEditor.imageNativeWidth;
                     dummyCanvas.height = regionEditor.imageNativeHeight;
                 }
                 storedImageWidth = dummyCanvas.width;
                 storedImageHeight = dummyCanvas.height;
                 storedImageMirrorHorizontally = regionEditor.imageMirrorHorizontally;
-                
-                
+
+
 
                 let rotation = regionEditor.imageRotation * Math.PI / 180;
                 if (rotation != 0 || regionEditor.imageMirrorHorizontally) {
@@ -2354,18 +2385,18 @@
                     ctxSource.translate(-dummyCanvas.width / 2, -dummyCanvas.height / 2);
                 }
                 //else {
-                    //ctxSource.drawImage(regionEditorImageRef, 0, 0, dummyCanvas.width, dummyCanvas.height);
+                //ctxSource.drawImage(regionEditorImageRef, 0, 0, dummyCanvas.width, dummyCanvas.height);
                 //}
 
                 ctxSource.drawImage(regionEditorImageRef, 0, 0, dummyCanvas.width, dummyCanvas.height);
                 storedImageData = ctxSource.getImageData(0, 0, dummyCanvas.width, dummyCanvas.height).data;
                 storedImageRotation = regionEditor.imageRotation;
             }
-            
+
             let ctx = magnifierCanvas.getContext('2d');
             ctx.clearRect(0, 0, magnifierCanvas.width, magnifierCanvas.height);
 
-            
+
             ctx.save();
             ctx.beginPath();
             ctx.fillStyle = 'white';
@@ -2377,40 +2408,40 @@
             ctx.closePath();
             ctx.restore();
 
-            
+
             let pixelList = [];
             let pixelDist = 9;
 
-           
-            
-            
-            for(let pointx = x - pixelDist; pointx < x + pixelDist; pointx++) {
-                for(let pointy = y - pixelDist; pointy < y + pixelDist; pointy++) {
+
+
+
+            for (let pointx = x - pixelDist; pointx < x + pixelDist; pointx++) {
+                for (let pointy = y - pixelDist; pointy < y + pixelDist; pointy++) {
                     let rgba = "white";
-                    if(pointx<0 || pointy<0 || pointx>storedImageWidth || pointy>storedImageHeight) {
+                    if (pointx < 0 || pointy < 0 || pointx > storedImageWidth || pointy > storedImageHeight) {
                         rgba = "white";
-        
+
                     }
-                    else{
+                    else {
                         //90 90 is the center pixel of the magnifier.
-                       
-                        rgba = getRGBAFromCanvasData(storedImageData, storedImageWidth,pointx,pointy);
+
+                        rgba = getRGBAFromCanvasData(storedImageData, storedImageWidth, pointx, pointy);
                     }
-                    
-                    let magX = 90 + ((pointx - x)*10);
-                    let magY = 90 + ((pointy - y)*10);
-                    let pixel = { "x": magX, "y": magY, "color":rgba}
+
+                    let magX = 90 + ((pointx - x) * 10);
+                    let magY = 90 + ((pointy - y) * 10);
+                    let pixel = { "x": magX, "y": magY, "color": rgba }
                     pixelList.push(pixel);
                     //rgba == "orange" ? rgba = "cyan" : rgba = "orange";
                 }
             }
 
 
-            
+
 
             drawPixels(ctx, 10, pixelList);
 
-             drawLines(ctx, 1, "green", [
+            drawLines(ctx, 1, "green", [
                 { "x": 0, "y": 30, "length": 200 },
                 { "x": 0, "y": 40, "length": 200 },
                 { "x": 0, "y": 50, "length": 200 },
@@ -2425,7 +2456,7 @@
                 { "x": 0, "y": 150, "length": 200 },
                 { "x": 0, "y": 160, "length": 200 },
                 { "x": 0, "y": 170, "length": 120 },//some reason this wasn't clipping this one so reduced the length
-            
+
             ], false);//horizontal
 
             drawLines(ctx, 1, "green", [
@@ -2443,14 +2474,14 @@
                 { "x": 150, "y": 0, "length": 200 },
                 { "x": 160, "y": 0, "length": 200 },
                 { "x": 170, "y": 0, "length": 200 },
-            
+
             ], true);//horizontal 
 
-            
+
             drawLines(ctx, 1, "gold", [{ "x": 0, "y": 100, "length": 200 }], false);//horizontal
             drawLines(ctx, 1, "gold", [{ "x": 100, "y": 0, "length": 200 }], true);//vertical
-            
-           
+
+
             drawHotSpot(ctx, 90, 90, 10, 2);
         }
 
@@ -2475,17 +2506,17 @@
                 ctx.beginPath();
                 let point = points[i];
                 ctx.fillStyle = point.color;
-                ctx.rect(point.x, point.y, width,width);
+                ctx.rect(point.x, point.y, width, width);
                 ctx.fill();
                 ctx.closePath();
             }
-           
+
             ctx.restore();
         }
 
-        function drawLines(ctx, lineWidth, strokeStyle, lineInfos,isVertical) {
+        function drawLines(ctx, lineWidth, strokeStyle, lineInfos, isVertical) {
             ctx.save();
-           
+
             ctx.arc(100, 100, 73, 0, Math.PI * 2, true);
             ctx.clip();
             for (let i = 0; i < lineInfos.length; i++) {
@@ -2496,17 +2527,17 @@
                 ctx.strokeStyle = strokeStyle;
                 ctx.fillStyle = '';
                 ctx.moveTo(lineInfo.x, lineInfo.y);
-                if(isVertical){
+                if (isVertical) {
                     ctx.lineTo(lineInfo.x, lineInfo.y + lineInfo.length);
                 }
-                else{
+                else {
                     ctx.lineTo(lineInfo.x + lineInfo.length, lineInfo.y);
                 }
                 ctx.stroke();
                 ctx.closePath();
 
             }
-           
+
             ctx.restore();
 
         }
@@ -2547,10 +2578,10 @@
                 }
                 else {
                     placementOffsetY += 20;
-                   magOffsetY += 80;
+                    magOffsetY += 80;
                 }
 
-                
+
 
                 tiptarget.style.top = `${pageY - 12}px`;
                 tiptarget.style.left = `${pageX - 10}px`;
@@ -2561,7 +2592,7 @@
 
                 tipmagnifier.style.top = `${magOffsetY}px`;
                 tipmagnifier.style.left = `${magOffsetX}px`;
-                
+
                 if (regionEditor.imageRotation == 0) {
                     posX = Math.min(x, regionEditor.imageNativeWidth);
                     posY = Math.min(y, regionEditor.imageNativeHeight);
@@ -2588,7 +2619,7 @@
                     return;
                 }
 
-                drawTipMagnifier(posX,posY);
+                drawTipMagnifier(posX, posY);
 
 
                 indexTempC = getIndexOfTempFromXY(posX, posY);
@@ -2635,7 +2666,7 @@
             }
             else {
                 hideTips();
-                
+
             }
 
 
