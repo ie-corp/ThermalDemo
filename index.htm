@@ -13,6 +13,7 @@
             "imageAlarmThresh": { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null },
             "imageRotation": 0,
             "imageFilter": "none",
+            "imageMirrorHorizontally": false,
             "maxNameLength": 16,
             "imageNativeWidth": 256,
             "imageNativeHeight": 192,
@@ -509,6 +510,9 @@
             var valueZoom = document.getElementById("valueZoom");
             valueZoom.innerHTML = Math.round(regionEditor.imageScale * 100) + "%";
 
+            document.getElementById("valueFilter").innerHTML = regionEditor.imageFilter;
+            document.getElementById("valueImageMirrorHorizontally").innerHTML = regionEditor.imageMirrorHorizontally ? 'On' : 'Off';
+
             document.getElementById("valImageMaxTempC").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.hiTempC, false) + '&deg;C';
             document.getElementById("valImageMaxTempF").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.hiTempC, true) + '&deg;F';
             document.getElementById("valImageMaxPriorityLevel").innerHTML = regionEditor.imageAlarmThresh.hiTempC == null ? '--' : regionEditor.imageAlarmThresh.hiPriority;
@@ -692,9 +696,12 @@
             }
             let scale = regionEditor.imageScale;
             //fix this
-            if (rotation != 0) {
+            if (rotation != 0 || regionEditor.imageMirrorHorizontally) {
                 // translate context to center of canvas
                 ctx.translate(canvas.width / 2, canvas.height / 2);
+                if (regionEditor.imageMirrorHorizontally) {
+                    ctx.scale(-1, 1);
+                }
                 ctx.rotate(rotation);
                 // draw image
 
@@ -1091,7 +1098,11 @@
         }
 
         function changeImageMirror() {
-            alert('not implemented yet')
+            regionEditor.imageMirrorHorizontally = !regionEditor.imageMirrorHorizontally;
+            
+            hideTips();
+            addHistory('image mirror horizontally', null, false);
+            recalcEditor();
         }
 
         function changeAlarmPriority(isMax, value) {
@@ -1319,7 +1330,7 @@
             }
             imageFilter = imageFilters[imageFilterIndex];
             regionEditor.imageFilter = imageFilter;
-            document.getElementById("valueFilter").innerHTML = imageFilter;
+            
             recalcEditor();
             addHistory('change image filter', null, false);//I don't think this needs a undo.
         }
@@ -2305,6 +2316,7 @@
         let storedImageRotation = null;
         let storedImageWidth = null;
         let storedImageHeight = null;
+        let storedImageMirrorHorizontally = null;
 
         function drawTipMagnifier(x,y) {
             
@@ -2312,7 +2324,7 @@
             const tipmagnifier = document.getElementById('tipmagnifier');
             const magnifierCanvas = document.getElementById('magnifierCanvas');
             //jamesjay
-            if(storedImageData == null || storedImageRotation != regionEditor.imageRotation){
+            if(storedImageData == null || storedImageRotation != regionEditor.imageRotation || storedImageMirrorHorizontally != regionEditor.imageMirrorHorizontally){
                 let dummyCanvas = document.createElement('canvas');
                 let ctxSource = dummyCanvas.getContext('2d');//, {willReadFrequently: true});
                 if(regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270){
@@ -2325,21 +2337,25 @@
                 }
                 storedImageWidth = dummyCanvas.width;
                 storedImageHeight = dummyCanvas.height;
+                storedImageMirrorHorizontally = regionEditor.imageMirrorHorizontally;
                 
                 
 
                 let rotation = regionEditor.imageRotation * Math.PI / 180;
-                if (rotation != 0) {
+                if (rotation != 0 || regionEditor.imageMirrorHorizontally) {
                     // translate context to center of canvas
                     ctxSource.translate(dummyCanvas.width / 2, dummyCanvas.height / 2);
+                    if (regionEditor.imageMirrorHorizontally) {
+                        ctxSource.scale(-1, 1);
+                    }
                     ctxSource.rotate(rotation);
-                    ctxSource.drawImage(regionEditorImageRef, (-regionEditor.imageNativeWidth / 2), (-regionEditor.imageNativeHeight / 2));
+                    //ctxSource.drawImage(regionEditorImageRef, (-regionEditor.imageNativeWidth / 2), (-regionEditor.imageNativeHeight / 2));
                     ctxSource.rotate(-rotation);
                     ctxSource.translate(-dummyCanvas.width / 2, -dummyCanvas.height / 2);
                 }
-                else {
-                    ctxSource.drawImage(regionEditorImageRef, 0, 0, dummyCanvas.width, dummyCanvas.height);
-                }
+                //else {
+                    //ctxSource.drawImage(regionEditorImageRef, 0, 0, dummyCanvas.width, dummyCanvas.height);
+                //}
 
                 ctxSource.drawImage(regionEditorImageRef, 0, 0, dummyCanvas.width, dummyCanvas.height);
                 storedImageData = ctxSource.getImageData(0, 0, dummyCanvas.width, dummyCanvas.height).data;
@@ -2618,9 +2634,8 @@
                 }
             }
             else {
-                tiptarget.style.display = 'none';
-                tipmagnifier.style.display = 'none';
-                tooltip.style.display = 'none';
+                hideTips();
+                
             }
 
 
@@ -2880,10 +2895,10 @@
             </div>
         </button>
 
-        <button id="btnMirrorImage" onclick="changeImageMirror()" class="resizebutton">
+        <button id="btnMirrorImageHorizontally" onclick="changeImageMirror()" class="resizebutton">
             <div style="line-height: 4px;">
                 <span class="regioneditortext">Mirror</span>
-                <span id="valueFilter" class="regioneditortext">off</span>
+                <span id="valueImageMirrorHorizontally" class="regioneditortext">off</span>
             </div>
         </button>
 
