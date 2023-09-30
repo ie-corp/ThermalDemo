@@ -5,24 +5,19 @@
     <meta charset="utf-8">
     <title>Home</title>
     <link rel="stylesheet" href="css/style.css">
+    <!--polyfill for ios demo-->
+    <script src="https://cdn.jsdelivr.net/npm/context-filter-polyfill/dist/index.min.js"></script>
     <script>
         let materialMap = [];
         let distanceMap = [];
 
-        var regionEditor = {
-            "imageAlarmThresh": { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null },
-            "imageRotation": 0,
-            "imageFilter": "none",
-            "imageMirrorHorizontally": false,
-            "maxNameLength": 16,
-            "imageNativeWidth": 256,
-            "imageNativeHeight": 192,
-            "imageWidth": 256,
-            "imageHeight": 192,
-            "imageScale": 1.0,
-            "regions": [],
-            "selectedRegionIndex": -1
+        let cameraEditor = {
+            "selectedCameraIndex": 0,
+            "isEditing": false,
+            "cameras": []
         };
+
+        var regionEditor = null;
         var regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
         var tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
         let regionTypes = ['point', 'polygon'];
@@ -152,6 +147,10 @@
         }
 
         function addHistory(historyType, selectedIndex, force) {
+            if (!cameraEditor.isEditing) {
+                setButtons();
+                return;
+            }
             this.closeAlarmTemp();//close alarm temp if open
             let historyEntry = { "historyType": historyType, "selectedIndex": selectedIndex, "regionEditor": JSON.stringify(regionEditor) };
             let lastHistoryEntry = null;
@@ -211,8 +210,14 @@
         }
 
         function setButtons() {
+
+            document.getElementById("btnRotateImage").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
+            document.getElementById("btnMirrorImageHorizontally").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
+
             document.getElementById("btnUndo").disabled = historyStack.length <= 1 || historyIndex <= 0;
+            document.getElementById("btnUndo").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
             document.getElementById("btnRedo").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
+            document.getElementById("btnRedo").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
             let hasActiveItem = false;
             let canSize = false;
             let canRotate = false;
@@ -232,9 +237,39 @@
             document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
             document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
 
+            document.getElementById("btnChangeMaterial").disabled = !cameraEditor.isEditing;
+            if (cameraEditor.isEditing) {
+                if (selectedMaterial != null && selectedMaterial.name != null && selectedMaterial.emissivity != null) {
+                    document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
+                    document.getElementById('valMaterialEmissivity').innerHTML = selectedMaterial.emissivity.toFixed(2);
+                }
+                else {
+                    document.getElementById('valMaterialName').innerHTML = '--';
+                    document.getElementById('valMaterialEmissivity').innerHTML = '--';
+                }
 
-            document.getElementById("btnPolygonAdd").style.display = (activeLayer != 'Region' ? 'none' : '');
-            document.getElementById("btnPointAdd").style.display = (activeLayer != 'Region' ? 'none' : '');
+
+            }
+            else {
+                document.getElementById('valMaterialName').innerHTML = 'Emissivity';
+                document.getElementById('valMaterialEmissivity').innerHTML = '';
+            }
+
+
+            document.getElementById("btnClearMaterial").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
+
+
+            document.getElementById("btnDistance").disabled = !cameraEditor.isEditing;
+            document.getElementById("btnChangeDistanceLess").style.display = !cameraEditor.isEditing ? 'none' : '';
+            document.getElementById("btnChangeDistanceMore").style.display = !cameraEditor.isEditing ? 'none' : '';
+            document.getElementById("spacerDistanceColorRampMin").style.display = !cameraEditor.isEditing ? 'none' : '';
+            document.getElementById("btnClearDistance").style.display = !cameraEditor.isEditing ? 'none' : '';
+
+
+            console.log('add button cameraEditor.isEditing' + cameraEditor.isEditing)
+
+            document.getElementById("btnPolygonAdd").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
+            document.getElementById("btnPointAdd").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
 
 
             document.getElementById("btnRegionToolLook").disabled = false;
@@ -244,47 +279,47 @@
             document.getElementById("btnRegionToolSelect").disabled = regionEditor.regions.length <= 1;
             document.getElementById("btnRegionToolSelect").style.color = (activeTool == 'select' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolMove").style.display = (activeLayer != 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolMove").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolMove").disabled = !hasActiveItem;
             document.getElementById("btnRegionToolMove").style.color = (activeTool == 'move' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolPointAdd").style.display = (activeLayer != 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolPointAdd").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolPointAdd").disabled = !polygonSelected;
             document.getElementById("btnRegionToolPointAdd").style.color = (activeTool == 'pointadd' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolPointMove").style.display = (activeLayer != 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolPointMove").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolPointMove").disabled = !polygonSelected;
             document.getElementById("btnRegionToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer != 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolPointDelete").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
             document.getElementById("btnRegionToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolSample").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolSample").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolSample").disabled = activeLayer == 'Region';
             document.getElementById("btnRegionToolSample").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolFill").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolFill").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolFill").disabled = activeLayer == 'Region';
             document.getElementById("btnRegionToolFill").style.color = (activeTool == 'fill' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolChange").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolChange").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolChange").disabled = activeLayer == 'Region';
             document.getElementById("btnRegionToolChange").style.color = (activeTool == 'change' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolPaintRound").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolPaintRound").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolPaintRound").disabled = activeLayer == 'Region';
             document.getElementById("btnRegionToolPaintRound").style.color = (activeTool == 'paintround' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolPaintSquare").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolPaintSquare").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolPaintSquare").disabled = activeLayer == 'Region';
             document.getElementById("btnRegionToolPaintSquare").style.color = (activeTool == 'paintsquare' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolEraseRound").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolEraseRound").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolEraseRound").disabled = activeLayer == 'Region';
             document.getElementById("btnRegionToolEraseRound").style.color = (activeTool == 'eraseround' ? activeToolColor : inactiveToolColor);
 
-            document.getElementById("btnRegionToolEraseSquare").style.display = (activeLayer == 'Region' ? 'none' : '');
+            document.getElementById("btnRegionToolEraseSquare").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
             document.getElementById("btnRegionToolEraseSquare").disabled = activeLayer == 'Region';
             document.getElementById("btnRegionToolEraseSquare").style.color = (activeTool == 'erasesquare' ? activeToolColor : inactiveToolColor);
 
@@ -298,19 +333,23 @@
 
 
             document.getElementById("btnDeleteRegion").disabled = !hasActiveItem;
+            document.getElementById("btnDeleteRegion").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
             document.getElementById("btnChangeRegion").disabled = !hasActiveItem;
-            document.getElementById("btnChangeRegionName").disabled = !hasActiveItem;
-            document.getElementById("btnChangeColor").disabled = !hasActiveItem;
-            document.getElementById("btnChangeImageMaxTemp").disabled = false;
-            document.getElementById("btnChangeImageMinTemp").disabled = false;
-            document.getElementById("btnChangeImageMaxPriorityLevel").disabled = false;
-            document.getElementById("btnChangeImageMinPriorityLevel").disabled = false;
 
-            document.getElementById("btnChangeRegionMaxTemp").disabled = !hasActiveItem;
-            document.getElementById("btnChangeRegionMinTemp").disabled = !hasActiveItem;
 
-            document.getElementById("btnChangeRegionMaxPriorityLevel").disabled = !hasActiveItem;
-            document.getElementById("btnChangeRegionMinPriorityLevel").disabled = !hasActiveItem;
+
+            document.getElementById("btnChangeRegionName").disabled = !hasActiveItem || !cameraEditor.isEditing;
+            document.getElementById("btnChangeColor").disabled = !hasActiveItem || !cameraEditor.isEditing;
+            document.getElementById("btnChangeImageMaxTemp").disabled = !cameraEditor.isEditing;
+            document.getElementById("btnChangeImageMinTemp").disabled = !cameraEditor.isEditing;
+            document.getElementById("btnChangeImageMaxPriorityLevel").disabled = !cameraEditor.isEditing;
+            document.getElementById("btnChangeImageMinPriorityLevel").disabled = !cameraEditor.isEditing;
+
+            document.getElementById("btnChangeRegionMaxTemp").disabled = !hasActiveItem || !cameraEditor.isEditing;
+            document.getElementById("btnChangeRegionMinTemp").disabled = !hasActiveItem || !cameraEditor.isEditing;
+
+            document.getElementById("btnChangeRegionMaxPriorityLevel").disabled = !hasActiveItem || !cameraEditor.isEditing;
+            document.getElementById("btnChangeRegionMinPriorityLevel").disabled = !hasActiveItem || !cameraEditor.isEditing;
 
 
 
@@ -1119,7 +1158,7 @@
                             }
                             else {
                                 point.y = regionEditor.imageNativeWidth - point.y;//mirror is always on horizontal axis
-                               
+
                             }
                         }
                         region.x = region.points[0].x;
@@ -2689,14 +2728,150 @@
                 element.getBoundingClientRect().bottom > item.clientY;
         }
 
+        function getEmptyRegionEditor() {
+            return {
+                "imageAlarmThresh": { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null },
+                "imageRotation": 0,
+                "imageFilter": "none",
+                "imageMirrorHorizontally": false,
+                "maxNameLength": 16,
+                "imageNativeWidth": 256,
+                "imageNativeHeight": 192,
+                "imageWidth": 256,
+                "imageHeight": 192,
+                "imageScale": 1.0,
+                "regions": [],
+                "selectedRegionIndex": -1
+            };
+        }
+
         function go() {
-            regionEditor.imageScale = 4.0;
+            setupEvents();
 
-            recalcEditor();
-            addHistory('Initial App State', null, true);
+            let cameras = [{ "name": "left", "rotation": 0 }, { "name": "right", "rotation": 0 }, { "name": "front", "rotation": 0 }, { "name": "back", "rotation": 0 }, { "name": "top", "rotation": 0 }, { "name": "bottom", "rotation": 0 }];
+            cameraEditor.cameras = cameras;
+            changeCamera(0, false);
+        }
 
-            fillTempsWithTestData();
-            displayImageTemps();
+
+
+        function changeCamera(cameraIndex, editing) {
+            cameraEditor.isEditing = false;//will flip if camera index is found
+            hideTips();
+            cameraEditor.selectedCameraIndex = cameraIndex;
+            if (regionEditor != null) {
+
+                if (historyStack != null && historyStack.length > 1) {
+                    //todo save changes?
+                }
+                historyStack = [];
+                tempsCelsius = [];
+                historyIndex = -1;
+
+                let oldImageScale = regionEditor.imageScale;
+                let oldImageFilter = regionEditor.imageFilter;
+                regionEditor = getEmptyRegionEditor();
+                regionEditor.imageScale = oldImageScale;
+                regionEditor.imageFilter = oldImageFilter;
+            }
+            else {
+                regionEditor = getEmptyRegionEditor();
+                regionEditor.imageScale = 4.0;
+            }
+
+            let cameraTools = document.getElementById('cameraTools');
+            cameraTools.innerHTML = '';
+            let sb = '';
+            for (let i = 0; i < cameraEditor.cameras.length; i++) {
+                let strIndex = i.toString().padStart(2, '0');
+                let camera = cameraEditor.cameras[i];
+
+                if (i == cameraIndex) {
+                    if (editing) {
+                        cameraEditor.isEditing = true;
+                        sb += '<button disabled id="btnCam' + strIndex + '" class="resizebutton2" style="background-color:black">';
+                        sb += '<div style="line-height: 14px;">';
+                        sb += '<div class="regioneditortext">Editing</div>';
+                        sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">Camera</div>';
+                        sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">' + camera.name + '</div>';
+                        sb += '</div>';
+                        sb += '</button>';
+
+                        sb += '<button id="btnRenameCamera" onclick="alert(\'not implemented\')" class="resizebutton">';
+                        sb += '<div style="line-height: 4px;">';
+                        sb += '<span class="regioneditortext">Rename</span>';
+                        sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+
+                        sb += '</svg>';
+                        sb += '</div>';
+                        sb += '</button>';
+
+                        sb += '<div style="width:72px;"></div>';
+
+                        sb += '<button id="btnSaveCamera" onclick="alert(\'save not implemented\')" class="resizebutton">';
+                        sb += '<div style="line-height: 4px;">';
+                        sb += '<span class="regioneditortext">Save</span>';
+                        sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+
+                        sb += '</svg>';
+                        sb += '</div>';
+                        sb += '</button>';
+
+                        sb += '<div style="width:64px;"></div>';
+
+                        sb += '<button id="btnCancelCamera" onclick="changeCamera(' + i + ',false)" class="resizebutton">';
+                        sb += '<div style="line-height: 4px;">';
+                        sb += '<span class="regioneditortext">Cancel</span>';
+                        sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+
+                        sb += '</svg>';
+                        sb += '</div>';
+                        sb += '</button>';
+
+                        sb += '<div style="width:72px;"></div>';
+
+                        sb += '<button id="btnDeleteCamera" onclick="changeCamera(' + i + ',false)" class="resizebutton" style="background-color:red">';
+                        sb += '<div style="line-height: 4px;">';
+                        sb += '<span class="regioneditortext">Delete</span>';
+                        sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+
+                        sb += '</svg>';
+                        sb += '</div>';
+                        sb += '</button>';
+
+
+                        //draw rename save and cancel buttons
+                        break;
+                    }
+                    else {
+                        sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',true)" class="resizebutton2" style="background-color:green">';
+                        sb += '<div style="line-height: 14px;">';
+                        sb += '<div class="regioneditortext">Tap to Edit</div>';
+                        //camera names were already sanitized
+                        sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">Viewing</div>';
+                        sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">' + camera.name + '</div>';
+                        sb += '</div>';
+                        sb += '</button>';
+                    }
+
+                }
+                else if (!editing) {
+                    sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',false)" class="resizebutton2">';
+                    sb += '<div style="line-height: 20px;">';
+                    sb += '<div class="regioneditortext">View Camera</div>';
+                    //camera names were already sanitized
+                    sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">' + camera.name + '</div>';
+                    sb += '</div>';
+                    sb += '</button>';
+                }
+
+            };
+
+            cameraTools.innerHTML = sb;
+            goRegion();
+        }
+
+        function setupEvents() {
             const image = document.querySelector('#regionEditorImage');
             const tooltip = document.getElementById('tooltip');
             const tipmagnifier = document.getElementById('tipmagnifier');
@@ -2716,6 +2891,9 @@
 
             image.addEventListener('touchstart', (e) => {
                 e.preventDefault();//stop mouse down event from firing
+                if (regionEditor == null) {
+                    return;
+                }
                 tiptarget.style.display = 'block';
                 tipmagnifier.style.display = 'block';
                 tooltip.style.display = 'block';
@@ -2729,7 +2907,9 @@
             image.addEventListener('touchmove', (e) => {
 
                 e.preventDefault();//stop scrolling of the page
-
+                if (regionEditor == null) {
+                    return;
+                }
                 if (!isTouchEventWithElement(image, e)) {
                     return;
                 }
@@ -2754,6 +2934,9 @@
 
 
             image.addEventListener('mouseover', (e) => {
+                if (regionEditor == null) {
+                    return;
+                }
                 tiptarget.style.display = 'block';
                 tipmagnifier.style.display = 'block';
                 tooltip.style.display = 'block';
@@ -2765,6 +2948,9 @@
             });
 
             image.addEventListener('mousemove', (e) => {
+                if (regionEditor == null) {
+                    return;
+                }
                 let isLeftMouseClick = false;
                 if ("buttons" in e) {
                     if (e.buttons == 1) {
@@ -2777,6 +2963,17 @@
 
             );
 
+        }
+
+        function goRegion() {
+
+            
+            recalcEditor();
+            setButtons();
+            addHistory('Initial App State', null, true);
+
+            fillTempsWithTestData();
+            displayImageTemps();
         }
 
         function zoomRegionEditor(scale) {
@@ -2901,7 +3098,10 @@
 
 <body onload="go()">
 
-    <div class="editorrow">
+    <div id="cameraTools" class="editorrow">
+
+    </div>
+    <div id="imageTools" class="editorrow">
 
         <button id="btnZoomImage" onclick="zoomRegionEditor(.5)" class="resizebutton">
             <div style="line-height: 4px;">
@@ -2910,19 +3110,17 @@
             </div>
         </button>
 
-
+        <button id="btnFilterImage" onclick="changeImageFilterNext(true)" class="resizebutton">
+            <div style="line-height: 4px;">
+                <span class="regioneditortext">Filter</span>
+                <span id="valueFilter" class="regioneditortext">none</span>
+            </div>
+        </button>
 
         <button id="btnRotateImage" onclick="rotateImage()" class="resizebutton">
             <div style="line-height: 4px;">
                 <span class="regioneditortext">Rotate</span>
                 <span id="valImageRotation" class="regioneditortext">0&deg;</span>
-            </div>
-        </button>
-
-        <button id="btnFilterImage" onclick="changeImageFilterNext(true)" class="resizebutton">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Filter</span>
-                <span id="valueFilter" class="regioneditortext">none</span>
             </div>
         </button>
 
@@ -3165,7 +3363,7 @@
     </div>
     <div id="rowDistanceTools" style="display:none" class="editorrow">
 
-        <button disabled class="resizebutton2" style="background-color: black;">
+        <button id="btnDistance" disabled class="resizebutton2" style="background-color: black;">
             <div style="line-height: 17px;">
                 <div class="regioneditortext2">Distance</div>
                 <div id="valDistanceMeters" class="regionditortextsub3">--</div>
@@ -3178,10 +3376,10 @@
         <button id="btnChangeDistanceMore" onmousedown="repeatFunc(changeDistanceBy.bind(null,.01))"
             onmouseup="clearFunc()" class="resizebutton">+</button>
 
-        <div style="width:8px;">
+        <div id="spacerDistanceColorRampMin" style="width:8px;">
         </div>
 
-        <button disabled id="btnDistanceColorRamp" class="resizebutton" style="background-color:black">
+        <button disabled id="btnDistanceColorRampMin" class="resizebutton" style="background-color:black">
             <div style="line-height: 10px;">
                 <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Near</span>
                 <div id="valMinDistanceColor" style="background-color: black; font-size:4px; line-height: 8px;"
@@ -3191,7 +3389,7 @@
             </div>
         </button>
 
-        <button disabled id="btnDistanceColorRamp" class="resizebutton" style="background-color:black">
+        <button disabled id="btnDistanceColorRampMax" class="resizebutton" style="background-color:black">
             <div style="line-height: 10px;">
                 <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Far</span>
                 <div id="valMaxDistanceColor" style="background-color: black; font-size:4px; line-height: 8px;"
