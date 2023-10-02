@@ -32,6 +32,7 @@ var waiterTime = 100;
 let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
 
 function changeLayerNext(doNext) {
+    hideTips();
     let index = regionEditorLayers.indexOf(activeLayer);
     if (doNext) {
         index++;
@@ -386,7 +387,7 @@ function metersToInches(meters) {
 }
 
 function clearDistanceMap() {
-
+    hideTips();
     distanceMap = new Array(49152);
     recalcEditor();
 }
@@ -447,6 +448,7 @@ function changeMaterial(material) {
 }
 
 function clearMaterialMap() {
+    hideTips();
     materialMap = new Array(49152);
     recalcEditor();
 }
@@ -1366,7 +1368,7 @@ function changeAlarmTemp(isImage, isMax) {
 }
 
 function changeImageFilterNext(nextFilter) {
-
+    hideTips();
     let imageFilter = imageFilters[0];
     let imageFilterIndex = 0;
     if (regionEditor.imageFilter != null) {
@@ -2854,7 +2856,7 @@ function renameCamera(cameraIndex){
 
 function changeCamera(cameraIndex, editing) {
     activeTool = 'look';
-    activeLayer = 'Region';
+    //activeLayer = 'Region';
     stagedUpdateCameraName = null;
     doEditing = editing;
     cameraEditor.isEditing = false;//will flip if camera index is found
