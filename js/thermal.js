@@ -453,16 +453,7 @@ function clearMaterialMap() {
     recalcEditor();
 }
 
-function fillTempsWithTestData() {
-    distanceMap = new Array(49152);
-    materialMap = new Array(49152);
-    tempsCelsius = new Array(49152);//256*192
-    let length = regionEditor.imageNativeWidth * regionEditor.imageNativeHeight;
-    for (let i = 0; i < length; i++) {
-        tempsCelsius[i] = randomNumberGenerator(35, 40, 1, true);
 
-    }
-}
 
 function clearFunc() {
     activeFunc = null;
@@ -1023,6 +1014,7 @@ function getRegionPointsOnCanvas(region, outlineOnly) {
 }
 
 function getTempsFromPointsOnCanvas(points) {
+    
     let lowCelsius = 999999
     let highCelsius = -999999
     let lowX = -1;
@@ -1031,8 +1023,9 @@ function getTempsFromPointsOnCanvas(points) {
     let highY = -1;
     for (let i = 0; i < points.length; i++) {
         let point = points[i];
-
+        
         let index = getIndexOfTempFromXY(point.x, point.y);
+        
         if (index > -1 && index < tempsCelsius.length) {
             let temp = tempsCelsius[index];
             if (temp < lowCelsius) {
@@ -1047,10 +1040,11 @@ function getTempsFromPointsOnCanvas(points) {
             }
         }
         else {
-            console.error("temp index out of bounds:" + index);
+            console.error("temp index out of bounds:" + index + "Length is: " + tempsCelsius.length + " point: " + point.x + "," + point.y + "");
         }
 
     }
+
     if (lowCelsius == 999999) {
         lowCelsius = null;
         highCelsius = null;
@@ -1823,6 +1817,7 @@ function changeRegionColorNext(goNext) {
 function getIndexOfTempFromXY(posX, posY) {
     let indexTempC = -1;
     if (regionEditor.imageRotation == 0) {
+        
         indexTempC = (posY * regionEditor.imageNativeHeight) + posX;
 
     }
@@ -2327,16 +2322,22 @@ function processScreenTouchCoordinates(offsetX, offsetY, isMouseMoveEvent) {
 }
 
 function displayImageTemps() {
-    let points = [(regionEditor.imageNativeHeight * regionEditor.imageNativeWidth)];
+    let arraySize = (regionEditor.imageNativeHeight * regionEditor.imageNativeWidth);
+    let points = new Array(arraySize);
+    
+    let index =-1;
     for (let x = 0; x < regionEditor.imageNativeWidth; x++) {
         for (let y = 0; y < regionEditor.imageNativeHeight; y++) {
-            let index = x + y;
+            index++;
             points[index] = { "x": x, "y": y };
+            
         }
     }
+    
+    
 
     let regionTemps = getTempsFromPointsOnCanvas(points);
-
+    
     document.getElementById("valImageHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
     document.getElementById("valImageHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
     document.getElementById("valImageLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
@@ -2695,7 +2696,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
                 `Distance: ${distanceText}<br/>` +
                 `Material: ${materialText}<br/>` +
                 `Emissivity: ${emissivityText}<br/>` +
-                `Adj Temp:${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F;`;
+                `Adj Temp:${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F`;
 
         }
         else {
@@ -2754,12 +2755,12 @@ function go() {
     };
 
 
-    let cameras = [{ "name": "left", "rotation": 0, "url": "reference_01.png", "isSpecified": true, "config":null}, 
-    { "name": "right", "rotation": 0, "url": "reference_02.png", "config":null }, 
-    { "name": "front", "rotation": 0, "url": "reference_03.png", "config":null }, 
-    { "name": "back", "rotation": 0, "url": "reference_04.png", "config":null }, 
-    { "name": "unknown", "rotation": 0, "url": "reference_05.png", "config":null }, 
-    { "name": "unknown", "rotation": 0, "url": "reference_06.png", "config":null }
+    let cameras = [{ "name": "left", "rotation": 0, "url": "reference_01.tiff", "isSpecified": true, "config":null}, 
+    { "name": "right", "rotation": 0, "url": "reference_02.tiff", "config":null }, 
+    { "name": "front", "rotation": 0, "url": "reference_03.tiff", "config":null }, 
+    { "name": "back", "rotation": 0, "url": "reference_04.tiff", "config":null }, 
+    { "name": "unknown", "rotation": 0, "url": "reference_05.tiff", "config":null }, 
+    { "name": "unknown", "rotation": 0, "url": "reference_06.tiff", "config":null }
 ];
     cameraEditor.cameras = cameras;
     changeCamera(0, false);
@@ -2863,8 +2864,58 @@ function changeCamera(cameraIndex, editing) {
     hideUI();
     hideTips();
     cameraEditor.selectedCameraIndex = cameraIndex;
+
+    let src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", src);
+    xhr.responseType = "arraybuffer";
+    xhr.onload = imgLoaded;
+    xhr.send();
+
+
+
+    
+}
+
+function imgLoaded(e) {
+    
+    //37510 User Comment
+    var ifds = UTIF.decode(e.target.response);
+    //console.log(JSON.stringify(ifds));
+    //return;
+    UTIF.decodeImage(e.target.response, ifds[0])
+    var rgba = UTIF.toRGBA8(ifds[0]);  // Uint8Array with RGBA pixels
+    //console.log(ifds[0].width, ifds[0].height);
+    let tags = ifds[0];//, ifds[0]);
+    let exifIFD = tags.exifIFD;
+    let userCommentTagID = "t37510";
+    let userComment = exifIFD[userCommentTagID];
+    let thermalData = JSON.parse(userComment);
+    //console.log(userComment);
+    let dateCaptured = thermalData.DateCaptured;
+    let temperaturesInCelsius = thermalData.TemperaturesInCelsius;
+    //let imageDescription = thermalData.ImageDescription;
+    //console.log('TemperaturesInCelsius:' + temperaturesInCelsius.length);
+
+
+    let canvas = document.createElement("canvas");
+    let ctx = canvas.getContext("2d");
+    canvas.width = ifds[0].width;
+    canvas.height = ifds[0].height;
+    let imageData = ctx.createImageData(ifds[0].width, ifds[0].height);
+    imageData.data.set(rgba);
+    ctx.putImageData(imageData, 0, 0);
+    //document.getElementById("holder").appendChild(canvas);
+
     let image = document.getElementById('regionEditorImageRef');
-    image.src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
+    image.src = canvas.toDataURL();
+    //jcogs123
+    distanceMap = new Array(49152);
+    materialMap = new Array(49152);
+    tempsCelsius = thermalData.TemperaturesInCelsius;
+    
+    
+
 }
 
 function cameraChangedImageLoaded(cameraIndex, editing) {
@@ -2877,7 +2928,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             //todo save changes?
         }
         historyStack = [];
-        tempsCelsius = [];
+        //tempsCelsius = [];
         historyIndex = -1;
 
         let oldImageScale = regionEditor.imageScale;
@@ -3098,7 +3149,7 @@ function setupEvents() {
 }
 
 function goRegion() {
-    fillTempsWithTestData();
+    
     recalcEditor();
     setButtons();
     addHistory('Initial App State', null, true);
