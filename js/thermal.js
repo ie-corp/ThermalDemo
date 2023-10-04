@@ -928,7 +928,8 @@ function getDisplayTempFromCelsius(celsius, displayFahrenheit) {
         return (Math.round(celsius * 10) / 10).toString();
     }
     else {
-        let valF = (celsius * 9 / 5) + 32;
+        let cel = Math.round(celsius * 10) / 10;//need to round first as this is what they see for on screen conversion
+        let valF = (cel * 9 / 5) + 32;
         return (Math.round(valF * 10) / 10).toString();
     }
 
