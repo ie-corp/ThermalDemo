@@ -244,6 +244,8 @@ function setButtons() {
     else {
         document.getElementById('valMaterialName').innerHTML = 'Emissivity';
         document.getElementById('valMaterialEmissivity').innerHTML = '';
+        document.getElementById('valDistanceMeters').innerHTML = '';
+        document.getElementById('valDistanceInches').innerHTML = '';
     }
 
 
@@ -257,7 +259,7 @@ function setButtons() {
     document.getElementById("btnClearDistance").style.display = !cameraEditor.isEditing ? 'none' : '';
 
 
-    
+
 
     document.getElementById("btnPolygonAdd").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
     document.getElementById("btnPointAdd").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
@@ -383,6 +385,7 @@ function changeDistance(distance) {
 }
 
 function metersToInches(meters) {
+    let fixed = parseFloat(meters.toFixed(2));//convert on what they see on the screen
     return meters * 39.3701;
 }
 
@@ -837,8 +840,9 @@ function drawDistanceMap(ctx, scale) {
         if (distanceItem == null) {
             continue;
         }
-        let x = i % regionEditor.imageNativeWidth;
-        let y = Math.floor(i / regionEditor.imageNativeWidth);
+        let pt = getPointFromIndex(i, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
+        let x = pt[0];
+        let y = pt[1];
         ctx.fillStyle = getColorRampValueRGBA(min * 100, max * 100, distanceItem * 100, .2, colorRamp);
 
         let pts = rotateFillPoint(regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, x, y)
@@ -879,8 +883,9 @@ function drawMaterialMap(ctx, scale) {
         if (materialItem == null || materialItem.name == null || materialItem.emissivity == null) {
             continue;
         }
-        let x = i % regionEditor.imageNativeWidth;
-        let y = Math.floor(i / regionEditor.imageNativeWidth);
+        let pt = getPointFromIndex(i, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
+        let x = pt[0];
+        let y = pt[1];
         ctx.fillStyle = getColorRampValueRGBA(min * 100, max * 100, materialItem.emissivity * 100, .2, colorRamp);
 
         let pts = rotateFillPoint(regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, x, y)
@@ -1015,7 +1020,7 @@ function getRegionPointsOnCanvas(region, outlineOnly) {
 }
 
 function getTempsFromPointsOnCanvas(points) {
-    
+
     let lowCelsius = 999999
     let highCelsius = -999999
     let lowX = -1;
@@ -1024,9 +1029,9 @@ function getTempsFromPointsOnCanvas(points) {
     let highY = -1;
     for (let i = 0; i < points.length; i++) {
         let point = points[i];
-        
-        let index = getIndexOfTempFromXY(point.x, point.y);
-        
+
+        let index = getIndexOfMapFromXY(point.x, point.y, regionEditor.imageRotation);
+
         if (index > -1 && index < tempsCelsius.length) {
             let temp = tempsCelsius[index];
             if (temp < lowCelsius) {
@@ -1810,25 +1815,36 @@ function changeRegionColorNext(goNext) {
 
 
 
-
-
-
-
-
-function getIndexOfTempFromXY(posX, posY) {
-    let indexTempC = -1;
-    if (regionEditor.imageRotation == 0) {
-        
-        indexTempC = (posY * regionEditor.imageNativeHeight) + posX;
-
+function dummyTest(posX,posY, width ,height) {
+    let idx = -1;
+    for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
+            idx++;
+            if (x == posX && y == posY) {
+                return idx;
+            }
+        }
     }
-    else if (regionEditor.imageRotation == 180) {
+    return -1;
+}
+
+
+
+
+function getIndexOfMapFromXY(posX, posY, pointRotation) {
+    let indexTempC = -1;
+    if (pointRotation == 0) {
+
+        //indexTempC = (posY * regionEditor.imageNativeHeight) + posX;
+        indexTempC = dummyTest(posX,posY,regionEditor.imageNativeWidth,regionEditor.imageNativeHeight);
+    }
+    else if (pointRotation == 180) {
         indexTempC = ((regionEditor.imageNativeHeight - posY) * regionEditor.imageNativeHeight) + (regionEditor.imageNativeWidth - posX);
     }
-    else if (regionEditor.imageRotation == 90) {
+    else if (pointRotation == 90) {
         indexTempC = ((regionEditor.imageNativeHeight - posX) * regionEditor.imageNativeHeight) + posY;
     }
-    else if (regionEditor.imageRotation == 270) {
+    else if (pointRotation == 270) {
         indexTempC = (posX * regionEditor.imageNativeHeight) + (regionEditor.imageNativeWidth - posY);
     }
     else {
@@ -2018,14 +2034,18 @@ function processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
     }
 }
 
+function getMapIndex(offsetX, offsetY) {
+    let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
+    let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+    let myIndex = realX + (realY * regionEditor.imageNativeWidth);
+    return myIndex;
+}
+
 function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
     if (activeTool == 'sample') {
         if (!isMouseMoveEvent) {
-            let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
-            let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
-            let myIndex = realX + (realY * regionEditor.imageNativeWidth);
-
+            let myIndex = getMapIndex(offsetX, offsetY);
             if (myIndex >= 0 && myIndex < distanceMap.length) {
                 let distance = distanceMap[myIndex];
                 if (distance != null) {
@@ -2038,10 +2058,31 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         }
     }
     else if (activeTool == 'fill') {
-        //we really only want to do this on touch up
+        //todo we really only want to do this on touch up
+        if (selectedDistance == null) {
+            return;
+        }
+        let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
+        let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+        let indexes = getFillIndexesToChange(tempsCelsius, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1);
+        console.log(indexes.length + ' indexes to color');
+        for(let i=0; i<indexes.length; i++){
+            let index = indexes[i];
+            if (index < distanceMap.length && index >= 0) {
+                console.log('coloring index: ' + index + ' with distance: ' + selectedDistance);
+                distanceMap[index] = selectedDistance;
+                
+            }
+            else{
+                console.error('index out of bounds: ' + index);
+            }
+
+        }
+        recalcEditor();
+        return;
 
         console.log('todo fill Material');
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
+        //let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
         if (indexes.length == 0) {
             return;
         }
@@ -2118,9 +2159,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
     if (activeTool == 'sample') {
         if (!isMouseMoveEvent) {
-            let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
-            let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
-            let myIndex = realX + (realY * regionEditor.imageNativeWidth);
+            let myIndex = getMapIndex(offsetX, offsetY);
 
             if (myIndex >= 0 && myIndex < materialMap.length) {
                 let material = materialMap[myIndex];
@@ -2247,6 +2286,148 @@ function getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, i
     return pts;
 }
 
+function getPointFromIndex(index, width, height) {
+    //index = (posY * height) + posX;
+    //0 * 192 + 1 = 1
+
+    //var x = index % height;
+    //var y = Math.floor(index/height);
+    //return [x,y];
+
+    let idx = -1;
+
+    for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
+            idx++;
+            if (idx == index) {
+                return [x, y];
+            }
+        }
+    }
+    return null;
+
+}
+
+
+
+
+//jbogs
+function getFillIndexesToChange(map, width, height, startX, startY, threshold) {
+
+    let newColor = -1;
+
+    let startIndex = getIndexOfMapFromXY(startX, startY, 0);
+    console.log(width, height);
+    let point = getPointFromIndex(startIndex, width, height);
+    if (point[0] != startX || point[1] != startY) {
+        console.error('point not correct. indexOf:' + startIndex + ' point:' + point[0] + ' ' + point[1] + ' is not the expected: ' + startX + ' ' + startY);
+    }
+
+
+    var startColor = map[startIndex];
+    console.log('startX:' + startX + ' startY:' + startY + ' startTemp:' + startColor + 'startIndex:' + startIndex);
+
+    // Create a new array that will store the pixels that should be changed
+    var newPixels = JSON.parse(JSON.stringify(map)); // Copying by value
+
+    // Create a queue that will store the pixels that need to be checked for similarity
+    var queue = [];
+    var checked = [];
+
+    // Enqueue the starting pixel
+    queue.push(startIndex);
+
+    // Create a loop that will iterate until the queue is empty
+    while (queue.length > 0) {
+        // Dequeue a pixel from the queue and store it in a variable
+        var currentIndex = queue.shift();
+        var currentColor = map[currentIndex];
+        console.log('currentTemp:' + currentColor);
+        
+        var pt = getPointFromIndex(currentIndex, width, height);
+        var currentX = pt[0];
+        var currentY = pt[1];
+
+        // Calculate the color distance between this pixel and the starting pixel using Euclidean distance
+        var distance = Math.sqrt(Math.pow(currentColor - startColor, 2));
+        console.log('distance:' + distance + ' threshold:' + threshold + ' currentX:' + currentX + ' currentY:' + currentY);
+        /*
+        var distance = Math.sqrt(
+            Math.pow(currentColor[0] - startColor[0], 2) +
+            Math.pow(currentColor[1] - startColor[1], 2) +
+            Math.pow(currentColor[2] - startColor[2], 2)
+        );
+        */
+
+        // If the color distance is less than or equal to your threshold value, then do the following:
+        if (distance <= threshold) {
+            // Mark this pixel as visited by setting its value in the new array to newColor
+            newPixels[currentIndex] = newColor;
+
+            // Enqueue the adjacent pixels of this pixel (up, down, left, right) to the queue,
+            // if they are within the bounds of the array and have not been visited before
+
+
+            if (currentX > 0) {// && newPixels[currentX - 1][currentY] != newColor) {
+                // Left
+                let checkX = currentX - 1;
+                let checkY = currentY
+                let indexOfAdjacent = getIndexOfMapFromXY(checkX, checkY, 0);
+                console.log('checking left:' + checkX + ' ' + checkY + ' index:' + indexOfAdjacent)
+                if (newPixels[indexOfAdjacent] != newColor) {
+                    if(checked.indexOf(indexOfAdjacent) == -1){
+                        checked.push(indexOfAdjacent);
+                        queue.push(indexOfAdjacent);
+                    }
+                }
+            }
+             if (currentX < width - 1) {// && newPixels[currentX + 1][currentY] != newColor) {
+                // Right
+                let indexOfAdjacent = getIndexOfMapFromXY(currentX + 1, currentY, 0);
+                if (newPixels[indexOfAdjacent] != newColor) {
+                    if(checked.indexOf(indexOfAdjacent) == -1){
+                        checked.push(indexOfAdjacent);
+                        queue.push(indexOfAdjacent);
+                    }
+                }
+            }
+            
+            if (currentY > 0) {// && newPixels[currentX][currentY - 1] != newColor) {
+                // Up
+                let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY - 1, 0);
+                if (newPixels[indexOfAdjacent] != newColor) {
+                    if(checked.indexOf(indexOfAdjacent) == -1){
+                        checked.push(indexOfAdjacent);
+                        queue.push(indexOfAdjacent);
+                    }
+                }
+            }
+            
+            if (currentY < height - 1) {
+                // Down
+                let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY + 1, 0);
+                if (newPixels[indexOfAdjacent] != newColor) {
+                    if(checked.indexOf(indexOfAdjacent) == -1){
+                        checked.push(indexOfAdjacent);
+                        queue.push(indexOfAdjacent);
+                    }
+                }
+            } 
+
+        }
+    }
+
+    // Return the new array of pixels that should be changed by the fill operation
+    let indexes = [];
+    for (let i = 0; i < newPixels.length; i++) {
+        if (newPixels[i] === newColor) {
+            indexes.push(i);
+        }
+    }
+    return indexes;
+
+    // return newPixels;
+}
 
 
 function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale, isRound, selBrushSize) {
@@ -2325,20 +2506,20 @@ function processScreenTouchCoordinates(offsetX, offsetY, isMouseMoveEvent) {
 function displayImageTemps() {
     let arraySize = (regionEditor.imageNativeHeight * regionEditor.imageNativeWidth);
     let points = new Array(arraySize);
-    
-    let index =-1;
+
+    let index = -1;
     for (let x = 0; x < regionEditor.imageNativeWidth; x++) {
         for (let y = 0; y < regionEditor.imageNativeHeight; y++) {
             index++;
             points[index] = { "x": x, "y": y };
-            
+
         }
     }
-    
-    
+
+
 
     let regionTemps = getTempsFromPointsOnCanvas(points);
-    
+
     document.getElementById("valImageHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
     document.getElementById("valImageHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
     document.getElementById("valImageLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
@@ -2382,7 +2563,7 @@ let storedImageWidth = null;
 let storedImageHeight = null;
 let storedImageMirrorHorizontally = null;
 
-function clearStoredImageData(){
+function clearStoredImageData() {
     storedImageData = null;
     storedImageRotation = null;
     storedImageWidth = null;
@@ -2663,7 +2844,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         drawTipMagnifier(posX, posY);
 
 
-        indexTempC = getIndexOfTempFromXY(posX, posY);
+        indexTempC = getIndexOfMapFromXY(posX, posY, regionEditor.imageRotation);//this is x and y of the image rotated
 
         //Emissivity is defined as the ratio of the energy radiated from a material's surface to that radiated from a perfect emitter, 
         //known as a blackbody, at the same temperature and wavelength and under the same viewing conditions. 
@@ -2674,9 +2855,14 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
         let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
         let myIndex = realX + (realY * regionEditor.imageNativeWidth);
+        let distanceMeters = null;
+        let materialEmissivity = null;
+        let adjTempC = null;
+
         if (myIndex >= 0 && myIndex < distanceMap.length) {
             let distance = distanceMap[myIndex];
             if (distance != null) {
+                distanceMeters = distance;
                 distanceText = distance.toFixed(2) + 'm&nbsp;' + metersToInches(distance).toFixed(1) + 'in';
             }
         }
@@ -2684,6 +2870,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         if (myIndex >= 0 && myIndex < materialMap.length) {
             let material = materialMap[myIndex];
             if (material != null) {
+                materialEmissivity = material.emissivity;
                 materialText = material.name;
                 emissivityText = material.emissivity.toFixed(2);
             }
@@ -2692,12 +2879,20 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
 
         if (indexTempC > -1 && indexTempC < tempsCelsius.length) {
             let tempC = tempsCelsius[indexTempC];
+            if (tempC != null && distanceMeters != null && materialEmissivity != null) {
+
+                let ambientTempC = tempC;
+                adjTempC = getAdjustedTempInCelsius(tempC, ambientTempC, distanceMeters, materialEmissivity);
+
+            }
+
             tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` +
+                `IndexTempC: ${indexTempC}<br/>` +
                 `Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F<br/>` +
                 `Distance: ${distanceText}<br/>` +
                 `Material: ${materialText}<br/>` +
                 `Emissivity: ${emissivityText}<br/>` +
-                `Adj Temp:${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F`;
+                `Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F`;
 
         }
         else {
@@ -2718,6 +2913,34 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
 
 
 }
+
+
+
+function getAdjustedTempInCelsius(temperatureInCelsius, ambientTemperatureInCelsius, distanceMeters, emissivity) {
+    const cameraFixedEmissivity = .95;
+    const cameraFixedDistanceMeters = .25;
+    const cameraFixedAmbientTemperatureInCelsius = 25;
+
+    //The lower the emissivity the more we need to raise the temperature;
+    //we shouldn't let them use an emissivity less than .5 as it can't be reliably measured.
+    //20C * (.95/.95) = 20C
+    ///20C * (.95/.5) = 40C
+    let adjEmissivityTemp = temperatureInCelsius * (cameraFixedEmissivity / emissivity);
+
+
+    //increase the temperature the longer the distance
+    //1.0 meters = 0.00510204081632653
+    //5 meters = 0.12755102040816327
+    //10 meters = 0.510204081632653
+    //100 meters = 51.0204081632653
+    //1 meter 37C + 37C * 0.005 = 37.185C
+    //5 meters 37C + 37C * 0.127 = 41.399C
+    //10 meters 37C + 37C * 0.51 = 55.87C
+    let adjDistanceTemp = adjEmissivityTemp + (adjEmissivityTemp * Math.pow((distanceMeters / 14), 2));
+
+    return adjDistanceTemp;
+}
+
 
 
 function isTouchEventWithElement(element, e) {
@@ -2752,22 +2975,22 @@ function go() {
     setupEvents();
     let image = document.getElementById('regionEditorImageRef');
     image.onload = function () {
-        cameraChangedImageLoaded(cameraEditor.selectedCameraIndex, doEditing);		
+        cameraChangedImageLoaded(cameraEditor.selectedCameraIndex, doEditing);
     };
 
 
-    let cameras = [{ "name": "left", "rotation": 0, "url": "reference_01.tiff", "isSpecified": true, "config":null}, 
-    { "name": "right", "rotation": 0, "url": "reference_02.tiff", "config":null }, 
-    { "name": "front", "rotation": 0, "url": "reference_03.tiff", "config":null }, 
-    { "name": "back", "rotation": 0, "url": "reference_04.tiff", "config":null }, 
-    { "name": "unknown", "rotation": 0, "url": "reference_05.tiff", "config":null }, 
-    { "name": "unknown", "rotation": 0, "url": "reference_06.tiff", "config":null }
-];
+    let cameras = [{ "name": "left", "rotation": 0, "url": "reference_01.tiff", "isSpecified": true, "config": null },
+    { "name": "right", "rotation": 0, "url": "reference_02.tiff", "config": null },
+    { "name": "front", "rotation": 0, "url": "reference_03.tiff", "config": null },
+    { "name": "back", "rotation": 0, "url": "reference_04.tiff", "config": null },
+    { "name": "unknown", "rotation": 0, "url": "reference_05.tiff", "config": null },
+    { "name": "unknown", "rotation": 0, "url": "reference_06.tiff", "config": null }
+    ];
     cameraEditor.cameras = cameras;
     changeCamera(0, false);
 }
 
-function hideUI(){
+function hideUI() {
     document.getElementById('cameraTools').style.display = 'none';
     document.getElementById('imageTools').style.display = 'none';
     document.getElementById('rowRegionTools').style.display = 'none';
@@ -2775,55 +2998,55 @@ function hideUI(){
     document.getElementById('rowDistanceTools').style.display = 'none';
     document.getElementById('touchTools').style.display = 'none';
     document.getElementById('threshwindow').style.display = 'none';
-    
+
 }
 
-function showUI(){
-   
+function showUI() {
+
     document.getElementById('cameraTools').style.display = '';
     document.getElementById('imageTools').style.display = '';
     document.getElementById('touchTools').style.display = '';
-   
-    
-    
+
+
+
 }
 
-function deleteCamera(cameraIndex){
+function deleteCamera(cameraIndex) {
     //todo prompt for confirm or tap again to confirm
     cameraEditor.selectedCameraIndex = cameraIndex;
     cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = "unknown";
     cameraEditor.cameras[cameraEditor.selectedCameraIndex].isSpecified = false;
-    changeCamera(cameraIndex,false);
+    changeCamera(cameraIndex, false);
 }
 
-function saveCamera(cameraIndex){
+function saveCamera(cameraIndex) {
     cameraEditor.selectedCameraIndex = cameraIndex;
     //todo get staged name
-    if(stagedUpdateCameraName != null){
+    if (stagedUpdateCameraName != null) {
         cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = stagedUpdateCameraName;
         stagedUpdateCameraName = null;
     }
-    else{
-       if(cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == "unknown" || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null){
-        alert('Please rename the camera before saving it.');
-        return;
-       }
+    else {
+        if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == "unknown" || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
+            alert('Please rename the camera before saving it.');
+            return;
+        }
     }
     cameraEditor.cameras[cameraEditor.selectedCameraIndex].config = JSON.parse(JSON.stringify(regionEditor));
-    changeCamera(cameraIndex,false);
+    changeCamera(cameraIndex, false);
 }
 
 let stagedUpdateCameraName = null;
-function renameCamera(cameraIndex){
+function renameCamera(cameraIndex) {
     cameraEditor.selectedCameraIndex = cameraIndex;
     let oldCamName = cameraEditor.cameras[cameraEditor.selectedCameraIndex].name;
-    if(oldCamName == null || oldCamName.trim().toLowerCase == "unknown"){
+    if (oldCamName == null || oldCamName.trim().toLowerCase == "unknown") {
         oldCamName = "";
     }
     let newName = prompt("Please enter a new camera name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", oldCamName);
     if (newName != null && newName.trim() != "") {
         newName = newName.trim();
-        if(oldCamName == newName){
+        if (oldCamName == newName) {
             return;
         }
 
@@ -2839,11 +3062,11 @@ function renameCamera(cameraIndex){
             }
         }
         //is the name already in use?
-        for(let i=0;i<cameraEditor.cameras.length;i++){
-            if(i == cameraIndex){
+        for (let i = 0; i < cameraEditor.cameras.length; i++) {
+            if (i == cameraIndex) {
                 continue;
             }
-            if((cameraEditor.cameras[i].name + "").toLocaleLowerCase() == newName){
+            if ((cameraEditor.cameras[i].name + "").toLocaleLowerCase() == newName) {
                 alert('The camera name already in use');
                 return;
             }
@@ -2875,11 +3098,11 @@ function changeCamera(cameraIndex, editing) {
 
 
 
-    
+
 }
 
 function imgLoaded(e) {
-    
+
     //37510 User Comment
     var ifds = UTIF.decode(e.target.response);
     //console.log(JSON.stringify(ifds));
@@ -2891,6 +3114,7 @@ function imgLoaded(e) {
     let exifIFD = tags.exifIFD;
     let userCommentTagID = "t37510";
     let userComment = exifIFD[userCommentTagID];
+    //console.log(userComment);
     let thermalData = JSON.parse(userComment);
     //console.log(userComment);
     let dateCaptured = thermalData.DateCaptured;
@@ -2910,12 +3134,13 @@ function imgLoaded(e) {
 
     let image = document.getElementById('regionEditorImageRef');
     image.src = canvas.toDataURL();
-    //jcogs123
+    
     distanceMap = new Array(49152);
     materialMap = new Array(49152);
     tempsCelsius = thermalData.TemperaturesInCelsius;
     
-    
+
+
 
 }
 
@@ -2934,23 +3159,23 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
 
         let oldImageScale = regionEditor.imageScale;
         let oldImageFilter = regionEditor.imageFilter;
-        if(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null){
+        if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null) {
             regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config));
             regionEditor.imageScale = oldImageScale;
             regionEditor.imageFilter = oldImageFilter;
         }
-        else{
+        else {
             regionEditor = getEmptyRegionEditor();
             regionEditor.imageScale = oldImageScale;
             regionEditor.imageFilter = oldImageFilter;
         }
-        
+
     }
     else {
-        if(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null){
+        if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null) {
             regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config));
         }
-        else{
+        else {
             regionEditor = getEmptyRegionEditor();
             regionEditor.imageScale = 4.0;
         }
@@ -3150,7 +3375,7 @@ function setupEvents() {
 }
 
 function goRegion() {
-    
+
     recalcEditor();
     setButtons();
     addHistory('Initial App State', null, true);
