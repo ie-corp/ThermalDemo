@@ -1815,17 +1815,10 @@ function changeRegionColorNext(goNext) {
 
 
 
-function dummyTest(posX,posY, width ,height) {
-    let idx = -1;
-    for (let x = 0; x < width; x++) {
-        for (let y = 0; y < height; y++) {
-            idx++;
-            if (x == posX && y == posY) {
-                return idx;
-            }
-        }
-    }
-    return -1;
+function getPointFromIndex(index, width, height) {
+    var calcY = index % height;
+    var calcX = Math.floor(index/height);
+    return [calcX,calcY];
 }
 
 
@@ -1834,9 +1827,8 @@ function dummyTest(posX,posY, width ,height) {
 function getIndexOfMapFromXY(posX, posY, pointRotation) {
     let indexTempC = -1;
     if (pointRotation == 0) {
-
-        //indexTempC = (posY * regionEditor.imageNativeHeight) + posX;
-        indexTempC = dummyTest(posX,posY,regionEditor.imageNativeWidth,regionEditor.imageNativeHeight);
+        indexTempC = (posX * regionEditor.imageNativeHeight) + posY;//this one is corret
+        //(posY * regionEditor.imageNativeHeight) + posX;//this is the old one
     }
     else if (pointRotation == 180) {
         indexTempC = ((regionEditor.imageNativeHeight - posY) * regionEditor.imageNativeHeight) + (regionEditor.imageNativeWidth - posX);
@@ -2064,12 +2056,11 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         }
         let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
         let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
-        let indexes = getFillIndexesToChange(tempsCelsius, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1);
-        console.log(indexes.length + ' indexes to color');
+        let indexes = getFillIndexesToChange(tempsCelsius,distanceMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1);
+        
         for(let i=0; i<indexes.length; i++){
             let index = indexes[i];
             if (index < distanceMap.length && index >= 0) {
-                console.log('coloring index: ' + index + ' with distance: ' + selectedDistance);
                 distanceMap[index] = selectedDistance;
                 
             }
@@ -2079,30 +2070,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
         }
         recalcEditor();
-        return;
-
-        console.log('todo fill Material');
-        //let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
-        if (indexes.length == 0) {
-            return;
-        }
-        let index = indexes[0];
-        if (index < distanceMap.length && index >= 0) {
-            if (selectedDistance == null) {
-                return;
-            }
-
-            for (let i = 0; i < distanceMap.length; i++) {
-                let distance = distanceMap[i];
-                if (distance != null) {
-                    continue;
-                }
-
-                distanceMap[i] = selectedDistance;
-
-            }
-            recalcEditor();
-        }
+        
 
     }
     else if (activeTool == 'change') {
@@ -2171,29 +2139,25 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         }
     }
     else if (activeTool == 'fill') {
-        //we really only want to do this on touch up
-
-        console.log('todo fill Material');
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
-        if (indexes.length == 0) {
+        //todo we really only want to do this on touch up
+        if (selectedDistance == null) {
             return;
         }
-        let index = indexes[0];
-        if (index < materialMap.length && index >= 0) {
-
-            for (let i = 0; i < materialMap.length; i++) {
-                let material = materialMap[i];
-                if (material != null) {
-                    continue;
-                }
-
-                materialMap[i] = selectedMaterial;
-
+        let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
+        let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+        let indexes = getFillIndexesToChange(tempsCelsius, materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1);
+        console.log(indexes.length + ' indexes to color');
+        for(let i=0; i<indexes.length; i++){
+            let index = indexes[i];
+            if (index < distanceMap.length && index >= 0) {
+                distanceMap[index] = selectedDistance;
             }
-            recalcEditor();
-
+            else{
+                console.error('index out of bounds: ' + index);
+            }
 
         }
+        recalcEditor();
     }
     else if (activeTool == 'change') {
 
@@ -2286,53 +2250,34 @@ function getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, i
     return pts;
 }
 
-function getPointFromIndex(index, width, height) {
-    //index = (posY * height) + posX;
-    //0 * 192 + 1 = 1
 
-    //var x = index % height;
-    //var y = Math.floor(index/height);
-    //return [x,y];
-
-    let idx = -1;
-
-    for (let x = 0; x < width; x++) {
-        for (let y = 0; y < height; y++) {
-            idx++;
-            if (idx == index) {
-                return [x, y];
-            }
-        }
-    }
-    return null;
-
-}
 
 
 
 
 //jbogs
-function getFillIndexesToChange(map, width, height, startX, startY, threshold) {
+function getFillIndexesToChange(map, map2, width, height, startX, startY, threshold) {
 
     let newColor = -1;
 
     let startIndex = getIndexOfMapFromXY(startX, startY, 0);
-    console.log(width, height);
+    
     let point = getPointFromIndex(startIndex, width, height);
     if (point[0] != startX || point[1] != startY) {
         console.error('point not correct. indexOf:' + startIndex + ' point:' + point[0] + ' ' + point[1] + ' is not the expected: ' + startX + ' ' + startY);
     }
 
 
-    var startColor = map[startIndex];
-    console.log('startX:' + startX + ' startY:' + startY + ' startTemp:' + startColor + 'startIndex:' + startIndex);
+    let startColor = map[startIndex];
+    let existingColor = map2[startIndex];
+    
 
     // Create a new array that will store the pixels that should be changed
-    var newPixels = JSON.parse(JSON.stringify(map)); // Copying by value
+    let newPixels = JSON.parse(JSON.stringify(map)); // Copying by value
 
     // Create a queue that will store the pixels that need to be checked for similarity
-    var queue = [];
-    var checked = [];
+    let queue = [];
+    let checked = [];
 
     // Enqueue the starting pixel
     queue.push(startIndex);
@@ -2340,17 +2285,17 @@ function getFillIndexesToChange(map, width, height, startX, startY, threshold) {
     // Create a loop that will iterate until the queue is empty
     while (queue.length > 0) {
         // Dequeue a pixel from the queue and store it in a variable
-        var currentIndex = queue.shift();
-        var currentColor = map[currentIndex];
-        console.log('currentTemp:' + currentColor);
+        let currentIndex = queue.shift();
+        let currentColor = map[currentIndex];
         
-        var pt = getPointFromIndex(currentIndex, width, height);
-        var currentX = pt[0];
-        var currentY = pt[1];
+        
+        let pt = getPointFromIndex(currentIndex, width, height);
+        let currentX = pt[0];
+        let currentY = pt[1];
 
         // Calculate the color distance between this pixel and the starting pixel using Euclidean distance
-        var distance = Math.sqrt(Math.pow(currentColor - startColor, 2));
-        console.log('distance:' + distance + ' threshold:' + threshold + ' currentX:' + currentX + ' currentY:' + currentY);
+        let distance = Math.sqrt(Math.pow(currentColor - startColor, 2));
+        
         /*
         var distance = Math.sqrt(
             Math.pow(currentColor[0] - startColor[0], 2) +
@@ -2373,8 +2318,7 @@ function getFillIndexesToChange(map, width, height, startX, startY, threshold) {
                 let checkX = currentX - 1;
                 let checkY = currentY
                 let indexOfAdjacent = getIndexOfMapFromXY(checkX, checkY, 0);
-                console.log('checking left:' + checkX + ' ' + checkY + ' index:' + indexOfAdjacent)
-                if (newPixels[indexOfAdjacent] != newColor) {
+                if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
                     if(checked.indexOf(indexOfAdjacent) == -1){
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
@@ -2384,7 +2328,7 @@ function getFillIndexesToChange(map, width, height, startX, startY, threshold) {
              if (currentX < width - 1) {// && newPixels[currentX + 1][currentY] != newColor) {
                 // Right
                 let indexOfAdjacent = getIndexOfMapFromXY(currentX + 1, currentY, 0);
-                if (newPixels[indexOfAdjacent] != newColor) {
+                if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
                     if(checked.indexOf(indexOfAdjacent) == -1){
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
@@ -2395,7 +2339,7 @@ function getFillIndexesToChange(map, width, height, startX, startY, threshold) {
             if (currentY > 0) {// && newPixels[currentX][currentY - 1] != newColor) {
                 // Up
                 let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY - 1, 0);
-                if (newPixels[indexOfAdjacent] != newColor) {
+                if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
                     if(checked.indexOf(indexOfAdjacent) == -1){
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
@@ -2406,7 +2350,7 @@ function getFillIndexesToChange(map, width, height, startX, startY, threshold) {
             if (currentY < height - 1) {
                 // Down
                 let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY + 1, 0);
-                if (newPixels[indexOfAdjacent] != newColor) {
+                if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
                     if(checked.indexOf(indexOfAdjacent) == -1){
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
@@ -2434,8 +2378,9 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
     let pts = getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale);
     let realX = pts[0];
     let realY = pts[1];
-
-    let myIndex = realX + (realY * imageNativeWidth);
+    let myRotation = 0
+    let myIndex = getIndexOfMapFromXY(realX, realY, myRotation);
+   
 
     if (isRound) {
         let indexes = [];
@@ -2450,7 +2395,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
                 }
                 let distanceItem = Math.sqrt(Math.pow(x - realX, 2) + Math.pow(y - realY, 2));
                 if (distanceItem < selBrushSize) {
-                    let index = x + (y * imageNativeWidth);
+                    let index = getIndexOfMapFromXY(x, y, myRotation);//jfig
 
                     indexes.push(index);
                 }
@@ -2480,7 +2425,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
                 if (y < 0 || y >= imageNativeHeight) {
                     continue;
                 }
-                let index = x + (y * imageNativeWidth);
+                let index = getIndexOfMapFromXY(x, y, myRotation);//jfig
                 indexes.push(index);
 
             }
