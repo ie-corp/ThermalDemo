@@ -2051,8 +2051,10 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         if (selectedDistance == null) {
             return;
         }
-        let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
-        let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale);
+        let realX = pts[0];
+        let realY = pts[1];
+       
         let indexes = getFillIndexesToChange(tempsCelsius,distanceMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, false);
         
         for(let i=0; i<indexes.length; i++){
@@ -2077,9 +2079,10 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
         let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
         if (indexes.length == 0) {
-            return;
+           return;
         }
         let index = indexes[0];
+        console.log('distance is' + selectedDistance);
         if (index < distanceMap.length && index >= 0) {
             let foundDistance = distanceMap[index];
             if (foundDistance == null) {
@@ -2140,8 +2143,9 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         if (selectedMaterial == null) {
             return;
         }
-        let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
-        let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale);
+        let realX = pts[0];
+        let realY = pts[1];
         let indexes = getFillIndexesToChange(tempsCelsius,materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, true);
         
         for(let i=0; i<indexes.length; i++){
@@ -2864,14 +2868,14 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
 
             let strMaterialColor = 'gray';
             let strDistanceColor = 'gray';
-            if(activeTool == 'sample' || activeTool == 'look'){
-                if(activeLayer == 'Matl'){
-                    strMaterialColor = 'white';
-                }
-                else if(activeLayer == 'Dist'){
-                    strDistanceColor = 'white';
-                }
+            
+            if(activeLayer == 'Matl'){
+                strMaterialColor = 'white';
             }
+            else if(activeLayer == 'Dist'){
+                strDistanceColor = 'white';
+            }
+            
         
 
             tooltip.innerHTML = `<span style="color:gray">X: ${posX}, Y: ${posY} index:${indexMap}</span><br/>` +
