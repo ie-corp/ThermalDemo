@@ -2407,8 +2407,10 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
 
         let myBrushSize = selBrushSize;
         if (myBrushSize == 1) {
-            let index = realX + (realY * imageNativeWidth);
-            indexes.push(index);
+            let index = getIndexOfMapFromXY(realX, realY, myRotation);
+            if(index > -1){
+                indexes.push(index);
+            }
             return indexes;
         }
         else {
