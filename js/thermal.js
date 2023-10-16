@@ -507,7 +507,7 @@ function recalcEditor() {
 
     if (activeTool != 'look' && activeTool != 'sample' & activeTool != 'fill' & activeTool != 'change') {
 
-        hideTips();
+        //hideTips();//cdog
     }
 
     document.getElementById("valActiveLayer").innerHTML = activeLayer;
@@ -2714,10 +2714,10 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
     const tooltip = document.getElementById('tooltip');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
-    if (activeTool == 'look' || activeTool == 'sample' || activeTool == 'fill' || activeTool == 'change') {
+    let showTip = true;//(activeTool == 'look' || activeTool == 'sample' || activeTool == 'fill' || activeTool == 'change');//cdog
+    if (showTip) {
         //const image = document.querySelector('#regionEditorImage');
-
-
+        
         let x = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
         let y = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
         let indexMap = -1;
@@ -2747,10 +2747,34 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
             magOffsetY += 80;
         }
 
+        if(activeTool == 'paintsquare' || activeTool == 'erasesquare'){
+            let width = (brushSize * regionEditor.imageScale)*2;
+            let posOffSetX = (brushSize * regionEditor.imageScale);
+            let posOffSetY = (brushSize * regionEditor.imageScale);
+            if(brushSize == 1){
+                posOffSetY += 8;
+            }
 
-
-        tiptarget.style.top = `${pageY - 12}px`;
-        tiptarget.style.left = `${pageX - 10}px`;
+            tiptarget.innerHTML = `<svg width="${width+2}" height="${width+2}" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="${width}" height="${width}" stroke="red" stroke-width="2" /></svg>`;
+            tiptarget.style.top = `${pageY -posOffSetY}px`;
+            tiptarget.style.left = `${pageX - posOffSetX}px`;
+        }
+        else if(activeTool == 'paintround' || activeTool == 'eraseround'){
+            let width = (brushSize * regionEditor.imageScale)*2;
+            let posOffSetX = (brushSize * regionEditor.imageScale);
+            let posOffSetY = (brushSize * regionEditor.imageScale);
+            if(brushSize == 1){
+                posOffSetY += 8;
+            }
+            tiptarget.innerHTML = `<svg width="${width+2}" height="${width+2}" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="${width/2+1}" cy="${width/2+1}" r="${width/2}" stroke="red" stroke-width="2" /></svg>`;
+            tiptarget.style.top = `${pageY -posOffSetY}px`;
+            tiptarget.style.left = `${pageX - posOffSetX}px`;
+        }
+        else{
+            tiptarget.innerHTML = `<svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="7" width="12" height="12" stroke="red" stroke-width="2" /></svg>`;
+            tiptarget.style.top = `${pageY - 12}px`;
+            tiptarget.style.left = `${pageX - 12}px`;
+        }
 
         tooltip.style.top = `${pageY + placementOffsetY}px`;
         tooltip.style.left = `${pageX + placementOffsetX}px`;
