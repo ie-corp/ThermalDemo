@@ -1823,26 +1823,23 @@ function getPointFromIndex(index, width, height) {
 
 
 
-
 function getIndexOfMapFromXY(posX, posY, pointRotation) {
     let indexTempC = -1;
     if (pointRotation == 0) {
-        indexTempC = (posX * regionEditor.imageNativeHeight) + posY;//this one is corret
-        //(posY * regionEditor.imageNativeHeight) + posX;//this is the old one
-    }
-    else if (pointRotation == 180) {
-        indexTempC = ((regionEditor.imageNativeHeight - posY) * regionEditor.imageNativeHeight) + (regionEditor.imageNativeWidth - posX);
+        indexTempC = (posX * regionEditor.imageNativeHeight) + posY;
     }
     else if (pointRotation == 90) {
-        indexTempC = ((regionEditor.imageNativeHeight - posX) * regionEditor.imageNativeHeight) + posY;
+        indexTempC = (posY * regionEditor.imageNativeHeight) + (regionEditor.imageNativeHeight - posX - 1);
+    }
+    else if (pointRotation == 180) {
+        indexTempC = ((regionEditor.imageNativeWidth - posX - 1) * regionEditor.imageNativeHeight) + (regionEditor.imageNativeHeight - posY - 1);
     }
     else if (pointRotation == 270) {
-        indexTempC = (posX * regionEditor.imageNativeHeight) + (regionEditor.imageNativeWidth - posY);
+        indexTempC = ((regionEditor.imageNativeWidth - posY - 1) * regionEditor.imageNativeHeight) + posX;
     }
-    else {
+    else{
         return -1;
     }
-
     return indexTempC;
 }
 
@@ -2719,9 +2716,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
 
         let x = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
         let y = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
-        let tempX = -1;
-        let tempY = -1;
-        let indexTempC = -1;
+        let indexMap = -1;
         let posX = -1;
         let posY = -1;
 
@@ -2761,23 +2756,23 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         tipmagnifier.style.left = `${magOffsetX}px`;
 
         if (regionEditor.imageRotation == 0) {
-            posX = Math.min(x, regionEditor.imageNativeWidth);
-            posY = Math.min(y, regionEditor.imageNativeHeight);
+            posX = Math.min(x, regionEditor.imageNativeWidth-1);
+            posY = Math.min(y, regionEditor.imageNativeHeight-1);
 
         }
         else if (regionEditor.imageRotation == 180) {
-            posX = Math.min(x, regionEditor.imageNativeWidth);
-            posY = Math.min(y, regionEditor.imageNativeHeight);
+            posX = Math.min(x, regionEditor.imageNativeWidth-1);
+            posY = Math.min(y, regionEditor.imageNativeHeight-1);
 
         }
         else if (regionEditor.imageRotation == 90) {
-            posX = Math.min(x, regionEditor.imageNativeHeight);
-            posY = Math.min(y, regionEditor.imageNativeWidth);
+            posX = Math.min(x, regionEditor.imageNativeHeight-1);
+            posY = Math.min(y, regionEditor.imageNativeWidth-1);
 
         }
         else if (regionEditor.imageRotation == 270) {
-            posX = Math.min(x, regionEditor.imageNativeHeight);
-            posY = Math.min(y, regionEditor.imageNativeWidth);
+            posX = Math.min(x, regionEditor.imageNativeHeight-1);
+            posY = Math.min(y, regionEditor.imageNativeWidth-1);
 
         }
         else {
@@ -2789,7 +2784,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         drawTipMagnifier(posX, posY);
 
 
-        indexTempC = getIndexOfMapFromXY(posX, posY, regionEditor.imageRotation);//this is x and y of the image rotated
+        indexMap = getIndexOfMapFromXY(posX, posY, regionEditor.imageRotation);//this is x and y of the image rotated
 
         //Emissivity is defined as the ratio of the energy radiated from a material's surface to that radiated from a perfect emitter, 
         //known as a blackbody, at the same temperature and wavelength and under the same viewing conditions. 
@@ -2797,33 +2792,38 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         let distanceText = "Not Specified";
         let materialText = "Not Specified";
         let emissivityText = "Not Specified";
-        let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
-        let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
-        let myIndex = realX + (realY * regionEditor.imageNativeWidth);
+        
+        
         let distanceMeters = null;
         let materialEmissivity = null;
         let adjTempC = null;
 
-        if (myIndex >= 0 && myIndex < distanceMap.length) {
-            let distance = distanceMap[myIndex];
+        if (indexMap >= 0 && indexMap < distanceMap.length) {
+            let distance = distanceMap[indexMap];
             if (distance != null) {
                 distanceMeters = distance;
                 distanceText = distance.toFixed(2) + 'm&nbsp;' + metersToInches(distance).toFixed(1) + 'in';
             }
         }
+        else{
+            console.error('distance index out of bounds');
+        }
 
-        if (myIndex >= 0 && myIndex < materialMap.length) {
-            let material = materialMap[myIndex];
+        if (indexMap >= 0 && indexMap < materialMap.length) {
+            let material = materialMap[indexMap];
             if (material != null) {
                 materialEmissivity = material.emissivity;
                 materialText = material.name;
                 emissivityText = material.emissivity.toFixed(2);
             }
         }
+        else{
+            console.error('material index out of bounds');
+        }
 
 
-        if (indexTempC > -1 && indexTempC < tempsCelsius.length) {
-            let tempC = tempsCelsius[indexTempC];
+        if (indexMap > -1 && indexMap < tempsCelsius.length) {
+            let tempC = tempsCelsius[indexMap];
             if (tempC != null && distanceMeters != null && materialEmissivity != null) {
 
                 let ambientTempC = tempC;
@@ -2831,8 +2831,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
 
             }
 
-            tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>` +
-                `IndexTempC: ${indexTempC}<br/>` +
+            tooltip.innerHTML = `X: ${posX}, Y: ${posY} index:${indexMap}<br/>` +
                 `Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F<br/>` +
                 `Distance: ${distanceText}<br/>` +
                 `Material: ${materialText}<br/>` +
@@ -2841,8 +2840,8 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
 
         }
         else {
-            console.error('invalid indexTempC: ' + indexTempC);
-            tooltip.textContent = 'No temperature reading at this location.';
+            console.error('invalid indexTempC: ' + indexMap);
+            tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>`;
         }
     }
     else {
