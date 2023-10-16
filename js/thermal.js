@@ -71,9 +71,11 @@ function changeBrushSizeBy(amount) {
         brushSize = 100;
     }
     document.getElementById("valBrushSize").innerHTML = brushSize;
+    hideTips();
 }
 
 function selectRegionEditorTool(toolName) {
+    hideTips();
     if (regionEditorTools.indexOf(toolName) == -1) {
         console.error('invalid tool name: ' + toolName);
         recalcEditor();
@@ -505,10 +507,7 @@ function recalcEditor() {
 
 
 
-    if (activeTool != 'look' && activeTool != 'sample' & activeTool != 'fill' & activeTool != 'change') {
-
-        //hideTips();//cdog
-    }
+    
 
     document.getElementById("valActiveLayer").innerHTML = activeLayer;
     document.getElementById("valBrushSize").innerHTML = brushSize;
@@ -2054,7 +2053,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         }
         let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
         let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
-        let indexes = getFillIndexesToChange(tempsCelsius,distanceMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1);
+        let indexes = getFillIndexesToChange(tempsCelsius,distanceMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, false);
         
         for(let i=0; i<indexes.length; i++){
             let index = indexes[i];
@@ -2137,18 +2136,19 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         }
     }
     else if (activeTool == 'fill') {
-        //todo we really only want to do this on touch up
-        if (selectedDistance == null) {
+
+        if (selectedMaterial == null) {
             return;
         }
         let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
         let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
-        let indexes = getFillIndexesToChange(tempsCelsius, materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1);
-        console.log(indexes.length + ' indexes to color');
+        let indexes = getFillIndexesToChange(tempsCelsius,materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, true);
+        
         for(let i=0; i<indexes.length; i++){
             let index = indexes[i];
-            if (index < distanceMap.length && index >= 0) {
-                distanceMap[index] = selectedDistance;
+            if (index < materialMap.length && index >= 0) {
+                materialMap[index] = {"name":selectedMaterial.name,"emissivity":selectedMaterial.emissivity};
+                
             }
             else{
                 console.error('index out of bounds: ' + index);
@@ -2156,6 +2156,9 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
         }
         recalcEditor();
+
+
+        
     }
     else if (activeTool == 'change') {
 
@@ -2254,7 +2257,7 @@ function getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, i
 
 
 //jbogs
-function getFillIndexesToChange(map, map2, width, height, startX, startY, threshold) {
+function getFillIndexesToChange(map, map2, width, height, startX, startY, threshold, isMaterial) {
 
     let newColor = -1;
 
@@ -2714,7 +2717,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
     const tooltip = document.getElementById('tooltip');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
-    let showTip = true;//(activeTool == 'look' || activeTool == 'sample' || activeTool == 'fill' || activeTool == 'change');//cdog
+    let showTip = true;
     if (showTip) {
         //const image = document.querySelector('#regionEditorImage');
         
