@@ -2835,12 +2835,24 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
 
             }
 
-            tooltip.innerHTML = `X: ${posX}, Y: ${posY} index:${indexMap}<br/>` +
-                `Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F<br/>` +
-                `Distance: ${distanceText}<br/>` +
-                `Material: ${materialText}<br/>` +
-                `Emissivity: ${emissivityText}<br/>` +
-                `Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F`;
+            let strMaterialColor = 'gray';
+            let strDistanceColor = 'gray';
+            if(activeTool == 'sample' || activeTool == 'look'){
+                if(activeLayer == 'Matl'){
+                    strMaterialColor = 'white';
+                }
+                else if(activeLayer == 'Dist'){
+                    strDistanceColor = 'white';
+                }
+            }
+        
+
+            tooltip.innerHTML = `<span style="color:gray">X: ${posX}, Y: ${posY} index:${indexMap}</span><br/>` +
+                `<span style="color:gray">Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
+                `<span style="color:${strDistanceColor}">Distance: ${distanceText}</span><br/>` +
+                `<span style="color:${strMaterialColor}">Material: ${materialText}</span><br/>` +
+                `<span style="color:${strMaterialColor}">Emissivity: ${emissivityText}</span><br/>` +
+                `<span style="color:gray">Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F</span>`;
 
         }
         else {
