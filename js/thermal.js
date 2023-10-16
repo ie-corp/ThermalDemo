@@ -755,6 +755,7 @@ function drawRegions() {
     }
 
     var ctxMain = regionEditorImage.getContext("2d");
+    
     regionEditorImage.width = canvas.width;
     regionEditorImage.height = canvas.height;
     ctxMain.clearRect(0, 0, regionEditorImage.width, regionEditorImage.height);
@@ -2518,7 +2519,7 @@ function drawTipMagnifier(x, y) {
     let regionEditorImageRef = document.getElementById('regionEditorImage');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const magnifierCanvas = document.getElementById('magnifierCanvas');
-    //jamesjay
+    
     if (storedImageData == null || storedImageRotation != regionEditor.imageRotation || storedImageMirrorHorizontally != regionEditor.imageMirrorHorizontally) {
         let dummyCanvas = document.createElement('canvas');
         let ctxSource = dummyCanvas.getContext('2d');//, {willReadFrequently: true});
@@ -2582,7 +2583,7 @@ function drawTipMagnifier(x, y) {
     for (let pointx = x - pixelDist; pointx < x + pixelDist; pointx++) {
         for (let pointy = y - pixelDist; pointy < y + pixelDist; pointy++) {
             let rgba = "white";
-            if (pointx < 0 || pointy < 0 || pointx > storedImageWidth || pointy > storedImageHeight) {
+            if (pointx < 0 || pointy < 0 || pointx > storedImageWidth-1 || pointy > storedImageHeight-1) {
                 rgba = "white";
 
             }
@@ -2590,6 +2591,7 @@ function drawTipMagnifier(x, y) {
                 //90 90 is the center pixel of the magnifier.
 
                 rgba = getRGBAFromCanvasData(storedImageData, storedImageWidth, pointx, pointy);
+                //console.log('pointx:' + pointx + ' pointy:' + pointy + ' rgba:' + rgba);
             }
 
             let magX = 90 + ((pointx - x) * 10);
