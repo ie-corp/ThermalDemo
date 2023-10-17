@@ -2836,9 +2836,9 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         //Emissivity is defined as the ratio of the energy radiated from a material's surface to that radiated from a perfect emitter, 
         //known as a blackbody, at the same temperature and wavelength and under the same viewing conditions. 
         //It is a dimensionless number between 0 (for a perfect reflector) and 1 (for a perfect emitter).
-        let distanceText = "Not Specified";
-        let materialText = "Not Specified";
-        let emissivityText = "Not Specified";
+        let distanceText = "Not Defined";
+        let materialText = "Not Defined";
+        let emissivityText = "Not Defined";
 
 
         let distanceMeters = null;
@@ -2889,13 +2889,13 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
             }
 
 
-
-            tooltip.innerHTML = `<span style="color:gray">X: ${posX}, Y: ${posY} index:${indexMap}</span><br/>` +
-                `<span style="color:gray">Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
-                `<span style="color:${strDistanceColor}">Distance: ${distanceText}</span><br/>` +
-                `<span style="color:${strMaterialColor}">Material: ${materialText}</span><br/>` +
-                `<span style="color:${strMaterialColor}">Emissivity: ${emissivityText}</span><br/>` +
-                `<span style="color:gray">Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F</span>`;
+            //index:${indexMap}
+            tooltip.innerHTML = `<span style="white-space:nowrap;color:gray">X: ${posX}, Y: ${posY}</span><br/>` +
+                `<span style="white-space:nowrap;color:gray">Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
+                `<span style="white-space:nowrap;color:${strDistanceColor}">Distance: ${distanceText}</span><br/>` +
+                `<span style="white-space:nowrap;color:${strMaterialColor}">Material: ${materialText}</span><br/>` +
+                `<span style="white-space:nowrap;color:${strMaterialColor}">Emissivity: ${emissivityText}</span><br/>` +
+                `<span style="white-space:nowrap;color:gray">Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F</span>`;
 
         }
         else {
@@ -3296,13 +3296,13 @@ function setupEvents() {
             if ("buttons" in e) {
                 if (e.buttons == 1) {
                     let minY = image.offsetTop;
-                    let maxY = image.offsetTop + image.offsetHeight;
+                    let maxY = image.offsetTop + image.offsetHeight-1;
                     let minX = image.offsetLeft;
-                    let maxX = image.offsetLeft + image.offsetWidth;
+                    let maxX = image.offsetLeft + image.offsetWidth-1;
                     let pageX = Math.max(Math.min(e.pageX, maxX), minX);
                     let pageY = Math.max(Math.min(e.pageY, maxY), minY);
-                    let offsetX = pageX - image.offsetLeft;
-                    let offsetY = pageY - image.offsetTop;
+                    let offsetX = pageX - image.offsetLeft-1;
+                    let offsetY = pageY - image.offsetTop-1;
                     processScreenTouchCoordinates(offsetX, offsetY, false);
                 }
             }
@@ -3332,13 +3332,13 @@ function setupEvents() {
             }
 
             let minY = image.offsetTop;
-            let maxY = image.offsetTop + image.offsetHeight;
+            let maxY = image.offsetTop + image.offsetHeight-1;
             let minX = image.offsetLeft;
-            let maxX = image.offsetLeft + image.offsetWidth;
+            let maxX = image.offsetLeft + image.offsetWidth-1;
             pageX = Math.max(Math.min(pageX, maxX), minX);
             pageY = Math.max(Math.min(pageY, maxY), minY);
-            let offsetX = pageX - image.offsetLeft;
-            let offsetY = pageY - image.offsetTop;
+            let offsetX = pageX - image.offsetLeft-1;
+            let offsetY = pageY - image.offsetTop-1;
 
             
             processScreenTouchCoordinates(offsetX, offsetY, false);
@@ -3372,13 +3372,13 @@ function setupEvents() {
             }
             
             let minY = image.offsetTop;
-            let maxY = image.offsetTop + image.offsetHeight;
+            let maxY = image.offsetTop + image.offsetHeight-1;
             let minX = image.offsetLeft;
-            let maxX = image.offsetLeft + image.offsetWidth;
+            let maxX = image.offsetLeft + image.offsetWidth-1;
             pageX = Math.max(Math.min(pageX, maxX), minX);
             pageY = Math.max(Math.min(pageY, maxY), minY);
-            let offsetX = pageX - image.offsetLeft;
-            let offsetY = pageY - image.offsetTop;
+            let offsetX = pageX - image.offsetLeft-1;
+            let offsetY = pageY - image.offsetTop-1;
             pointerMove(offsetX, offsetY, pageX, pageY, true, true);
 
         });
@@ -3422,13 +3422,13 @@ function setupEvents() {
                 
 
                 let minY = image.offsetTop;
-                let maxY = image.offsetTop + image.offsetHeight;
+                let maxY = image.offsetTop + image.offsetHeight-1;
                 let minX = image.offsetLeft;
-                let maxX = image.offsetLeft + image.offsetWidth;
+                let maxX = image.offsetLeft + image.offsetWidth-1;
                 let pageX = Math.max(Math.min(e.pageX, maxX), minX);
                 let pageY = Math.max(Math.min(e.pageY, maxY), minY);
-                let offsetX = pageX - image.offsetLeft;
-                let offsetY = pageY - image.offsetTop;
+                let offsetX = pageX - image.offsetLeft -1;
+                let offsetY = pageY - image.offsetTop -1;
                 pointerMove(offsetX, offsetY, pageX, pageY, false, isLeftMouseClick);
            
         }
