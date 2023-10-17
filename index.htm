@@ -322,7 +322,7 @@
 
     </div>
     <div id="touchTools" class="editorrow">
-        <div class="editorcolumn" style="width:80px;">
+        <div class="editorcolumn">
 
             <button id="btnChangeLayer" onclick="changeLayerNext(true)" class="resizebutton">
                 <div style="line-height: 4px;">
@@ -359,10 +359,10 @@
                     </svg>
                 </div>
             </button>
-            <div style="height:8px"></div>
+            <div style="height:8px;background-color: silver;"></div>
 
-            <div style="background-color: #252526;">
-                <div style="width:60px; text-align: center;color:white;user-select: none;">Touch Tool</div>
+            <div style="background-color:black">
+                <div style="width:60px; text-align: center;color:white;user-select: none;">Touch Tools</div>
                 <div style="height:4px"></div>
                 <button id="btnRegionToolLook" onclick="selectRegionEditorTool('look')" class="resizebutton">
                     <div style="line-height: 4px;">
@@ -559,7 +559,7 @@
 
             </div>
         </div>
-        <div class="editorcolumn" style="margin-left:-16px">
+        <div id="regionEditorBorder" class="editorcolumn" style="margin-left:-16px;padding:30px;">
             <canvas id="regionEditorImage" width="256" height="192" draggable="false"></canvas>
         </div>
     </div>

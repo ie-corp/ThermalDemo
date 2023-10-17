@@ -507,7 +507,7 @@ function recalcEditor() {
 
 
 
-    
+
 
     document.getElementById("valActiveLayer").innerHTML = activeLayer;
     document.getElementById("valBrushSize").innerHTML = brushSize;
@@ -555,7 +555,7 @@ function recalcEditor() {
 function rotateFillPoint(imageRotation, imageNativeWidth, imageNativeHeight, imageMirrorHorizontally, x, y) {
     //test by putting a 1 pixel block in a corner
     if (imageRotation == 0) {
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             x = imageNativeWidth - x - 1;
         }
     }
@@ -563,7 +563,7 @@ function rotateFillPoint(imageRotation, imageNativeWidth, imageNativeHeight, ima
         let pts = rotate90(imageNativeWidth, imageNativeHeight, x, y);
         x = pts[0] - 1;
         y = pts[1];
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             y = imageNativeWidth - y - 1;
         }
     }
@@ -574,7 +574,7 @@ function rotateFillPoint(imageRotation, imageNativeWidth, imageNativeHeight, ima
         pts = rotate90(imageNativeHeight, imageNativeWidth, x, y);
         x = pts[0] - 1;
         y = pts[1];
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             x = imageNativeWidth - x - 1;
         }
     }
@@ -588,7 +588,7 @@ function rotateFillPoint(imageRotation, imageNativeWidth, imageNativeHeight, ima
         pts = rotate90(imageNativeWidth, imageNativeHeight, x, y);
         x = pts[0] - 1;
         y = pts[1];
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             y = imageNativeWidth - y - 1;
         }
     }
@@ -735,7 +735,7 @@ function drawRegions() {
         ctx.save();
         // translate context to center of canvas
         ctx.translate(canvas.width / 2, canvas.height / 2);
-        
+
         ctx.rotate(rotation);
 
         if (regionEditor.imageMirrorHorizontally) {
@@ -759,11 +759,11 @@ function drawRegions() {
     }
     ctx.filter = 'none';
     if (activeLayer == 'Matl') {
-        
+
         drawMaterialMap(ctx, scale);
     }
     else if (activeLayer == 'Dist') {
-        
+
         drawDistanceMap(ctx, scale);
     }
     else {
@@ -771,7 +771,7 @@ function drawRegions() {
     }
 
     var ctxMain = regionEditorImage.getContext("2d");
-    
+
     regionEditorImage.width = canvas.width;
     regionEditorImage.height = canvas.height;
     ctxMain.clearRect(0, 0, regionEditorImage.width, regionEditorImage.height);
@@ -1834,8 +1834,8 @@ function changeRegionColorNext(goNext) {
 
 function getPointFromIndex(index, width, height) {
     var calcY = index % height;
-    var calcX = Math.floor(index/height);
-    return [calcX,calcY];
+    var calcX = Math.floor(index / height);
+    return [calcX, calcY];
 }
 
 
@@ -1847,30 +1847,30 @@ function getIndexOfMapFromXY(posX, posY, pointRotation, imageMirrorHorizontally)
 
 
     if (pointRotation == 0) {
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             myX = regionEditor.imageNativeWidth - myX - 1;
         }
         indexTempC = (myX * regionEditor.imageNativeHeight) + myY;
     }
     else if (pointRotation == 90) {
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             myX = regionEditor.imageNativeHeight - myX - 1;
         }
         indexTempC = (myY * regionEditor.imageNativeHeight) + (regionEditor.imageNativeHeight - myX - 1);
     }
     else if (pointRotation == 180) {
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             myX = regionEditor.imageNativeWidth - myX - 1;
         }
         indexTempC = ((regionEditor.imageNativeWidth - myX - 1) * regionEditor.imageNativeHeight) + (regionEditor.imageNativeHeight - myY - 1);
     }
     else if (pointRotation == 270) {
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             myX = regionEditor.imageNativeHeight - myX - 1;
         }
         indexTempC = ((regionEditor.imageNativeWidth - myY - 1) * regionEditor.imageNativeHeight) + myX;
     }
-    else{
+    else {
         return -1;
     }
     return indexTempC;
@@ -2087,22 +2087,22 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally);
         let realX = pts[0];
         let realY = pts[1];
-       
-        let indexes = getFillIndexesToChange(tempsCelsius,distanceMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, false);
-        
-        for(let i=0; i<indexes.length; i++){
+
+        let indexes = getFillIndexesToChange(tempsCelsius, distanceMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, false);
+
+        for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < distanceMap.length && index >= 0) {
                 distanceMap[index] = selectedDistance;
-                
+
             }
-            else{
+            else {
                 console.error('index out of bounds: ' + index);
             }
 
         }
         recalcEditor();
-        
+
 
     }
     else if (activeTool == 'change') {
@@ -2112,7 +2112,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
         let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, false, 1);
         if (indexes.length == 0) {
-           return;
+            return;
         }
         let index = indexes[0];
         console.log('distance is' + selectedDistance);
@@ -2179,15 +2179,15 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally);
         let realX = pts[0];
         let realY = pts[1];
-        let indexes = getFillIndexesToChange(tempsCelsius,materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, true);
-        
-        for(let i=0; i<indexes.length; i++){
+        let indexes = getFillIndexesToChange(tempsCelsius, materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, true);
+
+        for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < materialMap.length && index >= 0) {
-                materialMap[index] = {"name":selectedMaterial.name,"emissivity":selectedMaterial.emissivity};
-                
+                materialMap[index] = { "name": selectedMaterial.name, "emissivity": selectedMaterial.emissivity };
+
             }
-            else{
+            else {
                 console.error('index out of bounds: ' + index);
             }
 
@@ -2195,7 +2195,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         recalcEditor();
 
 
-        
+
     }
     else if (activeTool == 'change') {
 
@@ -2261,14 +2261,14 @@ function getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, i
     let realY = Math.max(0, Math.round(offsetY / imageScale));
     let pts = [0, 0];
     if (imageRotation == 0) {
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             realX = imageNativeWidth - realX - 1;
         }
         pts[0] = realX;
         pts[1] = realY;
     }
     else if (imageRotation == 90) {
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             realX = imageNativeHeight - realX - 1;
         }
         pts[0] = realY;
@@ -2277,14 +2277,14 @@ function getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, i
 
     }
     else if (imageRotation == 180) {
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             realX = imageNativeWidth - realX - 1;
         }
         pts[0] = regionEditor.imageNativeWidth - realX;
         pts[1] = regionEditor.imageNativeHeight - realY;
     }
     else if (imageRotation == 270) {
-        if(imageMirrorHorizontally){
+        if (imageMirrorHorizontally) {
             realX = imageNativeHeight - realX - 1;
         }
         pts[0] = imageNativeWidth - realY;
@@ -2310,7 +2310,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
     let newColor = -1;
 
     let startIndex = getIndexOfMapFromXY(startX, startY, 0, false);
-    
+
     let point = getPointFromIndex(startIndex, width, height);
     if (point[0] != startX || point[1] != startY) {
         console.error('point not correct. indexOf:' + startIndex + ' point:' + point[0] + ' ' + point[1] + ' is not the expected: ' + startX + ' ' + startY);
@@ -2319,7 +2319,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
 
     let startColor = map[startIndex];
     let existingColor = map2[startIndex];
-    
+
 
     // Create a new array that will store the pixels that should be changed
     let newPixels = JSON.parse(JSON.stringify(map)); // Copying by value
@@ -2336,15 +2336,15 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
         // Dequeue a pixel from the queue and store it in a variable
         let currentIndex = queue.shift();
         let currentColor = map[currentIndex];
-        
-        
+
+
         let pt = getPointFromIndex(currentIndex, width, height);
         let currentX = pt[0];
         let currentY = pt[1];
 
         // Calculate the color distance between this pixel and the starting pixel using Euclidean distance
         let distance = Math.sqrt(Math.pow(currentColor - startColor, 2));
-        
+
         /*
         var distance = Math.sqrt(
             Math.pow(currentColor[0] - startColor[0], 2) +
@@ -2368,44 +2368,44 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
                 let checkY = currentY
                 let indexOfAdjacent = getIndexOfMapFromXY(checkX, checkY, 0, false);
                 if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
-                    if(checked.indexOf(indexOfAdjacent) == -1){
+                    if (checked.indexOf(indexOfAdjacent) == -1) {
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
                     }
                 }
             }
-             if (currentX < width - 1) {// && newPixels[currentX + 1][currentY] != newColor) {
+            if (currentX < width - 1) {// && newPixels[currentX + 1][currentY] != newColor) {
                 // Right
                 let indexOfAdjacent = getIndexOfMapFromXY(currentX + 1, currentY, 0, false);
                 if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
-                    if(checked.indexOf(indexOfAdjacent) == -1){
+                    if (checked.indexOf(indexOfAdjacent) == -1) {
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
                     }
                 }
             }
-            
+
             if (currentY > 0) {// && newPixels[currentX][currentY - 1] != newColor) {
                 // Up
                 let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY - 1, 0, false);
                 if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
-                    if(checked.indexOf(indexOfAdjacent) == -1){
+                    if (checked.indexOf(indexOfAdjacent) == -1) {
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
                     }
                 }
             }
-            
+
             if (currentY < height - 1) {
                 // Down
                 let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY + 1, 0, false);
                 if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
-                    if(checked.indexOf(indexOfAdjacent) == -1){
+                    if (checked.indexOf(indexOfAdjacent) == -1) {
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
                     }
                 }
-            } 
+            }
 
         }
     }
@@ -2424,12 +2424,12 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
 
 
 function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale, imageMirrorHorizontally, isRound, selBrushSize) {
-    let pts = getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale,imageMirrorHorizontally);
+    let pts = getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale, imageMirrorHorizontally);
     let realX = pts[0];
     let realY = pts[1];
     let myRotation = 0
-   
-   
+
+
 
     if (isRound) {
         let indexes = [];
@@ -2459,7 +2459,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
         let myBrushSize = selBrushSize;
         if (myBrushSize == 1) {
             let index = getIndexOfMapFromXY(realX, realY, myRotation, false);
-            if(index > -1){
+            if (index > -1) {
                 indexes.push(index);
             }
             return indexes;
@@ -2526,21 +2526,6 @@ function displayImageTemps() {
 
 }
 
-function getTouchOffsetPosition(evt, parent) {
-    var position = {
-        x: (evt.targetTouches) ? evt.targetTouches[0].pageX : evt.clientX,
-        y: (evt.targetTouches) ? evt.targetTouches[0].pageY : evt.clientY
-    };
-
-    while (parent.offsetParent) {
-        position.x -= parent.offsetLeft - parent.scrollLeft;
-        position.y -= parent.offsetTop - parent.scrollTop;
-
-        parent = parent.offsetParent;
-    }
-
-    return position;
-}
 
 function getRGBAFromCanvasData(data, imageWidth, x, y) {
 
@@ -2572,7 +2557,7 @@ function drawTipMagnifier(x, y) {
     let regionEditorImageRef = document.getElementById('regionEditorImage');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const magnifierCanvas = document.getElementById('magnifierCanvas');
-    
+
     if (storedImageData == null || storedImageRotation != regionEditor.imageRotation || storedImageMirrorHorizontally != regionEditor.imageMirrorHorizontally) {
         let dummyCanvas = document.createElement('canvas');
         let ctxSource = dummyCanvas.getContext('2d');//, {willReadFrequently: true});
@@ -2618,7 +2603,7 @@ function drawTipMagnifier(x, y) {
     for (let pointx = x - pixelDist; pointx < x + pixelDist; pointx++) {
         for (let pointy = y - pixelDist; pointy < y + pixelDist; pointy++) {
             let rgba = "white";
-            if (pointx < 0 || pointy < 0 || pointx > storedImageWidth-1 || pointy > storedImageHeight-1) {
+            if (pointx < 0 || pointy < 0 || pointx > storedImageWidth - 1 || pointy > storedImageHeight - 1) {
                 rgba = "white";
 
             }
@@ -2744,13 +2729,14 @@ function drawLines(ctx, lineWidth, strokeStyle, lineInfos, isVertical) {
 }
 
 function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown) {
+    
     const tooltip = document.getElementById('tooltip');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
     let showTip = true;
     if (showTip) {
         //const image = document.querySelector('#regionEditorImage');
-        
+
         let x = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
         let y = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
         let indexMap = -1;
@@ -2780,30 +2766,30 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
             magOffsetY += 80;
         }
 
-        if(activeTool == 'paintsquare' || activeTool == 'erasesquare'){
-            let width = (brushSize * regionEditor.imageScale)*2;
+        if (activeTool == 'paintsquare' || activeTool == 'erasesquare') {
+            let width = (brushSize * regionEditor.imageScale) * 2;
             let posOffSetX = (brushSize * regionEditor.imageScale);
             let posOffSetY = (brushSize * regionEditor.imageScale);
-            if(brushSize == 1){
+            if (brushSize == 1) {
                 posOffSetY += 8;
             }
 
-            tiptarget.innerHTML = `<svg width="${width+2}" height="${width+2}" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="${width}" height="${width}" stroke="red" stroke-width="2" /></svg>`;
-            tiptarget.style.top = `${pageY -posOffSetY}px`;
+            tiptarget.innerHTML = `<svg width="${width + 2}" height="${width + 2}" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="${width}" height="${width}" stroke="red" stroke-width="2" /></svg>`;
+            tiptarget.style.top = `${pageY - posOffSetY}px`;
             tiptarget.style.left = `${pageX - posOffSetX}px`;
         }
-        else if(activeTool == 'paintround' || activeTool == 'eraseround'){
-            let width = (brushSize * regionEditor.imageScale)*2;
+        else if (activeTool == 'paintround' || activeTool == 'eraseround') {
+            let width = (brushSize * regionEditor.imageScale) * 2;
             let posOffSetX = (brushSize * regionEditor.imageScale);
             let posOffSetY = (brushSize * regionEditor.imageScale);
-            if(brushSize == 1){
+            if (brushSize == 1) {
                 posOffSetY += 8;
             }
-            tiptarget.innerHTML = `<svg width="${width+2}" height="${width+2}" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="${width/2+1}" cy="${width/2+1}" r="${width/2}" stroke="red" stroke-width="2" /></svg>`;
-            tiptarget.style.top = `${pageY -posOffSetY}px`;
+            tiptarget.innerHTML = `<svg width="${width + 2}" height="${width + 2}" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="${width / 2 + 1}" cy="${width / 2 + 1}" r="${width / 2}" stroke="red" stroke-width="2" /></svg>`;
+            tiptarget.style.top = `${pageY - posOffSetY}px`;
             tiptarget.style.left = `${pageX - posOffSetX}px`;
         }
-        else{
+        else {
             tiptarget.innerHTML = `<svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="7" width="12" height="12" stroke="red" stroke-width="2" /></svg>`;
             tiptarget.style.top = `${pageY - 12}px`;
             tiptarget.style.left = `${pageX - 12}px`;
@@ -2817,23 +2803,23 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         tipmagnifier.style.left = `${magOffsetX}px`;
 
         if (regionEditor.imageRotation == 0) {
-            posX = Math.min(x, regionEditor.imageNativeWidth-1);
-            posY = Math.min(y, regionEditor.imageNativeHeight-1);
+            posX = Math.min(x, regionEditor.imageNativeWidth - 1);
+            posY = Math.min(y, regionEditor.imageNativeHeight - 1);
 
         }
         else if (regionEditor.imageRotation == 180) {
-            posX = Math.min(x, regionEditor.imageNativeWidth-1);
-            posY = Math.min(y, regionEditor.imageNativeHeight-1);
+            posX = Math.min(x, regionEditor.imageNativeWidth - 1);
+            posY = Math.min(y, regionEditor.imageNativeHeight - 1);
 
         }
         else if (regionEditor.imageRotation == 90) {
-            posX = Math.min(x, regionEditor.imageNativeHeight-1);
-            posY = Math.min(y, regionEditor.imageNativeWidth-1);
+            posX = Math.min(x, regionEditor.imageNativeHeight - 1);
+            posY = Math.min(y, regionEditor.imageNativeWidth - 1);
 
         }
         else if (regionEditor.imageRotation == 270) {
-            posX = Math.min(x, regionEditor.imageNativeHeight-1);
-            posY = Math.min(y, regionEditor.imageNativeWidth-1);
+            posX = Math.min(x, regionEditor.imageNativeHeight - 1);
+            posY = Math.min(y, regionEditor.imageNativeWidth - 1);
 
         }
         else {
@@ -2853,8 +2839,8 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         let distanceText = "Not Specified";
         let materialText = "Not Specified";
         let emissivityText = "Not Specified";
-        
-        
+
+
         let distanceMeters = null;
         let materialEmissivity = null;
         let adjTempC = null;
@@ -2866,7 +2852,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
                 distanceText = distance.toFixed(2) + 'm&nbsp;' + metersToInches(distance).toFixed(1) + 'in';
             }
         }
-        else{
+        else {
             console.error('distance index out of bounds');
         }
 
@@ -2878,7 +2864,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
                 emissivityText = material.emissivity.toFixed(2);
             }
         }
-        else{
+        else {
             console.error('material index out of bounds');
         }
 
@@ -2894,15 +2880,15 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
 
             let strMaterialColor = 'gray';
             let strDistanceColor = 'gray';
-            
-            if(activeLayer == 'Matl'){
+
+            if (activeLayer == 'Matl') {
                 strMaterialColor = 'white';
             }
-            else if(activeLayer == 'Dist'){
+            else if (activeLayer == 'Dist') {
                 strDistanceColor = 'white';
             }
-            
-        
+
+
 
             tooltip.innerHTML = `<span style="color:gray">X: ${posX}, Y: ${posY} index:${indexMap}</span><br/>` +
                 `<span style="color:gray">Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
@@ -3151,11 +3137,11 @@ function imgLoaded(e) {
 
     let image = document.getElementById('regionEditorImageRef');
     image.src = canvas.toDataURL();
-    
+
     distanceMap = new Array(49152);
     materialMap = new Array(49152);
     tempsCelsius = thermalData.TemperaturesInCelsius;
-    
+
 
 
 
@@ -3194,7 +3180,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
         }
         else {
             regionEditor = getEmptyRegionEditor();
-            regionEditor.imageScale = 4.0;
+            regionEditor.imageScale = 3.0;
         }
     }
 
@@ -3299,95 +3285,156 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
 
 function setupEvents() {
     const image = document.querySelector('#regionEditorImage');
+    const border = document.querySelector('#regionEditorBorder');
     const tooltip = document.getElementById('tooltip');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
 
-    image.addEventListener('mousedown', (e) => {
-
-        if ("buttons" in e) {
-            if (e.buttons == 1) {
-                processScreenTouchCoordinates(e.offsetX, e.offsetY, false);
+    [border,image].forEach(function (elem) {
+        elem.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            if ("buttons" in e) {
+                if (e.buttons == 1) {
+                    let minY = image.offsetTop;
+                    let maxY = image.offsetTop + image.offsetHeight;
+                    let minX = image.offsetLeft;
+                    let maxX = image.offsetLeft + image.offsetWidth;
+                    let pageX = Math.max(Math.min(e.pageX, maxX), minX);
+                    let pageY = Math.max(Math.min(e.pageY, maxY), minY);
+                    let offsetX = pageX - image.offsetLeft;
+                    let offsetY = pageY - image.offsetTop;
+                    processScreenTouchCoordinates(offsetX, offsetY, false);
+                }
             }
-        }
 
+        });
     });
 
 
-
-    image.addEventListener('touchstart', (e) => {
-        e.preventDefault();//stop mouse down event from firing
-        if (regionEditor == null) {
-            return;
-        }
-        tiptarget.style.display = 'block';
-        tipmagnifier.style.display = 'block';
-        tooltip.style.display = 'block';
-
-        var tex = getTouchOffsetPosition(e, image);
-
-        processScreenTouchCoordinates(tex.x, tex.y, false);//test this by doing move points
-
-    });
-
-    image.addEventListener('touchmove', (e) => {
-
-        e.preventDefault();//stop scrolling of the page
-        if (regionEditor == null) {
-            return;
-        }
-        if (!isTouchEventWithElement(image, e)) {
-            return;
-        }
-        tiptarget.style.display = 'block';
-        tipmagnifier.style.display = 'block';
-        tooltip.style.display = 'block';
-        var tex = getTouchOffsetPosition(e, image);
-        let pageX = 0;
-        let pageY = 0;
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            pageX = e.changedTouches[i].pageX;
-            pageY = e.changedTouches[i].pageY;
-            //console.log('touchmove offset:' + tex.x + ', ' + tex.y)
-            //console.log('touchmove: ' + pageX + ', ' + pageY);
-            break;
-        }
-        pointerMove(tex.x, tex.y, pageX, pageY, true, true);
-
-    });
-
-
-
-
-    image.addEventListener('mouseover', (e) => {
-        if (regionEditor == null) {
-            return;
-        }
-        tiptarget.style.display = 'block';
-        tipmagnifier.style.display = 'block';
-        tooltip.style.display = 'block';
-    });
-
-
-    image.addEventListener('mouseout', () => {
-        //tooltip.style.display = 'none';
-    });
-
-    image.addEventListener('mousemove', (e) => {
-        if (regionEditor == null) {
-            return;
-        }
-        let isLeftMouseClick = false;
-        if ("buttons" in e) {
-            if (e.buttons == 1) {
-                isLeftMouseClick = true;
+    [border,image].forEach(function (elem) {
+        elem.addEventListener('touchstart', (e) => {
+            
+            e.stopPropagation();
+            e.preventDefault();//stop mouse down event from firing
+            if (regionEditor == null) {
+                return;
             }
+            tiptarget.style.display = 'block';
+            tipmagnifier.style.display = 'block';
+            tooltip.style.display = 'block';
+
+            let pageX = 0;
+            let pageY = 0;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                pageX = e.changedTouches[i].pageX;
+                pageY = e.changedTouches[i].pageY;
+                break;
+            }
+
+            let minY = image.offsetTop;
+            let maxY = image.offsetTop + image.offsetHeight;
+            let minX = image.offsetLeft;
+            let maxX = image.offsetLeft + image.offsetWidth;
+            pageX = Math.max(Math.min(pageX, maxX), minX);
+            pageY = Math.max(Math.min(pageY, maxY), minY);
+            let offsetX = pageX - image.offsetLeft;
+            let offsetY = pageY - image.offsetTop;
+
+            
+            processScreenTouchCoordinates(offsetX, offsetY, false);
+            pointerMove(offsetX, offsetY, pageX, pageY, false, false);
+            
+
+        });
+    });
+
+    [border,image].forEach(function (elem) {
+        
+        elem.addEventListener('touchmove', (e) => {
+            e.stopPropagation();
+            e.preventDefault();//stop scrolling of the page
+            if (regionEditor == null) {
+                return;
+            }
+            if (!isTouchEventWithElement(elem, e)) {
+                return;
+            }
+            tiptarget.style.display = 'block';
+            tipmagnifier.style.display = 'block';
+            tooltip.style.display = 'block';
+            
+            let pageX = 0;
+            let pageY = 0;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                pageX = e.changedTouches[i].pageX;
+                pageY = e.changedTouches[i].pageY;
+                break;
+            }
+            
+            let minY = image.offsetTop;
+            let maxY = image.offsetTop + image.offsetHeight;
+            let minX = image.offsetLeft;
+            let maxX = image.offsetLeft + image.offsetWidth;
+            pageX = Math.max(Math.min(pageX, maxX), minX);
+            pageY = Math.max(Math.min(pageY, maxY), minY);
+            let offsetX = pageX - image.offsetLeft;
+            let offsetY = pageY - image.offsetTop;
+            pointerMove(offsetX, offsetY, pageX, pageY, true, true);
+
+        });
+    });
+
+    [border,image].forEach(function (elem) {
+        elem.addEventListener('mouseover', (e) => {
+            e.stopPropagation();
+            if (regionEditor == null) {
+                return;
+            }
+            tiptarget.style.display = 'block';
+            tipmagnifier.style.display = 'block';
+            tooltip.style.display = 'block';
+        });
+    });
+
+
+    //image.addEventListener('mouseout', () => {
+    //tooltip.style.display = 'none';
+    //});
+
+    
+
+    [border,image].forEach(function (elem) {
+        
+        elem.addEventListener('mousemove', (e) => {
+            e.stopPropagation();
+            if (regionEditor == null) {
+                return;
+            }
+            let isLeftMouseClick = false;
+            if ("buttons" in e) {
+                if (e.buttons == 1) {
+                    isLeftMouseClick = true;
+                }
+            }
+
+           
+                //adjust offset relative to the image contained within the border
+                
+
+                let minY = image.offsetTop;
+                let maxY = image.offsetTop + image.offsetHeight;
+                let minX = image.offsetLeft;
+                let maxX = image.offsetLeft + image.offsetWidth;
+                let pageX = Math.max(Math.min(e.pageX, maxX), minX);
+                let pageY = Math.max(Math.min(e.pageY, maxY), minY);
+                let offsetX = pageX - image.offsetLeft;
+                let offsetY = pageY - image.offsetTop;
+                pointerMove(offsetX, offsetY, pageX, pageY, false, isLeftMouseClick);
+           
         }
 
-        pointerMove(e.offsetX, e.offsetY, e.pageX, e.pageY, false, isLeftMouseClick);
-    }
-
-    );
+        );
+    });
 
 }
 
