@@ -552,25 +552,33 @@ function recalcEditor() {
 
 }
 
-function rotateFillPoint(angle, imageNativeWidth, imageNativeHeight, x, y) {
+function rotateFillPoint(imageRotation, imageNativeWidth, imageNativeHeight, imageMirrorHorizontally, x, y) {
     //test by putting a 1 pixel block in a corner
-    if (redoRegionEditor.imageRotation == 0) {
-        return [x, y];
+    if (imageRotation == 0) {
+        if(imageMirrorHorizontally){
+            x = imageNativeWidth - x - 1;
+        }
     }
-    if (regionEditor.imageRotation == 90) {
+    else if (imageRotation == 90) {
         let pts = rotate90(imageNativeWidth, imageNativeHeight, x, y);
         x = pts[0] - 1;
         y = pts[1];
+        if(imageMirrorHorizontally){
+            y = imageNativeWidth - y - 1;
+        }
     }
-    else if (regionEditor.imageRotation == 180) {
+    else if (imageRotation == 180) {
         let pts = rotate90(imageNativeWidth, imageNativeHeight, x, y);
         x = pts[0] - 1;
         y = pts[1];
         pts = rotate90(imageNativeHeight, imageNativeWidth, x, y);
         x = pts[0] - 1;
         y = pts[1];
+        if(imageMirrorHorizontally){
+            x = imageNativeWidth - x - 1;
+        }
     }
-    else if (regionEditor.imageRotation == 270) {
+    else if (imageRotation == 270) {
         let pts = rotate90(imageNativeWidth, imageNativeHeight, x, y);
         x = pts[0] - 1;
         y = pts[1];
@@ -580,6 +588,9 @@ function rotateFillPoint(angle, imageNativeWidth, imageNativeHeight, x, y) {
         pts = rotate90(imageNativeWidth, imageNativeHeight, x, y);
         x = pts[0] - 1;
         y = pts[1];
+        if(imageMirrorHorizontally){
+            y = imageNativeWidth - y - 1;
+        }
     }
 
     return [x, y];
@@ -721,12 +732,15 @@ function drawRegions() {
     let scale = regionEditor.imageScale;
     //fix this
     if (rotation != 0 || regionEditor.imageMirrorHorizontally) {
+        ctx.save();
         // translate context to center of canvas
         ctx.translate(canvas.width / 2, canvas.height / 2);
+        
+        ctx.rotate(rotation);
+
         if (regionEditor.imageMirrorHorizontally) {
             ctx.scale(-1, 1);
         }
-        ctx.rotate(rotation);
         // draw image
 
         ctx.scale(scale, scale);
@@ -737,6 +751,7 @@ function drawRegions() {
         ctx.rotate(-rotation);
         // un-translate the canvas back to origin==top-left canvas
         ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        ctx.restore();
 
     }
     else {
@@ -744,9 +759,11 @@ function drawRegions() {
     }
     ctx.filter = 'none';
     if (activeLayer == 'Matl') {
+        
         drawMaterialMap(ctx, scale);
     }
     else if (activeLayer == 'Dist') {
+        
         drawDistanceMap(ctx, scale);
     }
     else {
@@ -845,7 +862,7 @@ function drawDistanceMap(ctx, scale) {
         let y = pt[1];
         ctx.fillStyle = getColorRampValueRGBA(min * 100, max * 100, distanceItem * 100, .2, colorRamp);
 
-        let pts = rotateFillPoint(regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, x, y)
+        let pts = rotateFillPoint(regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageMirrorHorizontally, x, y)
         x = pts[0];
         y = pts[1];
 
@@ -888,7 +905,7 @@ function drawMaterialMap(ctx, scale) {
         let y = pt[1];
         ctx.fillStyle = getColorRampValueRGBA(min * 100, max * 100, materialItem.emissivity * 100, .2, colorRamp);
 
-        let pts = rotateFillPoint(regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, x, y)
+        let pts = rotateFillPoint(regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageMirrorHorizontally, x, y)
         x = pts[0];
         y = pts[1];
 
@@ -1030,7 +1047,7 @@ function getTempsFromPointsOnCanvas(points) {
     for (let i = 0; i < points.length; i++) {
         let point = points[i];
 
-        let index = getIndexOfMapFromXY(point.x, point.y, regionEditor.imageRotation);
+        let index = getIndexOfMapFromXY(point.x, point.y, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally);
 
         if (index > -1 && index < tempsCelsius.length) {
             let temp = tempsCelsius[index];
@@ -1823,19 +1840,35 @@ function getPointFromIndex(index, width, height) {
 
 
 
-function getIndexOfMapFromXY(posX, posY, pointRotation) {
+function getIndexOfMapFromXY(posX, posY, pointRotation, imageMirrorHorizontally) {
     let indexTempC = -1;
+    let myX = posX;
+    let myY = posY;
+
+
     if (pointRotation == 0) {
-        indexTempC = (posX * regionEditor.imageNativeHeight) + posY;
+        if(imageMirrorHorizontally){
+            myX = regionEditor.imageNativeWidth - myX - 1;
+        }
+        indexTempC = (myX * regionEditor.imageNativeHeight) + myY;
     }
     else if (pointRotation == 90) {
-        indexTempC = (posY * regionEditor.imageNativeHeight) + (regionEditor.imageNativeHeight - posX - 1);
+        if(imageMirrorHorizontally){
+            myX = regionEditor.imageNativeHeight - myX - 1;
+        }
+        indexTempC = (myY * regionEditor.imageNativeHeight) + (regionEditor.imageNativeHeight - myX - 1);
     }
     else if (pointRotation == 180) {
-        indexTempC = ((regionEditor.imageNativeWidth - posX - 1) * regionEditor.imageNativeHeight) + (regionEditor.imageNativeHeight - posY - 1);
+        if(imageMirrorHorizontally){
+            myX = regionEditor.imageNativeWidth - myX - 1;
+        }
+        indexTempC = ((regionEditor.imageNativeWidth - myX - 1) * regionEditor.imageNativeHeight) + (regionEditor.imageNativeHeight - myY - 1);
     }
     else if (pointRotation == 270) {
-        indexTempC = ((regionEditor.imageNativeWidth - posY - 1) * regionEditor.imageNativeHeight) + posX;
+        if(imageMirrorHorizontally){
+            myX = regionEditor.imageNativeHeight - myX - 1;
+        }
+        indexTempC = ((regionEditor.imageNativeWidth - myY - 1) * regionEditor.imageNativeHeight) + myX;
     }
     else{
         return -1;
@@ -2051,7 +2084,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         if (selectedDistance == null) {
             return;
         }
-        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale);
+        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally);
         let realX = pts[0];
         let realY = pts[1];
        
@@ -2077,7 +2110,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             return;
         }
 
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, false, 1);
         if (indexes.length == 0) {
            return;
         }
@@ -2102,7 +2135,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
     }
     else if (activeTool == 'paintround' || activeTool == 'paintsquare') {
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, activeTool.indexOf('round') > -1, brushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, brushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < distanceMap.length && index >= 0) {
@@ -2112,7 +2145,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         recalcEditor();
     }
     else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, activeTool.indexOf('round') > -1, brushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, brushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < distanceMap.length && index >= 0) {
@@ -2143,7 +2176,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         if (selectedMaterial == null) {
             return;
         }
-        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale);
+        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally);
         let realX = pts[0];
         let realY = pts[1];
         let indexes = getFillIndexesToChange(tempsCelsius,materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, true);
@@ -2170,7 +2203,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             return;
         }
 
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, false, 1);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, false, 1);
         if (indexes.length == 0) {
             return;
         }
@@ -2196,7 +2229,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         if (selectedMaterial == null || selectedMaterial.name == null || selectedMaterial.emissivity == null) {
             return;
         }
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, activeTool.indexOf('round') > -1, brushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, brushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < materialMap.length && index >= 0) {
@@ -2223,26 +2256,37 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
 }
 
-function getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale) {
+function getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale, imageMirrorHorizontally) {
     let realX = Math.max(0, Math.round(offsetX / imageScale));
     let realY = Math.max(0, Math.round(offsetY / imageScale));
     let pts = [0, 0];
     if (imageRotation == 0) {
+        if(imageMirrorHorizontally){
+            realX = imageNativeWidth - realX - 1;
+        }
         pts[0] = realX;
         pts[1] = realY;
     }
-    else if (imageRotation == 180) {
-        pts[0] = regionEditor.imageNativeWidth - realX;
-        pts[1] = regionEditor.imageNativeHeight - realY;
-    }
     else if (imageRotation == 90) {
-
+        if(imageMirrorHorizontally){
+            realX = imageNativeHeight - realX - 1;
+        }
         pts[0] = realY;
         pts[1] = imageNativeHeight - realX;
 
 
     }
+    else if (imageRotation == 180) {
+        if(imageMirrorHorizontally){
+            realX = imageNativeWidth - realX - 1;
+        }
+        pts[0] = regionEditor.imageNativeWidth - realX;
+        pts[1] = regionEditor.imageNativeHeight - realY;
+    }
     else if (imageRotation == 270) {
+        if(imageMirrorHorizontally){
+            realX = imageNativeHeight - realX - 1;
+        }
         pts[0] = imageNativeWidth - realY;
         pts[1] = realX;
     }
@@ -2265,7 +2309,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
 
     let newColor = -1;
 
-    let startIndex = getIndexOfMapFromXY(startX, startY, 0);
+    let startIndex = getIndexOfMapFromXY(startX, startY, 0, false);
     
     let point = getPointFromIndex(startIndex, width, height);
     if (point[0] != startX || point[1] != startY) {
@@ -2322,7 +2366,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
                 // Left
                 let checkX = currentX - 1;
                 let checkY = currentY
-                let indexOfAdjacent = getIndexOfMapFromXY(checkX, checkY, 0);
+                let indexOfAdjacent = getIndexOfMapFromXY(checkX, checkY, 0, false);
                 if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
                     if(checked.indexOf(indexOfAdjacent) == -1){
                         checked.push(indexOfAdjacent);
@@ -2332,7 +2376,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
             }
              if (currentX < width - 1) {// && newPixels[currentX + 1][currentY] != newColor) {
                 // Right
-                let indexOfAdjacent = getIndexOfMapFromXY(currentX + 1, currentY, 0);
+                let indexOfAdjacent = getIndexOfMapFromXY(currentX + 1, currentY, 0, false);
                 if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
                     if(checked.indexOf(indexOfAdjacent) == -1){
                         checked.push(indexOfAdjacent);
@@ -2343,7 +2387,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
             
             if (currentY > 0) {// && newPixels[currentX][currentY - 1] != newColor) {
                 // Up
-                let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY - 1, 0);
+                let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY - 1, 0, false);
                 if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
                     if(checked.indexOf(indexOfAdjacent) == -1){
                         checked.push(indexOfAdjacent);
@@ -2354,7 +2398,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
             
             if (currentY < height - 1) {
                 // Down
-                let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY + 1, 0);
+                let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY + 1, 0, false);
                 if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
                     if(checked.indexOf(indexOfAdjacent) == -1){
                         checked.push(indexOfAdjacent);
@@ -2379,12 +2423,12 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
 }
 
 
-function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale, isRound, selBrushSize) {
-    let pts = getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale);
+function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale, imageMirrorHorizontally, isRound, selBrushSize) {
+    let pts = getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, imageRotation, imageScale,imageMirrorHorizontally);
     let realX = pts[0];
     let realY = pts[1];
     let myRotation = 0
-    let myIndex = getIndexOfMapFromXY(realX, realY, myRotation);
+    
    
 
     if (isRound) {
@@ -2400,7 +2444,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
                 }
                 let distanceItem = Math.sqrt(Math.pow(x - realX, 2) + Math.pow(y - realY, 2));
                 if (distanceItem < selBrushSize) {
-                    let index = getIndexOfMapFromXY(x, y, myRotation);//jfig
+                    let index = getIndexOfMapFromXY(x, y, myRotation, imageMirrorHorizontally);//jfig
 
                     indexes.push(index);
                 }
@@ -2414,7 +2458,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
 
         let myBrushSize = selBrushSize;
         if (myBrushSize == 1) {
-            let index = getIndexOfMapFromXY(realX, realY, myRotation);
+            let index = getIndexOfMapFromXY(realX, realY, myRotation, imageMirrorHorizontally);
             if(index > -1){
                 indexes.push(index);
             }
@@ -2432,7 +2476,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
                 if (y < 0 || y >= imageNativeHeight) {
                     continue;
                 }
-                let index = getIndexOfMapFromXY(x, y, myRotation);//jfig
+                let index = getIndexOfMapFromXY(x, y, myRotation, imageMirrorHorizontally);//jfig
                 indexes.push(index);
 
             }
@@ -2543,24 +2587,6 @@ function drawTipMagnifier(x, y) {
         storedImageWidth = dummyCanvas.width;
         storedImageHeight = dummyCanvas.height;
         storedImageMirrorHorizontally = regionEditor.imageMirrorHorizontally;
-
-
-
-        let rotation = regionEditor.imageRotation * Math.PI / 180;
-        if (rotation != 0 || regionEditor.imageMirrorHorizontally) {
-            // translate context to center of canvas
-            ctxSource.translate(dummyCanvas.width / 2, dummyCanvas.height / 2);
-            if (regionEditor.imageMirrorHorizontally) {
-                ctxSource.scale(-1, 1);
-            }
-            ctxSource.rotate(rotation);
-            //ctxSource.drawImage(regionEditorImageRef, (-regionEditor.imageNativeWidth / 2), (-regionEditor.imageNativeHeight / 2));
-            ctxSource.rotate(-rotation);
-            ctxSource.translate(-dummyCanvas.width / 2, -dummyCanvas.height / 2);
-        }
-        //else {
-        //ctxSource.drawImage(regionEditorImageRef, 0, 0, dummyCanvas.width, dummyCanvas.height);
-        //}
 
         ctxSource.drawImage(regionEditorImageRef, 0, 0, dummyCanvas.width, dummyCanvas.height);
         storedImageData = ctxSource.getImageData(0, 0, dummyCanvas.width, dummyCanvas.height).data;
@@ -2819,7 +2845,7 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
         drawTipMagnifier(posX, posY);
 
 
-        indexMap = getIndexOfMapFromXY(posX, posY, regionEditor.imageRotation);//this is x and y of the image rotated
+        indexMap = getIndexOfMapFromXY(posX, posY, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally);//this is x and y of the image rotated
 
         //Emissivity is defined as the ratio of the energy radiated from a material's surface to that radiated from a perfect emitter, 
         //known as a blackbody, at the same temperature and wavelength and under the same viewing conditions. 
