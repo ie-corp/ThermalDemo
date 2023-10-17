@@ -25,6 +25,12 @@ let brushSize = 10;
 let selectedDistance = 1.0;
 let selectedMaterial = { "name": "Shiny Mirror", "emissivity": 1.0 };
 
+let storedImageData = null;
+let storedImageRotation = null;
+let storedImageWidth = null;
+let storedImageHeight = null;
+let storedImageMirrorHorizontally = null;
+
 
 var activeFunc = null;
 var waiterTime = 100;
@@ -484,7 +490,17 @@ function repeatFunc(myfunc) {
     }, waiterTime);
 }
 
+function showTips(){
+    const tipmagnifier = document.getElementById('tipmagnifier');
+    const tiptarget = document.getElementById('tiptarget');
+    const tooltip = document.getElementById('tooltip');
+    tipmagnifier.style.display = 'block';
+    tiptarget.style.display = 'block';
+    tooltip.style.display = 'block';
+}
+
 function hideTips() {
+    console.log('hiding tips');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
     const tooltip = document.getElementById('tooltip');
@@ -494,7 +510,8 @@ function hideTips() {
 }
 
 function recalcEditor() {
-
+    
+    clearStoredImageData();
     if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
         regionEditor.imageWidth = regionEditor.imageNativeWidth * regionEditor.imageScale;
         regionEditor.imageHeight = regionEditor.imageNativeHeight * regionEditor.imageScale;
@@ -2538,18 +2555,16 @@ function getRGBAFromCanvasData(data, imageWidth, x, y) {
 
 }
 
-let storedImageData = null;
-let storedImageRotation = null;
-let storedImageWidth = null;
-let storedImageHeight = null;
-let storedImageMirrorHorizontally = null;
+
 
 function clearStoredImageData() {
+    console.log('clearing stored image data');
     storedImageData = null;
     storedImageRotation = null;
     storedImageWidth = null;
     storedImageHeight = null;
     storedImageMirrorHorizontally = null;
+    hideTips();//this is now invalid.
 }
 
 function drawTipMagnifier(x, y) {
@@ -2558,7 +2573,10 @@ function drawTipMagnifier(x, y) {
     const tipmagnifier = document.getElementById('tipmagnifier');
     const magnifierCanvas = document.getElementById('magnifierCanvas');
 
+   
+
     if (storedImageData == null || storedImageRotation != regionEditor.imageRotation || storedImageMirrorHorizontally != regionEditor.imageMirrorHorizontally) {
+        console.log('Drawing A new magnifier with new image');
         let dummyCanvas = document.createElement('canvas');
         let ctxSource = dummyCanvas.getContext('2d');//, {willReadFrequently: true});
         if (regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270) {
@@ -2669,6 +2687,7 @@ function drawTipMagnifier(x, y) {
 
 
     drawHotSpot(ctx, 90, 90, 10, 2);
+    showTips();
 }
 
 function drawHotSpot(ctx, x, y, width, lineWidth) {
@@ -2728,193 +2747,184 @@ function drawLines(ctx, lineWidth, strokeStyle, lineInfos, isVertical) {
 
 }
 
-function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown) {
-    
+function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown) {
+    //const image = document.querySelector('#regionEditorImage');
     const tooltip = document.getElementById('tooltip');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
-    let showTip = true;
-    if (showTip) {
-        //const image = document.querySelector('#regionEditorImage');
+    let x = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
+    let y = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+    let indexMap = -1;
+    let posX = -1;
+    let posY = -1;
 
-        let x = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
-        let y = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
-        let indexMap = -1;
-        let posX = -1;
-        let posY = -1;
+    let placementOffsetX = 0;
+    let placementOffsetY = 0;
+    let magOffsetX = pageX - 100;
+    let magOffsetY = pageY - 100;
 
-        let placementOffsetX = 0;
-        let placementOffsetY = 0;
-        let magOffsetX = pageX - 100;
-        let magOffsetY = pageY - 100;
+    if (regionEditor.imageScale > 2 && offsetX > regionEditor.imageWidth / 2) {
+        placementOffsetX -= 256;//bottom left x
+        magOffsetX -= 340;
+    }
+    else {
+        placementOffsetX += 10;//left side
+        magOffsetX += 340;
+    }
 
-        if (regionEditor.imageScale > 2 && offsetX > regionEditor.imageWidth / 2) {
-            placementOffsetX -= 256;//bottom left x
-            magOffsetX -= 340;
-        }
-        else {
-            placementOffsetX += 10;//left side
-            magOffsetX += 340;
-        }
+    if (offsetY > regionEditor.imageHeight / 2) {
+        placementOffsetY -= 120;
+        magOffsetY -= 80;
+    }
+    else {
+        placementOffsetY += 20;
+        magOffsetY += 80;
+    }
 
-        if (offsetY > regionEditor.imageHeight / 2) {
-            placementOffsetY -= 120;
-            magOffsetY -= 80;
-        }
-        else {
-            placementOffsetY += 20;
-            magOffsetY += 80;
-        }
-
-        if (activeTool == 'paintsquare' || activeTool == 'erasesquare') {
-            let width = (brushSize * regionEditor.imageScale) * 2;
-            let posOffSetX = (brushSize * regionEditor.imageScale);
-            let posOffSetY = (brushSize * regionEditor.imageScale);
-            if (brushSize == 1) {
-                posOffSetY += 8;
-            }
-
-            tiptarget.innerHTML = `<svg width="${width + 2}" height="${width + 2}" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="${width}" height="${width}" stroke="red" stroke-width="2" /></svg>`;
-            tiptarget.style.top = `${pageY - posOffSetY}px`;
-            tiptarget.style.left = `${pageX - posOffSetX}px`;
-        }
-        else if (activeTool == 'paintround' || activeTool == 'eraseround') {
-            let width = (brushSize * regionEditor.imageScale) * 2;
-            let posOffSetX = (brushSize * regionEditor.imageScale);
-            let posOffSetY = (brushSize * regionEditor.imageScale);
-            if (brushSize == 1) {
-                posOffSetY += 8;
-            }
-            tiptarget.innerHTML = `<svg width="${width + 2}" height="${width + 2}" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="${width / 2 + 1}" cy="${width / 2 + 1}" r="${width / 2}" stroke="red" stroke-width="2" /></svg>`;
-            tiptarget.style.top = `${pageY - posOffSetY}px`;
-            tiptarget.style.left = `${pageX - posOffSetX}px`;
-        }
-        else {
-            tiptarget.innerHTML = `<svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="7" width="12" height="12" stroke="red" stroke-width="2" /></svg>`;
-            tiptarget.style.top = `${pageY - 12}px`;
-            tiptarget.style.left = `${pageX - 12}px`;
+    if (activeTool == 'paintsquare' || activeTool == 'erasesquare') {
+        let width = (brushSize * regionEditor.imageScale) * 2;
+        let posOffSetX = (brushSize * regionEditor.imageScale);
+        let posOffSetY = (brushSize * regionEditor.imageScale);
+        if (brushSize == 1) {
+            posOffSetY += 8;
         }
 
-        tooltip.style.top = `${pageY + placementOffsetY}px`;
-        tooltip.style.left = `${pageX + placementOffsetX}px`;
-
-
-        tipmagnifier.style.top = `${magOffsetY}px`;
-        tipmagnifier.style.left = `${magOffsetX}px`;
-
-        if (regionEditor.imageRotation == 0) {
-            posX = Math.min(x, regionEditor.imageNativeWidth - 1);
-            posY = Math.min(y, regionEditor.imageNativeHeight - 1);
-
+        tiptarget.innerHTML = `<svg width="${width + 2}" height="${width + 2}" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="${width}" height="${width}" stroke="red" stroke-width="2" /></svg>`;
+        tiptarget.style.top = `${pageY - posOffSetY}px`;
+        tiptarget.style.left = `${pageX - posOffSetX}px`;
+    }
+    else if (activeTool == 'paintround' || activeTool == 'eraseround') {
+        let width = (brushSize * regionEditor.imageScale) * 2;
+        let posOffSetX = (brushSize * regionEditor.imageScale);
+        let posOffSetY = (brushSize * regionEditor.imageScale);
+        if (brushSize == 1) {
+            posOffSetY += 8;
         }
-        else if (regionEditor.imageRotation == 180) {
-            posX = Math.min(x, regionEditor.imageNativeWidth - 1);
-            posY = Math.min(y, regionEditor.imageNativeHeight - 1);
+        tiptarget.innerHTML = `<svg width="${width + 2}" height="${width + 2}" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="${width / 2 + 1}" cy="${width / 2 + 1}" r="${width / 2}" stroke="red" stroke-width="2" /></svg>`;
+        tiptarget.style.top = `${pageY - posOffSetY}px`;
+        tiptarget.style.left = `${pageX - posOffSetX}px`;
+    }
+    else {
+        tiptarget.innerHTML = `<svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="7" width="12" height="12" stroke="red" stroke-width="2" /></svg>`;
+        tiptarget.style.top = `${pageY - 12}px`;
+        tiptarget.style.left = `${pageX - 12}px`;
+    }
 
-        }
-        else if (regionEditor.imageRotation == 90) {
-            posX = Math.min(x, regionEditor.imageNativeHeight - 1);
-            posY = Math.min(y, regionEditor.imageNativeWidth - 1);
-
-        }
-        else if (regionEditor.imageRotation == 270) {
-            posX = Math.min(x, regionEditor.imageNativeHeight - 1);
-            posY = Math.min(y, regionEditor.imageNativeWidth - 1);
-
-        }
-        else {
-            console.error('unsupported rotation: ' + regionEditor.imageRotation);
-            tooltip.textContent = 'unsupported rotation: ' + regionEditor.imageRotation;
-            return;
-        }
-
-        drawTipMagnifier(posX, posY);
+    tooltip.style.top = `${pageY + placementOffsetY}px`;
+    tooltip.style.left = `${pageX + placementOffsetX}px`;
 
 
-        indexMap = getIndexOfMapFromXY(posX, posY, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally);//this is x and y of the image rotated
+    tipmagnifier.style.top = `${magOffsetY}px`;
+    tipmagnifier.style.left = `${magOffsetX}px`;
 
-        //Emissivity is defined as the ratio of the energy radiated from a material's surface to that radiated from a perfect emitter, 
-        //known as a blackbody, at the same temperature and wavelength and under the same viewing conditions. 
-        //It is a dimensionless number between 0 (for a perfect reflector) and 1 (for a perfect emitter).
-        let distanceText = "Not Defined";
-        let materialText = "Not Defined";
-        let emissivityText = "Not Defined";
+    if (regionEditor.imageRotation == 0) {
+        posX = Math.min(x, regionEditor.imageNativeWidth - 1);
+        posY = Math.min(y, regionEditor.imageNativeHeight - 1);
 
+    }
+    else if (regionEditor.imageRotation == 180) {
+        posX = Math.min(x, regionEditor.imageNativeWidth - 1);
+        posY = Math.min(y, regionEditor.imageNativeHeight - 1);
 
-        let distanceMeters = null;
-        let materialEmissivity = null;
-        let adjTempC = null;
+    }
+    else if (regionEditor.imageRotation == 90) {
+        posX = Math.min(x, regionEditor.imageNativeHeight - 1);
+        posY = Math.min(y, regionEditor.imageNativeWidth - 1);
 
-        if (indexMap >= 0 && indexMap < distanceMap.length) {
-            let distance = distanceMap[indexMap];
-            if (distance != null) {
-                distanceMeters = distance;
-                distanceText = distance.toFixed(2) + 'm&nbsp;' + metersToInches(distance).toFixed(1) + 'in';
-            }
-        }
-        else {
-            console.error('distance index out of bounds');
-        }
+    }
+    else if (regionEditor.imageRotation == 270) {
+        posX = Math.min(x, regionEditor.imageNativeHeight - 1);
+        posY = Math.min(y, regionEditor.imageNativeWidth - 1);
 
-        if (indexMap >= 0 && indexMap < materialMap.length) {
-            let material = materialMap[indexMap];
-            if (material != null) {
-                materialEmissivity = material.emissivity;
-                materialText = material.name;
-                emissivityText = material.emissivity.toFixed(2);
-            }
-        }
-        else {
-            console.error('material index out of bounds');
-        }
+    }
+    else {
+        console.error('unsupported rotation: ' + regionEditor.imageRotation);
+        tooltip.textContent = 'unsupported rotation: ' + regionEditor.imageRotation;
+        return;
+    }
+
+    drawTipMagnifier(posX, posY);
 
 
-        if (indexMap > -1 && indexMap < tempsCelsius.length) {
-            let tempC = tempsCelsius[indexMap];
-            if (tempC != null && distanceMeters != null && materialEmissivity != null) {
+    indexMap = getIndexOfMapFromXY(posX, posY, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally);//this is x and y of the image rotated
 
-                let ambientTempC = tempC;
-                adjTempC = getAdjustedTempInCelsius(tempC, ambientTempC, distanceMeters, materialEmissivity);
-
-            }
-
-            let strMaterialColor = 'gray';
-            let strDistanceColor = 'gray';
-
-            if (activeLayer == 'Matl') {
-                strMaterialColor = 'white';
-            }
-            else if (activeLayer == 'Dist') {
-                strDistanceColor = 'white';
-            }
+    //Emissivity is defined as the ratio of the energy radiated from a material's surface to that radiated from a perfect emitter, 
+    //known as a blackbody, at the same temperature and wavelength and under the same viewing conditions. 
+    //It is a dimensionless number between 0 (for a perfect reflector) and 1 (for a perfect emitter).
+    let distanceText = "Not Defined";
+    let materialText = "Not Defined";
+    let emissivityText = "Not Defined";
 
 
-            //index:${indexMap}
-            tooltip.innerHTML = `<span style="white-space:nowrap;color:gray">X: ${posX}, Y: ${posY}</span><br/>` +
-                `<span style="white-space:nowrap;color:gray">Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
-                `<span style="white-space:nowrap;color:${strDistanceColor}">Distance: ${distanceText}</span><br/>` +
-                `<span style="white-space:nowrap;color:${strMaterialColor}">Material: ${materialText}</span><br/>` +
-                `<span style="white-space:nowrap;color:${strMaterialColor}">Emissivity: ${emissivityText}</span><br/>` +
-                `<span style="white-space:nowrap;color:gray">Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F</span>`;
+    let distanceMeters = null;
+    let materialEmissivity = null;
+    let adjTempC = null;
 
-        }
-        else {
-            console.error('invalid indexTempC: ' + indexMap);
-            tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>`;
+    if (indexMap >= 0 && indexMap < distanceMap.length) {
+        let distance = distanceMap[indexMap];
+        if (distance != null) {
+            distanceMeters = distance;
+            distanceText = distance.toFixed(2) + 'm&nbsp;' + metersToInches(distance).toFixed(1) + 'in';
         }
     }
     else {
-        hideTips();
+        console.error('distance index out of bounds');
+    }
 
+    if (indexMap >= 0 && indexMap < materialMap.length) {
+        let material = materialMap[indexMap];
+        if (material != null) {
+            materialEmissivity = material.emissivity;
+            materialText = material.name;
+            emissivityText = material.emissivity.toFixed(2);
+        }
+    }
+    else {
+        console.error('material index out of bounds');
     }
 
 
+    if (indexMap > -1 && indexMap < tempsCelsius.length) {
+        let tempC = tempsCelsius[indexMap];
+        if (tempC != null && distanceMeters != null && materialEmissivity != null) {
+
+            let ambientTempC = tempC;
+            adjTempC = getAdjustedTempInCelsius(tempC, ambientTempC, distanceMeters, materialEmissivity);
+
+        }
+
+        let strMaterialColor = 'gray';
+        let strDistanceColor = 'gray';
+
+        if (activeLayer == 'Matl') {
+            strMaterialColor = 'white';
+        }
+        else if (activeLayer == 'Dist') {
+            strDistanceColor = 'white';
+        }
+
+
+        //index:${indexMap}
+        tooltip.innerHTML = `<span style="white-space:nowrap;color:gray">X: ${posX}, Y: ${posY}</span><br/>` +
+            `<span style="white-space:nowrap;color:gray">Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
+            `<span style="white-space:nowrap;color:${strDistanceColor}">Distance: ${distanceText}</span><br/>` +
+            `<span style="white-space:nowrap;color:${strMaterialColor}">Material: ${materialText}</span><br/>` +
+            `<span style="white-space:nowrap;color:${strMaterialColor}">Emissivity: ${emissivityText}</span><br/>` +
+            `<span style="white-space:nowrap;color:gray">Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F</span>`;
+
+    }
+    else {
+        console.error('invalid indexTempC: ' + indexMap);
+        tooltip.innerHTML = `X: ${posX}, Y: ${posY}<br/>`;
+    }
+}
+
+function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown) {
     if (isLeftMouseDown) {
         processScreenTouchCoordinates(offsetX, offsetY, true);
 
     }
-
-
+    placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown);
 }
 
 
@@ -3290,19 +3300,19 @@ function setupEvents() {
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
 
-    [border,image].forEach(function (elem) {
+    [border, image].forEach(function (elem) {
         elem.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             if ("buttons" in e) {
                 if (e.buttons == 1) {
                     let minY = image.offsetTop;
-                    let maxY = image.offsetTop + image.offsetHeight-1;
+                    let maxY = image.offsetTop + image.offsetHeight - 1;
                     let minX = image.offsetLeft;
-                    let maxX = image.offsetLeft + image.offsetWidth-1;
+                    let maxX = image.offsetLeft + image.offsetWidth - 1;
                     let pageX = Math.max(Math.min(e.pageX, maxX), minX);
                     let pageY = Math.max(Math.min(e.pageY, maxY), minY);
-                    let offsetX = pageX - image.offsetLeft-1;
-                    let offsetY = pageY - image.offsetTop-1;
+                    let offsetX = pageX - image.offsetLeft - 1;
+                    let offsetY = pageY - image.offsetTop - 1;
                     processScreenTouchCoordinates(offsetX, offsetY, false);
                 }
             }
@@ -3311,9 +3321,9 @@ function setupEvents() {
     });
 
 
-    [border,image].forEach(function (elem) {
+    [border, image].forEach(function (elem) {
         elem.addEventListener('touchstart', (e) => {
-            
+
             e.stopPropagation();
             e.preventDefault();//stop mouse down event from firing
             if (regionEditor == null) {
@@ -3332,24 +3342,24 @@ function setupEvents() {
             }
 
             let minY = image.offsetTop;
-            let maxY = image.offsetTop + image.offsetHeight-1;
+            let maxY = image.offsetTop + image.offsetHeight - 1;
             let minX = image.offsetLeft;
-            let maxX = image.offsetLeft + image.offsetWidth-1;
+            let maxX = image.offsetLeft + image.offsetWidth - 1;
             pageX = Math.max(Math.min(pageX, maxX), minX);
             pageY = Math.max(Math.min(pageY, maxY), minY);
-            let offsetX = pageX - image.offsetLeft-1;
-            let offsetY = pageY - image.offsetTop-1;
+            let offsetX = pageX - image.offsetLeft - 1;
+            let offsetY = pageY - image.offsetTop - 1;
 
-            
+
             processScreenTouchCoordinates(offsetX, offsetY, false);
             pointerMove(offsetX, offsetY, pageX, pageY, false, false);
-            
+
 
         });
     });
 
-    [border,image].forEach(function (elem) {
-        
+    [border, image].forEach(function (elem) {
+
         elem.addEventListener('touchmove', (e) => {
             e.stopPropagation();
             e.preventDefault();//stop scrolling of the page
@@ -3362,7 +3372,7 @@ function setupEvents() {
             tiptarget.style.display = 'block';
             tipmagnifier.style.display = 'block';
             tooltip.style.display = 'block';
-            
+
             let pageX = 0;
             let pageY = 0;
             for (let i = 0; i < e.changedTouches.length; i++) {
@@ -3370,21 +3380,21 @@ function setupEvents() {
                 pageY = e.changedTouches[i].pageY;
                 break;
             }
-            
+
             let minY = image.offsetTop;
-            let maxY = image.offsetTop + image.offsetHeight-1;
+            let maxY = image.offsetTop + image.offsetHeight - 1;
             let minX = image.offsetLeft;
-            let maxX = image.offsetLeft + image.offsetWidth-1;
+            let maxX = image.offsetLeft + image.offsetWidth - 1;
             pageX = Math.max(Math.min(pageX, maxX), minX);
             pageY = Math.max(Math.min(pageY, maxY), minY);
-            let offsetX = pageX - image.offsetLeft-1;
-            let offsetY = pageY - image.offsetTop-1;
+            let offsetX = pageX - image.offsetLeft - 1;
+            let offsetY = pageY - image.offsetTop - 1;
             pointerMove(offsetX, offsetY, pageX, pageY, true, true);
 
         });
     });
 
-    [border,image].forEach(function (elem) {
+    [border, image].forEach(function (elem) {
         elem.addEventListener('mouseover', (e) => {
             e.stopPropagation();
             if (regionEditor == null) {
@@ -3401,10 +3411,10 @@ function setupEvents() {
     //tooltip.style.display = 'none';
     //});
 
-    
 
-    [border,image].forEach(function (elem) {
-        
+
+    [border, image].forEach(function (elem) {
+
         elem.addEventListener('mousemove', (e) => {
             e.stopPropagation();
             if (regionEditor == null) {
@@ -3417,20 +3427,20 @@ function setupEvents() {
                 }
             }
 
-           
-                //adjust offset relative to the image contained within the border
-                
 
-                let minY = image.offsetTop;
-                let maxY = image.offsetTop + image.offsetHeight-1;
-                let minX = image.offsetLeft;
-                let maxX = image.offsetLeft + image.offsetWidth-1;
-                let pageX = Math.max(Math.min(e.pageX, maxX), minX);
-                let pageY = Math.max(Math.min(e.pageY, maxY), minY);
-                let offsetX = pageX - image.offsetLeft -1;
-                let offsetY = pageY - image.offsetTop -1;
-                pointerMove(offsetX, offsetY, pageX, pageY, false, isLeftMouseClick);
-           
+            //adjust offset relative to the image contained within the border
+
+
+            let minY = image.offsetTop;
+            let maxY = image.offsetTop + image.offsetHeight - 1;
+            let minX = image.offsetLeft;
+            let maxX = image.offsetLeft + image.offsetWidth - 1;
+            let pageX = Math.max(Math.min(e.pageX, maxX), minX);
+            let pageY = Math.max(Math.min(e.pageY, maxY), minY);
+            let offsetX = pageX - image.offsetLeft - 1;
+            let offsetY = pageY - image.offsetTop - 1;
+            pointerMove(offsetX, offsetY, pageX, pageY, false, isLeftMouseClick);
+
         }
 
         );
