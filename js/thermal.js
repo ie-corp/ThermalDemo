@@ -2304,7 +2304,7 @@ function getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, i
 
 
 
-//jbogs
+
 function getFillIndexesToChange(map, map2, width, height, startX, startY, threshold, isMaterial) {
 
     let newColor = -1;
@@ -2428,7 +2428,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
     let realX = pts[0];
     let realY = pts[1];
     let myRotation = 0
-    
+   
    
 
     if (isRound) {
@@ -2444,7 +2444,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
                 }
                 let distanceItem = Math.sqrt(Math.pow(x - realX, 2) + Math.pow(y - realY, 2));
                 if (distanceItem < selBrushSize) {
-                    let index = getIndexOfMapFromXY(x, y, myRotation, imageMirrorHorizontally);//jfig
+                    let index = getIndexOfMapFromXY(x, y, myRotation, false);
 
                     indexes.push(index);
                 }
@@ -2458,7 +2458,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
 
         let myBrushSize = selBrushSize;
         if (myBrushSize == 1) {
-            let index = getIndexOfMapFromXY(realX, realY, myRotation, imageMirrorHorizontally);
+            let index = getIndexOfMapFromXY(realX, realY, myRotation, false);
             if(index > -1){
                 indexes.push(index);
             }
@@ -2476,7 +2476,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
                 if (y < 0 || y >= imageNativeHeight) {
                     continue;
                 }
-                let index = getIndexOfMapFromXY(x, y, myRotation, imageMirrorHorizontally);//jfig
+                let index = getIndexOfMapFromXY(x, y, myRotation, false);
                 indexes.push(index);
 
             }
