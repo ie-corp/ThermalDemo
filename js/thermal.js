@@ -123,7 +123,30 @@ function changeBrushSizeBy(amount) {
 }
 
 function selectRegionEditorTool(toolName) {
-    hideTips();
+    hideTips();//jjc
+    if(toolName == 'erase'){
+        if(activeTool.indexOf('erase') > -1){//already active
+            toolName = document.getElementById('shapeEraseRound').style.display == 'none' ? 'eraseround' : 'erasesquare';
+        }
+        else{
+            toolName = document.getElementById('shapeEraseRound').style.display == 'none' ? 'erasesquare' : 'eraseround';
+            
+        }
+        document.getElementById('shapeEraseRound').style.display = toolName == 'eraseround' ? '' : 'none';
+        document.getElementById('shapeEraseSquare').style.display = toolName == 'erasesquare' ? '' : 'none';
+    }
+    else if(toolName == 'paint'){
+        if(activeTool.indexOf('paint') > -1){//already painting so flip the tool
+            toolName = document.getElementById('shapePaintRound').style.display == 'none' ? 'paintround' : 'paintsquare';
+        }
+        else{//keep the current tool
+            toolName = document.getElementById('shapePaintRound').style.display == 'none' ? 'paintsquare' : 'paintround';
+            
+        }
+        document.getElementById('shapePaintRound').style.display = toolName == 'paintround' ? '' : 'none';
+        document.getElementById('shapePaintSquare').style.display = toolName == 'paintsquare' ? '' : 'none';
+    }
+
     if (regionEditorTools.indexOf(toolName) == -1) {
         console.error('invalid tool name: ' + toolName);
         recalcEditor();
@@ -350,22 +373,16 @@ function setButtons() {
     document.getElementById("btnRegionToolChange").disabled = activeLayer == 'Region';
     document.getElementById("btnRegionToolChange").style.color = (activeTool == 'change' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPaintRound").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolPaintRound").disabled = activeLayer == 'Region';
-    document.getElementById("btnRegionToolPaintRound").style.color = (activeTool == 'paintround' ? activeToolColor : inactiveToolColor);
+    document.getElementById("btnRegionToolPaint").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolPaint").disabled = activeLayer == 'Region';
+    document.getElementById("btnRegionToolPaint").style.color = (activeTool.indexOf('paint') > -1 ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPaintSquare").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolPaintSquare").disabled = activeLayer == 'Region';
-    document.getElementById("btnRegionToolPaintSquare").style.color = (activeTool == 'paintsquare' ? activeToolColor : inactiveToolColor);
+    
+    document.getElementById("btnRegionToolErase").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolErase").disabled = activeLayer == 'Region';
+    document.getElementById("btnRegionToolErase").style.color = (activeTool.indexOf('erase') > -1 ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolEraseRound").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolEraseRound").disabled = activeLayer == 'Region';
-    document.getElementById("btnRegionToolEraseRound").style.color = (activeTool == 'eraseround' ? activeToolColor : inactiveToolColor);
-
-    document.getElementById("btnRegionToolEraseSquare").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolEraseSquare").disabled = activeLayer == 'Region';
-    document.getElementById("btnRegionToolEraseSquare").style.color = (activeTool == 'erasesquare' ? activeToolColor : inactiveToolColor);
-
+    
     let paintOrEraseSelected = activeLayer != 'Region' && (activeTool.indexOf('paint') > -1 || activeTool.indexOf('erase') > -1);
     document.getElementById("btnChangeSizeInfo").style.display = (!paintOrEraseSelected ? 'none' : '');
     document.getElementById("btnChangeSizeLess").style.display = (!paintOrEraseSelected ? 'none' : '');

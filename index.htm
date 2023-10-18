@@ -525,31 +525,37 @@
                         </div>
                     </button>
 
-                    <button id="btnRegionToolPaintRound" onclick="selectRegionEditorTool('paintround')"
+                    <button id="btnRegionToolPaint" onclick="selectRegionEditorTool('paint')"
                         class="resizebutton">
-                        <div style="line-height: 4px;">
+                        <div id="shapePaintRound" style="line-height: 4px;">
                             <span class="regioneditortext">Paint</span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <circle cx="12" cy="12" r="10" fill="currentColor" />
                             </svg>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="8" height="8" fill="white"/>
+                            </svg>
                         </div>
-                    </button>
-
-                    <button id="btnRegionToolPaintSquare" onclick="selectRegionEditorTool('paintsquare')"
-                        class="resizebutton">
-                        <div style="line-height: 4px;">
+                        <div id="shapePaintSquare" style="line-height: 4px;display:none">
                             <span class="regioneditortext">Paint</span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
-                                <rect x="2" y="2" width="20" height="20" fill="currentColor">
+                                <rect x="2" y="2" width="20" height="20" fill="currentColor"/>
+                            </svg>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="5" cy="5" r="4" fill="white" />
                             </svg>
                         </div>
                     </button>
 
-                    <button id="btnRegionToolEraseRound" onclick="selectRegionEditorTool('eraseround')"
+                    
+
+                    <button id="btnRegionToolErase" onclick="selectRegionEditorTool('erase')"
                         class="resizebutton">
-                        <div style="line-height: 4px;">
+                        <div id="shapeEraseRound" style="line-height: 4px;">
                             <span class="regioneditortext">Erase</span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
@@ -563,12 +569,12 @@
                                 <circle cx="12" cy="12" r="10" fill="url(#diagonalHatchEraseRound)"
                                     stroke="currentColor" />
                             </svg>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="8" height="8" stroke="white" style="stroke-width:1"/>
+                            </svg>
                         </div>
-                    </button>
-
-                    <button id="btnRegionToolEraseSquare" onclick="selectRegionEditorTool('erasesquare')"
-                        class="resizebutton">
-                        <div style="line-height: 4px;">
+                        <div id="shapeEraseSquare" style="line-height: 4px;display:none">
                             <span class="regioneditortext">Erase</span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
@@ -582,8 +588,14 @@
                                 <rect x="2" y="2" width="20" height="20" fill="url(#diagonalHatchEraseSquare)"
                                     stroke="currentColor" />
                             </svg>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="5" cy="5" r="4" stroke="white" style="stroke-width:1" />
+                            </svg>
                         </div>
                     </button>
+
+                    
                     <button id="btnChangeSizeInfo" disabled class="resizebutton" style="background-color: black;">
                         <div style="line-height: 17px;">
                             <span class="regioneditortext2">Size</span>
