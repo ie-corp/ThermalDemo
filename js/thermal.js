@@ -38,7 +38,7 @@ Make certain that these items may be found in an electrical cabinet.
 Emissivity values should be rounded to 2 decimal places.
 Give me the results as a javascript array in the following format:var knownMaterials =  [{"name":"material name", "emissivity":.95}]
 */
-var knownMaterials = [
+const knownMaterials = [
     {"name":"Black Body", "emissivity":1.00},
     {"name":"Black Elec. Tape", "emissivity":0.95},
     {"name":"Polypropylene", "emissivity":0.97},
@@ -2332,7 +2332,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         recalcEditor();
     }
     else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, activeTool.indexOf('round') > -1, brushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, brushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < materialMap.length && index >= 0) {
@@ -2341,6 +2341,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         }
         recalcEditor();
     }
+    
 
 }
 
