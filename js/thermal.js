@@ -3594,12 +3594,13 @@ function addRegion(regionType) {
             regionAngle = lastRegion.angle;
             regionX = lastRegion.x + 10;
             regionY = lastRegion.y + 10;
-            if (lastRegion.points != null && lastRegion.points.length > 0) {
+            //this code copied the last polygon shape, but it was not intuitive to the user.
+            /*if (lastRegion.points != null && lastRegion.points.length > 0) {
                 regionPoints = [];
                 for (let q = 0; q < lastRegion.points.length; q++) {
                     regionPoints.push({ "x": (lastRegion.points[q].x + 10), "y": (lastRegion.points[q].y + 10) });
                 }
-            }
+            }*/
 
         }
         else {
