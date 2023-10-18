@@ -23,7 +23,49 @@ let editAlarmThresh = { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTe
 let editAlarmIsImage = true;
 let brushSize = 10;
 let selectedDistance = 1.0;
-let selectedMaterial = { "name": "Shiny Mirror", "emissivity": 1.0 };
+
+
+/*AI Prompt
+Give me a list of 25 common materials found in an electrical cabinet and their emissivity values.
+The names should be no longer than 20 characters. Abbreviate the names if necessary.
+The names may only contain letters, numbers, spaces and commas. 
+Order them by highest emissivity to lowest. 
+Do not give emissivity as a range, it should be a single value. 
+The list should contain Black Body with an emissivity of 1.00.
+The list should contain Black Electrical Tape with an emissivity of 0.95.
+The list should contain a Polished Silver with an emissivity of 0.02.
+Make certain that these items may be found in an electrical cabinet.
+Emissivity values should be rounded to 2 decimal places.
+Give me the results as a javascript array in the following format:var knownMaterials =  [{"name":"material name", "emissivity":.95}]
+*/
+var knownMaterials = [
+    {"name":"Black Body", "emissivity":1.00},
+    {"name":"Black Elec. Tape", "emissivity":0.95},
+    {"name":"Polypropylene", "emissivity":0.97},
+    {"name":"Polystyrene", "emissivity":0.95},
+    {"name":"Rubber, hard glossy", "emissivity":0.94},
+    {"name":"Iron, rusted", "emissivity":0.94},
+    {"name":"PTFE", "emissivity":0.92},
+    {"name":"Polyethylene, black", "emissivity":0.92},
+    {"name":"PVC", "emissivity":0.92},
+    {"name":"Fibreglass", "emissivity":0.85},
+    {"name":"Carbon, not oxidized", "emissivity":0.88},
+    {"name":"Carbon filament", "emissivity":0.86},
+    {"name":"Copper, oxidized", "emissivity":0.76},
+    {"name":"Brass, oxidized", "emissivity":0.79},
+    {"name":"Steel, stainless", "emissivity":0.70},
+    {"name":"Steel, galvanized", "emissivity":0.56},
+    {"name":"Aluminium, anodised", "emissivity":0.82},
+    {"name":"Aluminium, oxidized", "emissivity":0.26},
+    {"name":"Aluminium, sheet", "emissivity":0.10},
+    {"name":"Aluminium, polished", "emissivity":0.06},
+    {"name":"Gold, not polished", "emissivity":0.49},
+    {"name":"Gold, polished", "emissivity":0.03},
+    {"name":"Copper, polished", "emissivity":0.04},
+    {"name":"Nickel, polished", "emissivity":0.09},
+    {"name":"Silver, polished", "emissivity":0.02}
+    ];
+let selectedMaterial = knownMaterials[15];
 
 let storedImageData = null;
 let storedImageRotation = null;
@@ -403,59 +445,70 @@ function clearDistanceMap() {
     recalcEditor();
 }
 
-function pickMaterial() {
-    alert('Not Fully Implemented. A Window would appear with a list of materials to choose from.');
-    let material = selectedMaterial;
-    if (material == null || material.name == null || material.emissivity == null) {
-        alert('invalid material');
-        return;
-    }
-    let materialName = prompt('Enter Material Name consisting of only letters, numbers and spaces', "Oxidized Steel");
-
-    if (materialName == null || materialName.trim() == '') {
-        console.log('invalid material name');
-        return;
-    }
-    else {
-        //validate material name
-        materialName = materialName.trim();
-        if (materialName.length > 20) {
-            alert('invalid material name length');
-            return;
-        }
-        let regex = /^[a-zA-Z0-9 ]*$/;
-        if (!regex.test(materialName)) {
-            alert('invalid material name characters');
-            return;
-        }
-    }
-    let emissivity = prompt('Enter Emissivity 0.00-1.00', "0.90");
-    if (emissivity == null || emissivity.trim() == '') {
-        console.log('invalid emissivity');
-        return;
-    }
-    else {
-        //validate emissivity
-        emissivity = parseFloat(emissivity.trim());
-        if (emissivity < 0.00 || emissivity > 1.00) {
-            alert('invalid emissivity');
-            return;
-        }
-    }
-    let newMaterial = { "name": materialName, "emissivity": emissivity };
-    changeMaterial(newMaterial);
-
+function hideEverything() {
+    hideTips();
+    document.getElementById('mainEditor').style.display = 'none';
+    document.getElementById('dialogDistance').style.display = 'none';
+    document.getElementById('dialogMaterials').style.display = 'none';
 }
 
-function changeMaterial(material) {
-    if (material == null || material.name == null || material.emissivity == null) {
+
+function cancelMaterial() {
+    hideEverything();
+    document.getElementById('mainEditor').style.display = 'block';
+}
+
+function pickMaterial() {
+    hideEverything();
+    let materialList = document.getElementById('materialList');
+    if (knownMaterials != null && knownMaterials.length > 0) {
+        let sb = '';
+        for (let i = 0; i < knownMaterials.length; i++) {
+            let material = knownMaterials[i];
+            sb += '<button class="resizebutton2" onclick="changeMaterial(\'' + material.name +'\','+ material.emissivity + ')">';
+            sb += '<div style="line-height: 17px;">';
+            sb += '<div class="regioneditortext2">Material</div>';
+            sb += '<div class="regionditortextsub4">' + material.name + '</div>';
+            sb += '<div class="regionditortextsub3">' + material.emissivity.toFixed(2) + '</div>';
+            sb += '</div>';
+            sb += '</button>';
+        }
+        materialList.innerHTML = sb;
+    }
+    document.getElementById('dialogMaterials').style.display = 'block';
+}
+
+function changeMaterial(materialName, emissivity) {
+    if (materialName == null || emissivity == null) {
         console.error('invalid material');
         return;
     }
 
-    selectedMaterial = { "name": material.name, "emissivity": material.emissivity };
+    //validate material name
+    materialName = materialName.trim();
+    if (materialName.length > 100) {
+        console.error('invalid material name length');
+        return;
+    }
+    // regular expression that only allows mixed case letters, whole numbers, spaces and commas.
+    let regex = /^[a-zA-Z0-9 ,]*$/;
+    if (!regex.test(materialName)) {
+        console.error('invalid material name characters');
+        return;
+    }
+
+    //round emissivity to 2 decimal places
+    emissivity = parseFloat(emissivity.toFixed(2));
+    if (emissivity < 0.00 || emissivity > 1.00) {
+        console.error('invalid emissivity');
+        return;
+    }
+    console.log ('old material: ' + selectedMaterial.name + ' with emissivity ' + selectedMaterial.emissivity.toFixed(2) + '');
+    selectedMaterial = { "name": materialName, "emissivity": emissivity };
+    console.log ('changed material to: ' + selectedMaterial.name + ' with emissivity ' + selectedMaterial.emissivity.toFixed(2) + '');
     document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
     document.getElementById('valMaterialEmissivity').innerHTML = selectedMaterial.emissivity.toFixed(2);
+    cancelMaterial();
 }
 
 function clearMaterialMap() {
@@ -490,7 +543,7 @@ function repeatFunc(myfunc) {
     }, waiterTime);
 }
 
-function showTips(){
+function showTips() {
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
     const tooltip = document.getElementById('tooltip');
@@ -500,7 +553,7 @@ function showTips(){
 }
 
 function hideTips() {
-    console.log('hiding tips');
+    //console.log('hiding tips');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
     const tooltip = document.getElementById('tooltip');
@@ -510,7 +563,7 @@ function hideTips() {
 }
 
 function recalcEditor() {
-    
+
     clearStoredImageData();
     if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
         regionEditor.imageWidth = regionEditor.imageNativeWidth * regionEditor.imageScale;
@@ -720,7 +773,22 @@ function rotateImage() {
     addHistory('rotate image', null, false);//I don't think this needs a undo.
 }
 
+let lastRedrawDate = null;
+let waitinhRedraw = false;
 function drawRegions() {
+    if (lastRedrawDate != null) {
+        let now = new Date();
+        let diff = now - lastRedrawDate;
+        if (diff < 100) {
+            if (!waitingRedraw) {
+                waitingRedraw = true;
+                window.setTimeout(drawRegions, 100);//when they are painting with a prush updates are too fast.
+            }
+            return;
+        }
+    }
+    waitingRedraw = false;
+    lastRedrawDate = new Date();
 
     var regionEditorImage = document.getElementById("regionEditorImage");
     var regionEditorImageRef = document.getElementById("regionEditorImageRef");
@@ -1534,10 +1602,13 @@ function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, draw
                         ctx.stroke();
                     }
                     else {
-                        ctx.beginPath();
-                        ctx.arc((point.x * scale), (point.y * scale), (2 * scale), 0, 2 * Math.PI);
-                        ctx.fillStyle = strokeColor;
-                        ctx.fill();
+
+                        if (activeTool != 'pointmove') {
+                            ctx.beginPath();
+                            ctx.arc((point.x * scale), (point.y * scale), (2 * scale), 0, 2 * Math.PI);
+                            ctx.fillStyle = strokeColor;
+                            ctx.fill();
+                        }
 
                         if ((i == selectedPointIndex || activeTool == 'pointmove')) {
 
@@ -2558,7 +2629,7 @@ function getRGBAFromCanvasData(data, imageWidth, x, y) {
 
 
 function clearStoredImageData() {
-    console.log('clearing stored image data');
+    //console.log('clearing stored image data');
     storedImageData = null;
     storedImageRotation = null;
     storedImageWidth = null;
@@ -2573,10 +2644,10 @@ function drawTipMagnifier(x, y) {
     const tipmagnifier = document.getElementById('tipmagnifier');
     const magnifierCanvas = document.getElementById('magnifierCanvas');
 
-   
+
 
     if (storedImageData == null || storedImageRotation != regionEditor.imageRotation || storedImageMirrorHorizontally != regionEditor.imageMirrorHorizontally) {
-        console.log('Drawing A new magnifier with new image');
+        //console.log('Drawing A new magnifier with new image');
         let dummyCanvas = document.createElement('canvas');
         let ctxSource = dummyCanvas.getContext('2d');//, {willReadFrequently: true});
         if (regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270) {
@@ -2768,7 +2839,7 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
         magOffsetX -= 340;
     }
     else {
-        placementOffsetX += 10;//left side
+        placementOffsetX += 50;//left side
         magOffsetX += 340;
     }
 
@@ -2905,12 +2976,12 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
 
 
         //index:${indexMap}
-        tooltip.innerHTML = `<span style="white-space:nowrap;color:gray">X: ${posX}, Y: ${posY}</span><br/>` +
-            `<span style="white-space:nowrap;color:gray">Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
-            `<span style="white-space:nowrap;color:${strDistanceColor}">Distance: ${distanceText}</span><br/>` +
-            `<span style="white-space:nowrap;color:${strMaterialColor}">Material: ${materialText}</span><br/>` +
-            `<span style="white-space:nowrap;color:${strMaterialColor}">Emissivity: ${emissivityText}</span><br/>` +
-            `<span style="white-space:nowrap;color:gray">Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F</span>`;
+        tooltip.innerHTML = `<span style="white-space:nowrap;font-size:13px;color:gray">X: ${posX}, Y: ${posY}</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:gray">Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:${strDistanceColor}">Distance: ${distanceText}</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Matl:&nbsp;</span><span style="white-space:nowrap;font-size:12px;width:100px;text-overflow: ellipsis;overflow: hidden;color:${strMaterialColor}">${materialText}</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Emissivity: ${emissivityText}</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:gray">Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F</span>`;
 
     }
     else {
@@ -2985,6 +3056,8 @@ function getEmptyRegionEditor() {
 
 let doEditing = false;
 function go() {
+    hideEverything();
+    document.getElementById('mainEditor').style.display = 'block';
     setupEvents();
     let image = document.getElementById('regionEditorImageRef');
     image.onload = function () {

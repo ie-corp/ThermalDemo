@@ -157,6 +157,16 @@ background-color:grey;
       font-size: 12px;
     }
 
+    .regionditortextsub4
+    {
+      width: 120px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      user-select: none; 
+      font-size: 11px;
+    }
+
 
 .regionbutton{
   padding:0px;

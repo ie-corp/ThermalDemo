@@ -15,681 +15,725 @@
 </head>
 
 <body onload="start()">
-
-    <div id="cameraTools" class="editorrow">
-    </div>
-    <div id="imageTools" class="editorrow">
-
-        <button id="btnZoomImage" onclick="zoomRegionEditor(.5)" class="resizebutton">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Zoom</span>
-                <span id="valueZoom" class="regioneditortext">100%</span>
-            </div>
-        </button>
-
-        <button id="btnFilterImage" onclick="changeImageFilterNext(true)" class="resizebutton">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Filter</span>
-                <span id="valueFilter" class="regioneditortext">none</span>
-            </div>
-        </button>
-
-        <button id="btnRotateImage" onclick="rotateImage()" class="resizebutton">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Rotate</span>
-                <span id="valImageRotation" class="regioneditortext">0&deg;</span>
-            </div>
-        </button>
-
-        <button id="btnMirrorImageHorizontally" onclick="changeImageMirror()" class="resizebutton">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Mirror</span>
-                <span id="valueImageMirrorHorizontally" class="regioneditortext">off</span>
-            </div>
-        </button>
-
-        <div style="width:8px;">
-        </div>
+    <div id="dialogDistance"></div>
+    <div id="dialogMaterials">
+        <table width="100%">
+            <tr>
+                <td width="50%"><span style="font-size:28px;color:white">Choose Material</span></td>
+                <td width="50%" style="text-align:right">
+                    <button id="btnMaterialCancel" onclick="cancelMaterial()" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Cancel</span>
+                        </div>
+                    </button>
+                </td>
+            </tr>
+        </table>
 
 
 
-        <button disabled class="resizebutton" style="background-color: black;">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Img Hi</span>
-                <span id="valImageHighTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="valImageHighTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
 
-        <button id="btnChangeImageMaxTemp" onclick="changeAlarmTemp(true,true)" class="resizebutton">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Alm Hi</span>
-                <span id="valImageMaxTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="valImageMaxTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-
-
-        <button id="btnChangeImageMaxPriorityLevel" onclick="changeAlarmTemp(true,true)" class="resizebutton">
-            <div style="line-height: 19px;">
-                <span class="regioneditortext2">Alarm</span>
-                <span id="valImageMaxPriorityLevel" class="regioneditortext2">--</span>
-                <span class="regioneditortext2">Level</span>
-
-            </div>
-        </button>
-
-        <div style="width:8px;">
-        </div>
-
-        <button disabled class="resizebutton" style="background-color: black;">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Img Lo</span>
-                <span id="valImageLowTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="valImageLowTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-
-        <button id="btnChangeImageMinTemp" onclick="changeAlarmTemp(true,false)" class="resizebutton">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Alm Lo</span>
-                <span id="valImageMinTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="valImageMinTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-
-        <button id="btnChangeImageMinPriorityLevel" onclick="changeAlarmTemp(true,true)" class="resizebutton">
-            <div style="line-height: 19px;">
-                <span class="regioneditortext2">Alarm</span>
-                <span id="valImageMinPriorityLevel" class="regioneditortext2">--</span>
-                <span class="regioneditortext2">Level</span>
-
-            </div>
-        </button>
-
-        <div style="width:8px;">
-        </div>
-
-        <button id="btnUndo" onclick="undoRegionEditor()" class="resizebutton">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Undo</span>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
-                        fill="white" />
-                </svg>
-            </div>
-        </button>
-
-        <button id="btnRedo" onclick="redoRegionEditor()" class="resizebutton">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Redo</span>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
-                        fill="currentColor" />
-                </svg>
-            </div>
-        </button>
-
+        <div id="materialList"></div>
 
     </div>
-    <div id="rowRegionTools" class="editorrow">
+    <div id="mainEditor">
 
-        <button id="btnChangeRegion" onclick="changeRegionNext(true)" class="resizebutton">
-            <div style="line-height: 20px;">
-                <span class="regioneditortext">Region</span>
-                <span id="valRegionIndex" class="regionditortextsub3">0 of 0</span>
-            </div>
-        </button>
-
-        <button id="btnChangeRegionName" onclick="changeRegionName()" class="resizebutton2">
-            <div style="line-height: 20px;">
-                <div class="regioneditortext">Name</div>
-                <div id="valRegionName" class="regionditortextsub3">--</div>
-            </div>
-        </button>
-
-        <button id="btnChangeColor" onclick="changeRegionColorNext(true)" class="resizebutton">
-            <div style="line-height: 10px;">
-                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Color</span>
-                <div id="valRegionColorDemo" style="background-color: red; font-size:4px; line-height: 8px;"
-                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                <div id="valRegionColor" style="line-height:16px" class="regionditortextsub3">Red</div>
-            </div>
-        </button>
-
-        <div style="width:8px;">
+        <div id="cameraTools" class="editorrow">
         </div>
+        <div id="imageTools" class="editorrow">
 
-
-        <button disabled class="resizebutton" style="background-color: black;">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Rgn Hi</span>
-                <span id="valRegionHighTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="valRegionHighTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-
-        <button id="btnChangeRegionMaxTemp" onclick="changeAlarmTemp(false,true)" class="resizebutton">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Alm Hi</span>
-                <span id="valRegionMaxTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="valRegionMaxTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-
-        <button id="btnChangeRegionMaxPriorityLevel" onclick="changeAlarmTemp(false,true)" class="resizebutton">
-            <div style="line-height: 19px;">
-                <span class="regioneditortext2">Alarm</span>
-                <span id="valRegionMaxPriorityLevel" class="regioneditortext2">--</span>
-                <span class="regioneditortext2">Level</span>
-
-            </div>
-        </button>
-
-        <div style="width:8px;">
-        </div>
-
-        <button disabled class="resizebutton" style="background-color: black;">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Rgn Lo</span>
-                <span id="valRegionLowTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="valRegionLowTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-
-
-        <button id="btnChangeRegionMinTemp" onclick="changeAlarmTemp(false,false)" class="resizebutton">
-            <div style="line-height: 17px;">
-                <span class="regioneditortext2">Alm Lo</span>
-                <span id="valRegionMinTempC" class="regionditortextsub3">--&deg;C</span>
-                <span id="valRegionMinTempF" class="regionditortextsub3">--&deg;F</span>
-            </div>
-        </button>
-
-        <button id="btnChangeRegionMinPriorityLevel" onclick="changeAlarmTemp(false,false)" class="resizebutton">
-            <div style="line-height: 19px;">
-                <span class="regioneditortext2">Alarm</span>
-                <span id="valRegionMinPriorityLevel" class="regioneditortext2">--</span>
-                <span class="regioneditortext2">Level</span>
-
-            </div>
-        </button>
-
-        <div style="width:72px;">
-        </div>
-
-
-        <button id="btnDeleteRegion" onclick="deleteRegionEditor()" class="resizebutton">
-            <div style="line-height: 4px;">
-                <span class="regioneditortext">Delete</span>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="currentColor"
-                        stroke-width="2" />
-                </svg>
-            </div>
-        </button>
-    </div>
-
-    <div id="rowMaterialTools" style="display:none" class="editorrow">
-        <button id="btnChangeMaterial" onclick="pickMaterial()" class="resizebutton2">
-            <div style="line-height: 17px;">
-                <div class="regioneditortext2">Material</div>
-                <div id="valMaterialName" class="regionditortextsub3">--</div>
-                <div id="valMaterialEmissivity" class="regionditortextsub3">--</div>
-            </div>
-        </button>
-
-
-
-
-
-        <button disabled class="resizebutton" style="background-color:black">
-            <div style="line-height: 10px;">
-                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Min</span>
-                <div id="valMinEmissivityColor" style="background-color: black; font-size:4px; line-height: 8px;"
-                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                <div id="valMinEmissivity" style="line-height:16px" class="regionditortextsub3">--</div>
-
-            </div>
-        </button>
-
-        <button disabled class="resizebutton" style="background-color:black">
-            <div style="line-height: 10px;">
-                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Max</span>
-                <div id="valMaxEmissivityColor" style="background-color: black; font-size:4px; line-height: 8px;"
-                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                <div id="valMaxEmissivity" style="line-height:16px" class="regionditortextsub3">--</div>
-            </div>
-        </button>
-
-        <div style="width:8px;">
-        </div>
-
-        <button id="btnClearMaterial" onclick="clearMaterialMap()" class="resizebutton">
-            <div style="line-height: 20px;">
-                <div class="regioneditortext">Clear</div>
-                <div class="regionditortextsub">Layer</div>
-            </div>
-        </button>
-
-    </div>
-    <div id="rowDistanceTools" style="display:none" class="editorrow">
-
-        <button id="btnDistance" disabled class="resizebutton2" style="background-color: black;">
-            <div style="line-height: 17px;">
-                <div class="regioneditortext2">Distance</div>
-                <div id="valDistanceMeters" class="regionditortextsub3">--</div>
-                <div id="valDistanceInches" class="regionditortextsub3">--</div>
-            </div>
-        </button>
-
-        <button id="btnChangeDistanceLess" onmousedown="repeatFunc(changeDistanceBy.bind(null,-.01))"
-            onmouseup="clearFunc()" class="resizebutton">-</button>
-        <button id="btnChangeDistanceMore" onmousedown="repeatFunc(changeDistanceBy.bind(null,.01))"
-            onmouseup="clearFunc()" class="resizebutton">+</button>
-
-        <div id="spacerDistanceColorRampMin" style="width:8px;">
-        </div>
-
-        <button disabled id="btnDistanceColorRampMin" class="resizebutton" style="background-color:black">
-            <div style="line-height: 10px;">
-                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Near</span>
-                <div id="valMinDistanceColor" style="background-color: black; font-size:4px; line-height: 8px;"
-                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                <div id="valMinDistanceM" style="line-height:16px" class="regionditortextsub3">--m</div>
-                <div id="valMinDistanceIn" style="line-height:16px" class="regionditortextsub3">--in</div>
-            </div>
-        </button>
-
-        <button disabled id="btnDistanceColorRampMax" class="resizebutton" style="background-color:black">
-            <div style="line-height: 10px;">
-                <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Far</span>
-                <div id="valMaxDistanceColor" style="background-color: black; font-size:4px; line-height: 8px;"
-                    class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                <div id="valMaxDistanceM" style="line-height:16px" class="regionditortextsub3">--m</div>
-                <div id="valMaxDistanceIn" style="line-height:16px" class="regionditortextsub3">--in</div>
-            </div>
-        </button>
-
-        <button id="btnClearDistance" onclick="clearDistanceMap()" class="resizebutton">
-            <div style="line-height: 20px;">
-                <div class="regioneditortext">Clear</div>
-                <div class="regionditortextsub">Layer</div>
-            </div>
-        </button>
-
-    </div>
-    <div id="touchTools" class="editorrow">
-        <div class="editorcolumn">
-
-            <button id="btnChangeLayer" onclick="changeLayerNext(true)" class="resizebutton">
+            <button id="btnZoomImage" onclick="zoomRegionEditor(.5)" class="resizebutton">
                 <div style="line-height: 4px;">
-                    <span class="regioneditortext">Layer</span>
-                    <span id="valActiveLayer" class="regioneditortext">--</span>
+                    <span class="regioneditortext">Zoom</span>
+                    <span id="valueZoom" class="regioneditortext">100%</span>
                 </div>
             </button>
 
-
-
-            <button id="btnPolygonAdd" onclick="addRegion('polygon')" class="regionbutton">
-                <div>
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="10" y="10" width="24" height="24" stroke="white" stroke-width="2" />
-                        <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
-                        <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
-                    </svg>
+            <button id="btnFilterImage" onclick="changeImageFilterNext(true)" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Filter</span>
+                    <span id="valueFilter" class="regioneditortext">none</span>
                 </div>
             </button>
 
-
-            <button id="btnPointAdd" onclick="addRegion('point')" class="regionbutton">
-                <div>
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <line x1="22" y1="4" x2="22" y2="20" stroke="white" stroke-width="2" />
-                        <line x1="22" y1="24" x2="22" y2="41" stroke="white" stroke-width="2" />
-
-                        <line x1="3" y1="22" x2="20" y2="22" stroke="white" stroke-width="2" />
-                        <line x1="24" y1="22" x2="41" y2="22" stroke="white" stroke-width="2" />
-
-                        <circle cx="22" cy="22" r="12" stroke="white" stroke-width="2" />
-                        <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
-                        <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
-                    </svg>
+            <button id="btnRotateImage" onclick="rotateImage()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Rotate</span>
+                    <span id="valImageRotation" class="regioneditortext">0&deg;</span>
                 </div>
             </button>
-            <div style="height:8px;background-color: silver;"></div>
 
-            <div style="background-color:black">
-                <div style="width:60px; text-align: center;color:white;user-select: none;">Touch Tools</div>
-                <div style="height:4px"></div>
-                <button id="btnRegionToolLook" onclick="selectRegionEditorTool('look')" class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Look</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                d="M7 14C8.10457 14 9 13.1046 9 12C9 10.8954 8.10457 10 7 10C5.89543 10 5 10.8954 5 12C5 13.1046 5.89543 14 7 14ZM10.4649 10C9.77325 8.8044 8.48056 8 7 8C5.13616 8 3.57006 9.27477 3.12602 11H2C1.44772 11 1 11.4477 1 12C1 12.5523 1.44772 13 2 13H3.12602C3.57006 14.7252 5.13616 16 7 16C9.20914 16 11 14.2091 11 12H13C13 14.2091 14.7909 16 17 16C18.8638 16 20.4299 14.7252 20.874 13H22C22.5523 13 23 12.5523 23 12C23 11.4477 22.5523 11 22 11H20.874C20.4299 9.27477 18.8638 8 17 8C15.5194 8 14.2267 8.8044 13.5351 10H10.4649ZM15 12C15 13.1046 15.8954 14 17 14C18.1046 14 19 13.1046 19 12C19 10.8954 18.1046 10 17 10C15.8954 10 15 10.8954 15 12Z"
-                                fill="currentColor" />
-                        </svg>
-                    </div>
-                </button>
+            <button id="btnMirrorImageHorizontally" onclick="changeImageMirror()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Mirror</span>
+                    <span id="valueImageMirrorHorizontally" class="regioneditortext">off</span>
+                </div>
+            </button>
 
-                <button id="btnRegionToolSelect" onclick="selectRegionEditorTool('select')" class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Select</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="currentColor"
-                                stroke-width="2" />
-                        </svg>
-                    </div>
-                </button>
-
-                <button id="btnRegionToolMove" onclick="selectRegionEditorTool('move')" class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Move</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M14.8284 6.34313L16.2426 4.92892L12 0.686279L7.75735 4.92892L9.17156 6.34313L12 3.51471L14.8284 6.34313Z"
-                                fill="currentColor" />
-                            <path
-                                d="M4.92892 16.2426L6.34313 14.8284L3.51471 12L6.34313 9.17156L4.92892 7.75735L0.686279 12L4.92892 16.2426Z"
-                                fill="currentColor" />
-                            <path
-                                d="M7.75735 19.0711L12 23.3137L16.2426 19.0711L14.8284 17.6568L12 20.4853L9.17156 17.6568L7.75735 19.0711Z"
-                                fill="currentColor" />
-                            <path
-                                d="M17.6568 9.17156L20.4853 12L17.6568 14.8284L19.0711 16.2426L23.3137 12L19.0711 7.75735L17.6568 9.17156Z"
-                                fill="currentColor" />
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                d="M12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8ZM12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z"
-                                fill="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-
-                <button id="btnRegionToolPointAdd" onclick="selectRegionEditorTool('pointadd')" class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Add&nbsp;Pt</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                d="M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
-                                fill="currentColor" />
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                d="M13 7C13 6.44772 12.5523 6 12 6C11.4477 6 11 6.44772 11 7V11H7C6.44772 11 6 11.4477 6 12C6 12.5523 6.44772 13 7 13H11V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V13H17C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H13V7Z"
-                                fill="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-
-                <button id="btnRegionToolPointMove" onclick="selectRegionEditorTool('pointmove')" class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Mve&nbsp;Pt</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="5" fill="currentColor" />
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-                                fill="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-
-
-                <button id="btnRegionToolPointDelete" onclick="selectRegionEditorTool('pointdelete')"
-                    class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Del&nbsp;Pt</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M16.3394 9.32245C16.7434 8.94589 16.7657 8.31312 16.3891 7.90911C16.0126 7.50509 15.3798 7.48283 14.9758 7.85938L12.0497 10.5866L9.32245 7.66048C8.94589 7.25647 8.31312 7.23421 7.90911 7.61076C7.50509 7.98731 7.48283 8.62008 7.85938 9.0241L10.5866 11.9502L7.66048 14.6775C7.25647 15.054 7.23421 15.6868 7.61076 16.0908C7.98731 16.4948 8.62008 16.5171 9.0241 16.1405L11.9502 13.4133L14.6775 16.3394C15.054 16.7434 15.6868 16.7657 16.0908 16.3891C16.4948 16.0126 16.5171 15.3798 16.1405 14.9758L13.4133 12.0497L16.3394 9.32245Z"
-                                fill="currentColor" />
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                d="M1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12ZM12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z"
-                                fill="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-
-                <button id="btnRegionToolSample" onclick="selectRegionEditorTool('sample')" class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Sample</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M20.3847 2.87868C19.2132 1.70711 17.3137 1.70711 16.1421 2.87868L14.0202 5.00052L13.313 4.29332C12.9225 3.9028 12.2894 3.9028 11.8988 4.29332C11.5083 4.68385 11.5083 5.31701 11.8988 5.70754L17.5557 11.3644C17.9462 11.7549 18.5794 11.7549 18.9699 11.3644C19.3604 10.9739 19.3604 10.3407 18.9699 9.95018L18.2629 9.24316L20.3847 7.12132C21.5563 5.94975 21.5563 4.05025 20.3847 2.87868Z"
-                                fill="currentColor" />
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                d="M11.9297 7.09116L4.1515 14.8693C3.22786 15.793 3.03239 17.169 3.5651 18.2842L1.99994 19.8493L3.41415 21.2635L4.97931 19.6984C6.09444 20.2311 7.4705 20.0356 8.39414 19.112L16.1723 11.3338L11.9297 7.09116ZM13.3439 11.3338L11.9297 9.91959L5.56571 16.2835C5.17518 16.6741 5.17518 17.3072 5.56571 17.6978C5.95623 18.0883 6.5894 18.0883 6.97992 17.6978L13.3439 11.3338Z"
-                                fill="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-
-                <button id="btnRegionToolFill" onclick="selectRegionEditorTool('fill')" class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Fill</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                d="M8.20348 2.00378C9.46407 2.00378 10.5067 3.10742 10.6786 4.54241L19.1622 13.0259L11.384 20.8041C10.2124 21.9757 8.31291 21.9757 7.14134 20.8041L2.8987 16.5615C1.72713 15.3899 1.72713 13.4904 2.8987 12.3188L5.70348 9.51404V4.96099C5.70348 3.32777 6.82277 2.00378 8.20348 2.00378ZM8.70348 4.96099V6.51404L7.70348 7.51404V4.96099C7.70348 4.63435 7.92734 4.36955 8.20348 4.36955C8.47963 4.36955 8.70348 4.63435 8.70348 4.96099ZM8.70348 10.8754V9.34247L4.31291 13.733C3.92239 14.1236 3.92239 14.7567 4.31291 15.1473L8.55555 19.3899C8.94608 19.7804 9.57924 19.7804 9.96977 19.3899L16.3337 13.0259L10.7035 7.39569V10.8754C10.7035 10.9184 10.7027 10.9612 10.7012 11.0038H8.69168C8.69941 10.9625 8.70348 10.9195 8.70348 10.8754Z"
-                                fill="currentColor" />
-                            <path
-                                d="M16.8586 16.8749C15.687 18.0465 15.687 19.946 16.8586 21.1175C18.0302 22.2891 19.9297 22.2891 21.1013 21.1175C22.2728 19.946 22.2728 18.0465 21.1013 16.8749L18.9799 14.7536L16.8586 16.8749Z"
-                                fill="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-
-
-                <button id="btnRegionToolChange" onclick="selectRegionEditorTool('change')" class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Change</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M18.3701 7.99993L13.8701 10.598V8.99993H6.88989V12.9999H4.88989V6.99993H13.8701V5.40186L18.3701 7.99993Z"
-                                fill="currentColor" />
-                            <path
-                                d="M10.1299 16.9999H19.1101V10.9999H17.1101V14.9999H10.1299V13.4019L5.62988 15.9999L10.1299 18.598V16.9999Z"
-                                fill="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-
-                <button id="btnRegionToolPaintRound" onclick="selectRegionEditorTool('paintround')"
-                    class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Paint</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="10" fill="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-
-                <button id="btnRegionToolPaintSquare" onclick="selectRegionEditorTool('paintsquare')"
-                    class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Paint</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="2" y="2" width="20" height="20" fill="currentColor">
-                        </svg>
-                    </div>
-                </button>
-
-                <button id="btnRegionToolEraseRound" onclick="selectRegionEditorTool('eraseround')"
-                    class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Erase</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <pattern id="diagonalHatchEraseRound" width="4" height="4"
-                                    patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                                    <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor" style="stroke-width:1" />
-                                </pattern>
-                            </defs>
-                            <circle cx="12" cy="12" r="10" fill="url(#diagonalHatchEraseRound)" stroke="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-
-                <button id="btnRegionToolEraseSquare" onclick="selectRegionEditorTool('erasesquare')"
-                    class="resizebutton">
-                    <div style="line-height: 4px;">
-                        <span class="regioneditortext">Erase</span>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <pattern id="diagonalHatchEraseSquare" width="4" height="4"
-                                    patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                                    <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor" style="stroke-width:1" />
-                                </pattern>
-                            </defs>
-                            <rect x="2" y="2" width="20" height="20" fill="url(#diagonalHatchEraseRound)"
-                                stroke="currentColor" />
-                        </svg>
-                    </div>
-                </button>
-                <button id="btnChangeSizeInfo" disabled class="resizebutton" style="background-color: black;">
-                    <div style="line-height: 17px;">
-                        <span class="regioneditortext2">Size</span>
-                        <span id="valBrushSize" class="regionditortextsub2">--</span>
-                    </div>
-                </button>
-
-                <button id="btnChangeSizeLess" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,-1))"
-                    onmouseup="clearFunc()" class="resizebutton">-</button>
-                <button id="btnChangeSizeMore" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,1))"
-                    onmouseup="clearFunc()" class="resizebutton">+</button>
-
+            <div style="width:8px;">
             </div>
-        </div>
-        <div id="regionEditorBorder" class="editorcolumn" style="margin-left:-16px;padding:30px;">
-            <canvas id="regionEditorImage" width="256" height="192" draggable="false"></canvas>
-        </div>
-    </div>
 
-    <div id="threshwindow" style="display:none">
-        <div class="editorrow" style="margin-bottom:4px">
-            <div id="lblEditThreshTitle" style="font-family:Arial, Helvetica, sans-serif;color:black;margin: auto;">--
-            </div>
-        </div>
 
-        <div class="editorrow">
 
-            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 17px;">
-                    <span id="edtImageHighLabel" class="regioneditortext2">Hi</span>
-                    <span id="edtImageHighTempC" class="regionditortextsub3">--&deg;C</span>
-                    <span id="edtImageHighTempF" class="regionditortextsub3">--&deg;F</span>
+                    <span class="regioneditortext2">Img Hi</span>
+                    <span id="valImageHighTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="valImageHighTempF" class="regionditortextsub3">--&deg;F</span>
                 </div>
             </button>
-            <div style="width:4px"></div>
 
-            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <button id="btnChangeImageMaxTemp" onclick="changeAlarmTemp(true,true)" class="resizebutton">
                 <div style="line-height: 17px;">
                     <span class="regioneditortext2">Alm Hi</span>
-                    <span id="edtImageMaxAlarmTempC" class="regionditortextsub3">--&deg;C</span>
-                    <span id="edtImageMaxAlarmTempF" class="regionditortextsub3">--&deg;F</span>
+                    <span id="valImageMaxTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="valImageMaxTempF" class="regionditortextsub3">--&deg;F</span>
                 </div>
             </button>
-            <button id="btnChangeImageMaxAlarmTempLess" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,true,-0.1))"
-                onmouseup="clearFunc()" class="resizebutton">-</button>
-            <button id="btnChangeImageMaxAlarmTempMore" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,true,0.1))"
-                onmouseup="clearFunc()" class="resizebutton">+</button>
 
-            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
-                <div style="line-height: 17px;">
+
+            <button id="btnChangeImageMaxPriorityLevel" onclick="changeAlarmTemp(true,true)" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <span class="regioneditortext2">Alarm</span>
+                    <span id="valImageMaxPriorityLevel" class="regioneditortext2">--</span>
                     <span class="regioneditortext2">Level</span>
-                    <span id="edtImageMaxAlarmPriority" class="regionditortextsub3">1</span>
-                </div>
-            </button>
-            <button id="btnChangeImageMaxAlarmPriorityLess" onmousedown="changeAlarmPriority(true,-1)"
-                onmouseup="clearFunc()" class="resizebutton">-</button>
-            <button id="btnChangeImageMaxAlarmPriorityMore" onmousedown="changeAlarmPriority(true,1)"
-                onmouseup="clearFunc()" class="resizebutton">+</button>
 
-            <button id="btnClearImageMaxAlarmPriority" onclick="clearAlarmThresh(true)" class="resizebutton">
-                <div style="line-height: 4px;">
-                    <span class="regioneditortext">Clear</span>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M14 3V3.28988C16.8915 4.15043 19 6.82898 19 10V17H20V19H4V17H5V10C5 6.82898 7.10851 4.15043 10 3.28988V3C10 1.89543 10.8954 1 12 1C13.1046 1 14 1.89543 14 3ZM7 17H17V10C17 7.23858 14.7614 5 12 5C9.23858 5 7 7.23858 7 10V17ZM14 21V20H10V21C10 22.1046 10.8954 23 12 23C13.1046 23 14 22.1046 14 21Z"
-                            fill="currentColor" />
-                    </svg>
                 </div>
             </button>
 
-        </div>
+            <div style="width:8px;">
+            </div>
 
-        <div class="editorrow">
-
-            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 17px;">
-                    <span id="edtImageLowLabel" class="regioneditortext2">Lo</span>
-                    <span id="edtImageLowTempC" class="regionditortextsub3">--&deg;C</span>
-                    <span id="edtImageLowTempF" class="regionditortextsub3">--&deg;F</span>
+                    <span class="regioneditortext2">Img Lo</span>
+                    <span id="valImageLowTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="valImageLowTempF" class="regionditortextsub3">--&deg;F</span>
                 </div>
             </button>
-            <div style="width:4px"></div>
 
-            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+            <button id="btnChangeImageMinTemp" onclick="changeAlarmTemp(true,false)" class="resizebutton">
                 <div style="line-height: 17px;">
                     <span class="regioneditortext2">Alm Lo</span>
-                    <span id="edtImageMinAlarmTempC" class="regionditortextsub3">--&deg;C</span>
-                    <span id="edtImageMinAlarmTempF" class="regionditortextsub3">--&deg;F</span>
+                    <span id="valImageMinTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="valImageMinTempF" class="regionditortextsub3">--&deg;F</span>
                 </div>
             </button>
-            <button id="btnChangeImageMinAlarmTempLess"
-                onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,-0.1))" onmouseup="clearFunc()"
-                class="resizebutton">-</button>
-            <button id="btnChangeImageMinAlarmTempMore" onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,0.1))"
-                onmouseup="clearFunc()" class="resizebutton">+</button>
 
-            <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
-                <div style="line-height: 17px;">
+            <button id="btnChangeImageMinPriorityLevel" onclick="changeAlarmTemp(true,true)" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <span class="regioneditortext2">Alarm</span>
+                    <span id="valImageMinPriorityLevel" class="regioneditortext2">--</span>
                     <span class="regioneditortext2">Level</span>
-                    <span id="edtImageMinAlarmPriority" class="regionditortextsub3">1</span>
+
                 </div>
             </button>
-            <button id="btnChangeImageMinAlarmPriorityLess" onmousedown="changeAlarmPriority(false,-1)"
-                onmouseup="clearFunc()" class="resizebutton">-</button>
-            <button id="btnChangeImageMinAlarmPriorityMore" onmousedown="changeAlarmPriority(false,1)"
-                onmouseup="clearFunc()" class="resizebutton">+</button>
 
-            <button id="btnClearImageMinAlarmPriority" onclick="clearAlarmThresh(false)" class="resizebutton">
+            <div style="width:8px;">
+            </div>
+
+            <button id="btnUndo" onclick="undoRegionEditor()" class="resizebutton">
                 <div style="line-height: 4px;">
-                    <span class="regioneditortext">Clear</span>
+                    <span class="regioneditortext">Undo</span>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M14 3V3.28988C16.8915 4.15043 19 6.82898 19 10V17H20V19H4V17H5V10C5 6.82898 7.10851 4.15043 10 3.28988V3C10 1.89543 10.8954 1 12 1C13.1046 1 14 1.89543 14 3ZM7 17H17V10C17 7.23858 14.7614 5 12 5C9.23858 5 7 7.23858 7 10V17ZM14 21V20H10V21C10 22.1046 10.8954 23 12 23C13.1046 23 14 22.1046 14 21Z"
+                        <path
+                            d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
+                            fill="white" />
+                    </svg>
+                </div>
+            </button>
+
+            <button id="btnRedo" onclick="redoRegionEditor()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Redo</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
                             fill="currentColor" />
                     </svg>
                 </div>
             </button>
 
-        </div>
-        <div id="threshWindowMessage" class="editorrow" style="height: 30px;color:red">
-            The threshold is not valid.
-        </div>
-        <div class="editorrow" style="margin-top:8px;">
-            <button id="btnCancelImageAlarms" onclick="closeAlarmTemp()" class="resizebutton2">
-                <div style="line-height: 4px;">
-                    <span class="regioneditortext">Cancel</span>
-                </div>
-            </button>
-            <div style="width:250px;"></div>
-            <button id="btnSaveImageAlarms" onclick="saveAlarmTemp()" class="resizebutton2">
-                <div style="line-height: 4px;">
-                    <span class="regioneditortext">Save</span>
-                </div>
-            </button>
-        </div>
-    </div>
 
-    <div id="tiptarget">
-        
+        </div>
+        <div id="rowRegionTools" class="editorrow">
+
+            <button id="btnChangeRegion" onclick="changeRegionNext(true)" class="resizebutton">
+                <div style="line-height: 20px;">
+                    <span class="regioneditortext">Region</span>
+                    <span id="valRegionIndex" class="regionditortextsub3">0 of 0</span>
+                </div>
+            </button>
+
+            <button id="btnChangeRegionName" onclick="changeRegionName()" class="resizebutton2">
+                <div style="line-height: 20px;">
+                    <div class="regioneditortext">Name</div>
+                    <div id="valRegionName" class="regionditortextsub3">--</div>
+                </div>
+            </button>
+
+            <button id="btnChangeColor" onclick="changeRegionColorNext(true)" class="resizebutton">
+                <div style="line-height: 10px;">
+                    <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Color</span>
+                    <div id="valRegionColorDemo" style="background-color: red; font-size:4px; line-height: 8px;"
+                        class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                    <div id="valRegionColor" style="line-height:16px" class="regionditortextsub3">Red</div>
+                </div>
+            </button>
+
+            <div style="width:8px;">
+            </div>
+
+
+            <button disabled class="resizebutton" style="background-color: black;">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Rgn Hi</span>
+                    <span id="valRegionHighTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="valRegionHighTempF" class="regionditortextsub3">--&deg;F</span>
+                </div>
+            </button>
+
+            <button id="btnChangeRegionMaxTemp" onclick="changeAlarmTemp(false,true)" class="resizebutton">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Alm Hi</span>
+                    <span id="valRegionMaxTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="valRegionMaxTempF" class="regionditortextsub3">--&deg;F</span>
+                </div>
+            </button>
+
+            <button id="btnChangeRegionMaxPriorityLevel" onclick="changeAlarmTemp(false,true)" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <span class="regioneditortext2">Alarm</span>
+                    <span id="valRegionMaxPriorityLevel" class="regioneditortext2">--</span>
+                    <span class="regioneditortext2">Level</span>
+
+                </div>
+            </button>
+
+            <div style="width:8px;">
+            </div>
+
+            <button disabled class="resizebutton" style="background-color: black;">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Rgn Lo</span>
+                    <span id="valRegionLowTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="valRegionLowTempF" class="regionditortextsub3">--&deg;F</span>
+                </div>
+            </button>
+
+
+            <button id="btnChangeRegionMinTemp" onclick="changeAlarmTemp(false,false)" class="resizebutton">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Alm Lo</span>
+                    <span id="valRegionMinTempC" class="regionditortextsub3">--&deg;C</span>
+                    <span id="valRegionMinTempF" class="regionditortextsub3">--&deg;F</span>
+                </div>
+            </button>
+
+            <button id="btnChangeRegionMinPriorityLevel" onclick="changeAlarmTemp(false,false)" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <span class="regioneditortext2">Alarm</span>
+                    <span id="valRegionMinPriorityLevel" class="regioneditortext2">--</span>
+                    <span class="regioneditortext2">Level</span>
+
+                </div>
+            </button>
+
+            <div style="width:72px;">
+            </div>
+
+
+            <button id="btnDeleteRegion" onclick="deleteRegionEditor()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Delete</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="currentColor"
+                            stroke-width="2" />
+                    </svg>
+                </div>
+            </button>
+        </div>
+
+        <div id="rowMaterialTools" style="display:none" class="editorrow">
+            <button id="btnChangeMaterial" onclick="pickMaterial()" class="resizebutton2">
+                <div style="line-height: 17px;">
+                    <div class="regioneditortext2">Material</div>
+                    <div id="valMaterialName" class="regionditortextsub4">--</div>
+                    <div id="valMaterialEmissivity" class="regionditortextsub3">--</div>
+                </div>
+            </button>
+
+
+
+
+
+            <button disabled class="resizebutton" style="background-color:black">
+                <div style="line-height: 10px;">
+                    <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Min</span>
+                    <div id="valMinEmissivityColor" style="background-color: black; font-size:4px; line-height: 8px;"
+                        class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                    <div id="valMinEmissivity" style="line-height:16px" class="regionditortextsub3">--</div>
+
+                </div>
+            </button>
+
+            <button disabled class="resizebutton" style="background-color:black">
+                <div style="line-height: 10px;">
+                    <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Max</span>
+                    <div id="valMaxEmissivityColor" style="background-color: black; font-size:4px; line-height: 8px;"
+                        class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                    <div id="valMaxEmissivity" style="line-height:16px" class="regionditortextsub3">--</div>
+                </div>
+            </button>
+
+            <div style="width:8px;">
+            </div>
+
+            <button id="btnClearMaterial" onclick="clearMaterialMap()" class="resizebutton">
+                <div style="line-height: 20px;">
+                    <div class="regioneditortext">Clear</div>
+                    <div class="regionditortextsub">Layer</div>
+                </div>
+            </button>
+
+        </div>
+        <div id="rowDistanceTools" style="display:none" class="editorrow">
+
+            <button id="btnDistance" disabled class="resizebutton2" style="background-color: black;">
+                <div style="line-height: 17px;">
+                    <div class="regioneditortext2">Distance</div>
+                    <div id="valDistanceMeters" class="regionditortextsub3">--</div>
+                    <div id="valDistanceInches" class="regionditortextsub3">--</div>
+                </div>
+            </button>
+
+            <button id="btnChangeDistanceLess" onmousedown="repeatFunc(changeDistanceBy.bind(null,-.01))"
+                onmouseup="clearFunc()" class="resizebutton">-</button>
+            <button id="btnChangeDistanceMore" onmousedown="repeatFunc(changeDistanceBy.bind(null,.01))"
+                onmouseup="clearFunc()" class="resizebutton">+</button>
+
+            <div id="spacerDistanceColorRampMin" style="width:8px;">
+            </div>
+
+            <button disabled id="btnDistanceColorRampMin" class="resizebutton" style="background-color:black">
+                <div style="line-height: 10px;">
+                    <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Near</span>
+                    <div id="valMinDistanceColor" style="background-color: black; font-size:4px; line-height: 8px;"
+                        class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                    <div id="valMinDistanceM" style="line-height:16px" class="regionditortextsub3">--m</div>
+                    <div id="valMinDistanceIn" style="line-height:16px" class="regionditortextsub3">--in</div>
+                </div>
+            </button>
+
+            <button disabled id="btnDistanceColorRampMax" class="resizebutton" style="background-color:black">
+                <div style="line-height: 10px;">
+                    <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Far</span>
+                    <div id="valMaxDistanceColor" style="background-color: black; font-size:4px; line-height: 8px;"
+                        class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                    <div id="valMaxDistanceM" style="line-height:16px" class="regionditortextsub3">--m</div>
+                    <div id="valMaxDistanceIn" style="line-height:16px" class="regionditortextsub3">--in</div>
+                </div>
+            </button>
+
+            <button id="btnClearDistance" onclick="clearDistanceMap()" class="resizebutton">
+                <div style="line-height: 20px;">
+                    <div class="regioneditortext">Clear</div>
+                    <div class="regionditortextsub">Layer</div>
+                </div>
+            </button>
+
+        </div>
+        <div id="touchTools" class="editorrow">
+            <div class="editorcolumn">
+
+                <button id="btnChangeLayer" onclick="changeLayerNext(true)" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Layer</span>
+                        <span id="valActiveLayer" class="regioneditortext">--</span>
+                    </div>
+                </button>
+
+
+
+                <button id="btnPolygonAdd" onclick="addRegion('polygon')" class="regionbutton">
+                    <div>
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="10" y="10" width="24" height="24" stroke="white" stroke-width="2" />
+                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
+                        </svg>
+                    </div>
+                </button>
+
+
+                <button id="btnPointAdd" onclick="addRegion('point')" class="regionbutton">
+                    <div>
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="22" y1="4" x2="22" y2="20" stroke="white" stroke-width="2" />
+                            <line x1="22" y1="24" x2="22" y2="41" stroke="white" stroke-width="2" />
+
+                            <line x1="3" y1="22" x2="20" y2="22" stroke="white" stroke-width="2" />
+                            <line x1="24" y1="22" x2="41" y2="22" stroke="white" stroke-width="2" />
+
+                            <circle cx="22" cy="22" r="12" stroke="white" stroke-width="2" />
+                            <line x1="41" y1="35" x2="41" y2="47" stroke="white" stroke-width="2" />
+                            <line x1="35" y1="41" x2="47" y2="41" stroke="white" stroke-width="2" />
+                        </svg>
+                    </div>
+                </button>
+                <div style="height:8px;background-color: silver;"></div>
+
+                <div style="background-color:black">
+                    <div style="width:60px; text-align: center;color:white;user-select: none;">Touch Tools</div>
+                    <div style="height:4px"></div>
+                    <button id="btnRegionToolLook" onclick="selectRegionEditorTool('look')" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Look</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M7 14C8.10457 14 9 13.1046 9 12C9 10.8954 8.10457 10 7 10C5.89543 10 5 10.8954 5 12C5 13.1046 5.89543 14 7 14ZM10.4649 10C9.77325 8.8044 8.48056 8 7 8C5.13616 8 3.57006 9.27477 3.12602 11H2C1.44772 11 1 11.4477 1 12C1 12.5523 1.44772 13 2 13H3.12602C3.57006 14.7252 5.13616 16 7 16C9.20914 16 11 14.2091 11 12H13C13 14.2091 14.7909 16 17 16C18.8638 16 20.4299 14.7252 20.874 13H22C22.5523 13 23 12.5523 23 12C23 11.4477 22.5523 11 22 11H20.874C20.4299 9.27477 18.8638 8 17 8C15.5194 8 14.2267 8.8044 13.5351 10H10.4649ZM15 12C15 13.1046 15.8954 14 17 14C18.1046 14 19 13.1046 19 12C19 10.8954 18.1046 10 17 10C15.8954 10 15 10.8954 15 12Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolSelect" onclick="selectRegionEditorTool('select')" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Select</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="currentColor"
+                                    stroke-width="2" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolMove" onclick="selectRegionEditorTool('move')" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Move</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M14.8284 6.34313L16.2426 4.92892L12 0.686279L7.75735 4.92892L9.17156 6.34313L12 3.51471L14.8284 6.34313Z"
+                                    fill="currentColor" />
+                                <path
+                                    d="M4.92892 16.2426L6.34313 14.8284L3.51471 12L6.34313 9.17156L4.92892 7.75735L0.686279 12L4.92892 16.2426Z"
+                                    fill="currentColor" />
+                                <path
+                                    d="M7.75735 19.0711L12 23.3137L16.2426 19.0711L14.8284 17.6568L12 20.4853L9.17156 17.6568L7.75735 19.0711Z"
+                                    fill="currentColor" />
+                                <path
+                                    d="M17.6568 9.17156L20.4853 12L17.6568 14.8284L19.0711 16.2426L23.3137 12L19.0711 7.75735L17.6568 9.17156Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8ZM12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolPointAdd" onclick="selectRegionEditorTool('pointadd')"
+                        class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Add&nbsp;Pt</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M13 7C13 6.44772 12.5523 6 12 6C11.4477 6 11 6.44772 11 7V11H7C6.44772 11 6 11.4477 6 12C6 12.5523 6.44772 13 7 13H11V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V13H17C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H13V7Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolPointMove" onclick="selectRegionEditorTool('pointmove')"
+                        class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Mve&nbsp;Pt</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+
+                    <button id="btnRegionToolPointDelete" onclick="selectRegionEditorTool('pointdelete')"
+                        class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Del&nbsp;Pt</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M16.3394 9.32245C16.7434 8.94589 16.7657 8.31312 16.3891 7.90911C16.0126 7.50509 15.3798 7.48283 14.9758 7.85938L12.0497 10.5866L9.32245 7.66048C8.94589 7.25647 8.31312 7.23421 7.90911 7.61076C7.50509 7.98731 7.48283 8.62008 7.85938 9.0241L10.5866 11.9502L7.66048 14.6775C7.25647 15.054 7.23421 15.6868 7.61076 16.0908C7.98731 16.4948 8.62008 16.5171 9.0241 16.1405L11.9502 13.4133L14.6775 16.3394C15.054 16.7434 15.6868 16.7657 16.0908 16.3891C16.4948 16.0126 16.5171 15.3798 16.1405 14.9758L13.4133 12.0497L16.3394 9.32245Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12ZM12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolSample" onclick="selectRegionEditorTool('sample')" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Sample</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M20.3847 2.87868C19.2132 1.70711 17.3137 1.70711 16.1421 2.87868L14.0202 5.00052L13.313 4.29332C12.9225 3.9028 12.2894 3.9028 11.8988 4.29332C11.5083 4.68385 11.5083 5.31701 11.8988 5.70754L17.5557 11.3644C17.9462 11.7549 18.5794 11.7549 18.9699 11.3644C19.3604 10.9739 19.3604 10.3407 18.9699 9.95018L18.2629 9.24316L20.3847 7.12132C21.5563 5.94975 21.5563 4.05025 20.3847 2.87868Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M11.9297 7.09116L4.1515 14.8693C3.22786 15.793 3.03239 17.169 3.5651 18.2842L1.99994 19.8493L3.41415 21.2635L4.97931 19.6984C6.09444 20.2311 7.4705 20.0356 8.39414 19.112L16.1723 11.3338L11.9297 7.09116ZM13.3439 11.3338L11.9297 9.91959L5.56571 16.2835C5.17518 16.6741 5.17518 17.3072 5.56571 17.6978C5.95623 18.0883 6.5894 18.0883 6.97992 17.6978L13.3439 11.3338Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolFill" onclick="selectRegionEditorTool('fill')" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Fill</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M8.20348 2.00378C9.46407 2.00378 10.5067 3.10742 10.6786 4.54241L19.1622 13.0259L11.384 20.8041C10.2124 21.9757 8.31291 21.9757 7.14134 20.8041L2.8987 16.5615C1.72713 15.3899 1.72713 13.4904 2.8987 12.3188L5.70348 9.51404V4.96099C5.70348 3.32777 6.82277 2.00378 8.20348 2.00378ZM8.70348 4.96099V6.51404L7.70348 7.51404V4.96099C7.70348 4.63435 7.92734 4.36955 8.20348 4.36955C8.47963 4.36955 8.70348 4.63435 8.70348 4.96099ZM8.70348 10.8754V9.34247L4.31291 13.733C3.92239 14.1236 3.92239 14.7567 4.31291 15.1473L8.55555 19.3899C8.94608 19.7804 9.57924 19.7804 9.96977 19.3899L16.3337 13.0259L10.7035 7.39569V10.8754C10.7035 10.9184 10.7027 10.9612 10.7012 11.0038H8.69168C8.69941 10.9625 8.70348 10.9195 8.70348 10.8754Z"
+                                    fill="currentColor" />
+                                <path
+                                    d="M16.8586 16.8749C15.687 18.0465 15.687 19.946 16.8586 21.1175C18.0302 22.2891 19.9297 22.2891 21.1013 21.1175C22.2728 19.946 22.2728 18.0465 21.1013 16.8749L18.9799 14.7536L16.8586 16.8749Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+
+                    <button id="btnRegionToolChange" onclick="selectRegionEditorTool('change')" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Change</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M18.3701 7.99993L13.8701 10.598V8.99993H6.88989V12.9999H4.88989V6.99993H13.8701V5.40186L18.3701 7.99993Z"
+                                    fill="currentColor" />
+                                <path
+                                    d="M10.1299 16.9999H19.1101V10.9999H17.1101V14.9999H10.1299V13.4019L5.62988 15.9999L10.1299 18.598V16.9999Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolPaintRound" onclick="selectRegionEditorTool('paintround')"
+                        class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Paint</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" fill="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolPaintSquare" onclick="selectRegionEditorTool('paintsquare')"
+                        class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Paint</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <rect x="2" y="2" width="20" height="20" fill="currentColor">
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolEraseRound" onclick="selectRegionEditorTool('eraseround')"
+                        class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Erase</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <pattern id="diagonalHatchEraseRound" width="4" height="4"
+                                        patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                                        <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor"
+                                            style="stroke-width:1" />
+                                    </pattern>
+                                </defs>
+                                <circle cx="12" cy="12" r="10" fill="url(#diagonalHatchEraseRound)"
+                                    stroke="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button id="btnRegionToolEraseSquare" onclick="selectRegionEditorTool('erasesquare')"
+                        class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Erase</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <pattern id="diagonalHatchEraseSquare" width="4" height="4"
+                                        patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                                        <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor"
+                                            style="stroke-width:1" />
+                                    </pattern>
+                                </defs>
+                                <rect x="2" y="2" width="20" height="20" fill="url(#diagonalHatchEraseRound)"
+                                    stroke="currentColor" />
+                            </svg>
+                        </div>
+                    </button>
+                    <button id="btnChangeSizeInfo" disabled class="resizebutton" style="background-color: black;">
+                        <div style="line-height: 17px;">
+                            <span class="regioneditortext2">Size</span>
+                            <span id="valBrushSize" class="regionditortextsub2">--</span>
+                        </div>
+                    </button>
+
+                    <button id="btnChangeSizeLess" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,-1))"
+                        onmouseup="clearFunc()" class="resizebutton">-</button>
+                    <button id="btnChangeSizeMore" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,1))"
+                        onmouseup="clearFunc()" class="resizebutton">+</button>
+
+                </div>
+            </div>
+            <div id="regionEditorBorder" class="editorcolumn" style="margin-left:-16px;padding:30px;">
+                <canvas id="regionEditorImage" width="256" height="192" draggable="false"></canvas>
+            </div>
+        </div>
+
+        <div id="threshwindow" style="display:none">
+            <div class="editorrow" style="margin-bottom:4px">
+                <div id="lblEditThreshTitle" style="font-family:Arial, Helvetica, sans-serif;color:black;margin: auto;">
+                    --
+                </div>
+            </div>
+
+            <div class="editorrow">
+
+                <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                    <div style="line-height: 17px;">
+                        <span id="edtImageHighLabel" class="regioneditortext2">Hi</span>
+                        <span id="edtImageHighTempC" class="regionditortextsub3">--&deg;C</span>
+                        <span id="edtImageHighTempF" class="regionditortextsub3">--&deg;F</span>
+                    </div>
+                </button>
+                <div style="width:4px"></div>
+
+                <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                    <div style="line-height: 17px;">
+                        <span class="regioneditortext2">Alm Hi</span>
+                        <span id="edtImageMaxAlarmTempC" class="regionditortextsub3">--&deg;C</span>
+                        <span id="edtImageMaxAlarmTempF" class="regionditortextsub3">--&deg;F</span>
+                    </div>
+                </button>
+                <button id="btnChangeImageMaxAlarmTempLess"
+                    onmousedown="repeatFunc(changeAlarmTempBy.bind(null,true,-0.1))" onmouseup="clearFunc()"
+                    class="resizebutton">-</button>
+                <button id="btnChangeImageMaxAlarmTempMore"
+                    onmousedown="repeatFunc(changeAlarmTempBy.bind(null,true,0.1))" onmouseup="clearFunc()"
+                    class="resizebutton">+</button>
+
+                <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                    <div style="line-height: 17px;">
+                        <span class="regioneditortext2">Level</span>
+                        <span id="edtImageMaxAlarmPriority" class="regionditortextsub3">1</span>
+                    </div>
+                </button>
+                <button id="btnChangeImageMaxAlarmPriorityLess" onmousedown="changeAlarmPriority(true,-1)"
+                    onmouseup="clearFunc()" class="resizebutton">-</button>
+                <button id="btnChangeImageMaxAlarmPriorityMore" onmousedown="changeAlarmPriority(true,1)"
+                    onmouseup="clearFunc()" class="resizebutton">+</button>
+
+                <button id="btnClearImageMaxAlarmPriority" onclick="clearAlarmThresh(true)" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Clear</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M14 3V3.28988C16.8915 4.15043 19 6.82898 19 10V17H20V19H4V17H5V10C5 6.82898 7.10851 4.15043 10 3.28988V3C10 1.89543 10.8954 1 12 1C13.1046 1 14 1.89543 14 3ZM7 17H17V10C17 7.23858 14.7614 5 12 5C9.23858 5 7 7.23858 7 10V17ZM14 21V20H10V21C10 22.1046 10.8954 23 12 23C13.1046 23 14 22.1046 14 21Z"
+                                fill="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+
+            </div>
+
+            <div class="editorrow">
+
+                <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                    <div style="line-height: 17px;">
+                        <span id="edtImageLowLabel" class="regioneditortext2">Lo</span>
+                        <span id="edtImageLowTempC" class="regionditortextsub3">--&deg;C</span>
+                        <span id="edtImageLowTempF" class="regionditortextsub3">--&deg;F</span>
+                    </div>
+                </button>
+                <div style="width:4px"></div>
+
+                <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                    <div style="line-height: 17px;">
+                        <span class="regioneditortext2">Alm Lo</span>
+                        <span id="edtImageMinAlarmTempC" class="regionditortextsub3">--&deg;C</span>
+                        <span id="edtImageMinAlarmTempF" class="regionditortextsub3">--&deg;F</span>
+                    </div>
+                </button>
+                <button id="btnChangeImageMinAlarmTempLess"
+                    onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,-0.1))" onmouseup="clearFunc()"
+                    class="resizebutton">-</button>
+                <button id="btnChangeImageMinAlarmTempMore"
+                    onmousedown="repeatFunc(changeAlarmTempBy.bind(null,false,0.1))" onmouseup="clearFunc()"
+                    class="resizebutton">+</button>
+
+                <button disabled class="resizebutton" style="background-color: black;margin-right:0px">
+                    <div style="line-height: 17px;">
+                        <span class="regioneditortext2">Level</span>
+                        <span id="edtImageMinAlarmPriority" class="regionditortextsub3">1</span>
+                    </div>
+                </button>
+                <button id="btnChangeImageMinAlarmPriorityLess" onmousedown="changeAlarmPriority(false,-1)"
+                    onmouseup="clearFunc()" class="resizebutton">-</button>
+                <button id="btnChangeImageMinAlarmPriorityMore" onmousedown="changeAlarmPriority(false,1)"
+                    onmouseup="clearFunc()" class="resizebutton">+</button>
+
+                <button id="btnClearImageMinAlarmPriority" onclick="clearAlarmThresh(false)" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Clear</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M14 3V3.28988C16.8915 4.15043 19 6.82898 19 10V17H20V19H4V17H5V10C5 6.82898 7.10851 4.15043 10 3.28988V3C10 1.89543 10.8954 1 12 1C13.1046 1 14 1.89543 14 3ZM7 17H17V10C17 7.23858 14.7614 5 12 5C9.23858 5 7 7.23858 7 10V17ZM14 21V20H10V21C10 22.1046 10.8954 23 12 23C13.1046 23 14 22.1046 14 21Z"
+                                fill="currentColor" />
+                        </svg>
+                    </div>
+                </button>
+
+            </div>
+            <div id="threshWindowMessage" class="editorrow" style="height: 30px;color:red">
+                The threshold is not valid.
+            </div>
+            <div class="editorrow" style="margin-top:8px;">
+                <button id="btnCancelImageAlarms" onclick="closeAlarmTemp()" class="resizebutton2">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Cancel</span>
+                    </div>
+                </button>
+                <div style="width:250px;"></div>
+                <button id="btnSaveImageAlarms" onclick="saveAlarmTemp()" class="resizebutton2">
+                    <div style="line-height: 4px;">
+                        <span class="regioneditortext">Save</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <div id="tiptarget">
+
+        </div>
+        <div id="tipmagnifier">
+            <canvas id="magnifierCanvas" width="200" height="200"></canvas>
+        </div>
+        <div id="tooltip">This is a tooltip</div>
+        <img id="regionEditorImageRef" style="display: none;">
     </div>
-    <div id="tipmagnifier">
-        <canvas id="magnifierCanvas" width="200" height="200"></canvas>
-    </div>
-    <div id="tooltip">This is a tooltip</div>
-    <img id="regionEditorImageRef" style="display: none;">
 </body>
 
 </html>
