@@ -21,8 +21,10 @@ let historyIndex = -1;
 let selectedPointIndex = -1;
 let editAlarmThresh = { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null };
 let editAlarmIsImage = true;
-let brushSize = 10;
+let paintBrushSize = 10;
+let eraseBrushSize = 10;
 let selectedDistance = 1.0;
+let fillRange = 1.0;
 
 
 /*AI Prompt
@@ -39,32 +41,32 @@ Emissivity values should be rounded to 2 decimal places.
 Give me the results as a javascript array in the following format:var knownMaterials =  [{"name":"material name", "emissivity":.95}]
 */
 const knownMaterials = [
-    {"name":"Black Body", "emissivity":1.00},
-    {"name":"Black Elec. Tape", "emissivity":0.95},
-    {"name":"Polypropylene", "emissivity":0.97},
-    {"name":"Polystyrene", "emissivity":0.95},
-    {"name":"Rubber, hard glossy", "emissivity":0.94},
-    {"name":"Iron, rusted", "emissivity":0.94},
-    {"name":"PTFE", "emissivity":0.92},
-    {"name":"Polyethylene, black", "emissivity":0.92},
-    {"name":"PVC", "emissivity":0.92},
-    {"name":"Fibreglass", "emissivity":0.85},
-    {"name":"Carbon, not oxidized", "emissivity":0.88},
-    {"name":"Carbon filament", "emissivity":0.86},
-    {"name":"Copper, oxidized", "emissivity":0.76},
-    {"name":"Brass, oxidized", "emissivity":0.79},
-    {"name":"Steel, stainless", "emissivity":0.70},
-    {"name":"Steel, galvanized", "emissivity":0.56},
-    {"name":"Aluminium, anodised", "emissivity":0.82},
-    {"name":"Aluminium, oxidized", "emissivity":0.26},
-    {"name":"Aluminium, sheet", "emissivity":0.10},
-    {"name":"Aluminium, polished", "emissivity":0.06},
-    {"name":"Gold, not polished", "emissivity":0.49},
-    {"name":"Gold, polished", "emissivity":0.03},
-    {"name":"Copper, polished", "emissivity":0.04},
-    {"name":"Nickel, polished", "emissivity":0.09},
-    {"name":"Silver, polished", "emissivity":0.02}
-    ];
+    { "name": "Black Body", "emissivity": 1.00 },
+    { "name": "Black Elec. Tape", "emissivity": 0.95 },
+    { "name": "Polypropylene", "emissivity": 0.97 },
+    { "name": "Polystyrene", "emissivity": 0.95 },
+    { "name": "Rubber, hard glossy", "emissivity": 0.94 },
+    { "name": "Iron, rusted", "emissivity": 0.94 },
+    { "name": "PTFE", "emissivity": 0.92 },
+    { "name": "Polyethylene, black", "emissivity": 0.92 },
+    { "name": "PVC", "emissivity": 0.92 },
+    { "name": "Fibreglass", "emissivity": 0.85 },
+    { "name": "Carbon, not oxidized", "emissivity": 0.88 },
+    { "name": "Carbon filament", "emissivity": 0.86 },
+    { "name": "Copper, oxidized", "emissivity": 0.76 },
+    { "name": "Brass, oxidized", "emissivity": 0.79 },
+    { "name": "Steel, stainless", "emissivity": 0.70 },
+    { "name": "Steel, galvanized", "emissivity": 0.56 },
+    { "name": "Aluminium, anodised", "emissivity": 0.82 },
+    { "name": "Aluminium, oxidized", "emissivity": 0.26 },
+    { "name": "Aluminium, sheet", "emissivity": 0.10 },
+    { "name": "Aluminium, polished", "emissivity": 0.06 },
+    { "name": "Gold, not polished", "emissivity": 0.49 },
+    { "name": "Gold, polished", "emissivity": 0.03 },
+    { "name": "Copper, polished", "emissivity": 0.04 },
+    { "name": "Nickel, polished", "emissivity": 0.09 },
+    { "name": "Silver, polished", "emissivity": 0.02 }
+];
 let selectedMaterial = knownMaterials[15];
 
 let storedImageData = null;
@@ -80,6 +82,8 @@ var waiterTime = 100;
 let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
 
 function changeLayerNext(doNext) {
+    //changing layers clears the history stack;
+    goRegionEditor();
     hideTips();
     let index = regionEditorLayers.indexOf(activeLayer);
     if (doNext) {
@@ -110,38 +114,68 @@ function setActiveLayer(layer) {
     recalcEditor();
 }
 
-function changeBrushSizeBy(amount) {
-    brushSize += amount;
-    if (brushSize < 1) {
-        brushSize = 1;
+function changeBrushSizeBy(isPaint, amount) {
+    if (isPaint) {
+        
+        paintBrushSize += amount;
+        if (paintBrushSize < 1) {
+            paintBrushSize = 1;
+        }
+        else if (paintBrushSize > 100) {
+            paintBrushSize = 100;
+        }
+        paintBrushSize = parseInt(paintBrushSize.toFixed(0));
+       
+        document.getElementById("valPaintBrushSize").innerHTML = paintBrushSize.toFixed(0);
     }
-    else if (brushSize > 100) {
-        brushSize = 100;
+    else{
+        eraseBrushSize += amount;
+        if (eraseBrushSize < 1) {
+            eraseBrushSize = 1;
+        }
+        else if (eraseBrushSize > 100) {
+            eraseBrushSize = 100;
+        }
+        eraseBrushSize = parseInt(eraseBrushSize.toFixed(0));
+        document.getElementById("valEraseBrushSize").innerHTML = eraseBrushSize.toFixed(0);
     }
-    document.getElementById("valBrushSize").innerHTML = brushSize;
+
+    hideTips();
+}
+
+function changeFillRangeBy(amount) {
+    fillRange += amount;
+    if (fillRange < 0.1) {
+        fillRange = 0.1;
+    }
+    else if (fillRange > 500) {
+        fillRange = 500;
+    }
+    fillRange = parseFloat(fillRange.toFixed(2));
+    document.getElementById("valFillRange").innerHTML = fillRange.toFixed(2);
     hideTips();
 }
 
 function selectRegionEditorTool(toolName) {
     hideTips();//jjc
-    if(toolName == 'erase'){
-        if(activeTool.indexOf('erase') > -1){//already active
+    if (toolName == 'erase') {
+        if (activeTool.indexOf('erase') > -1) {//already active
             toolName = document.getElementById('shapeEraseRound').style.display == 'none' ? 'eraseround' : 'erasesquare';
         }
-        else{
+        else {
             toolName = document.getElementById('shapeEraseRound').style.display == 'none' ? 'erasesquare' : 'eraseround';
-            
+
         }
         document.getElementById('shapeEraseRound').style.display = toolName == 'eraseround' ? '' : 'none';
         document.getElementById('shapeEraseSquare').style.display = toolName == 'erasesquare' ? '' : 'none';
     }
-    else if(toolName == 'paint'){
-        if(activeTool.indexOf('paint') > -1){//already painting so flip the tool
+    else if (toolName == 'paint') {
+        if (activeTool.indexOf('paint') > -1) {//already painting so flip the tool
             toolName = document.getElementById('shapePaintRound').style.display == 'none' ? 'paintround' : 'paintsquare';
         }
-        else{//keep the current tool
+        else {//keep the current tool
             toolName = document.getElementById('shapePaintRound').style.display == 'none' ? 'paintsquare' : 'paintround';
-            
+
         }
         document.getElementById('shapePaintRound').style.display = toolName == 'paintround' ? '' : 'none';
         document.getElementById('shapePaintSquare').style.display = toolName == 'paintsquare' ? '' : 'none';
@@ -278,10 +312,23 @@ function setButtons() {
     document.getElementById("btnRotateImage").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
     document.getElementById("btnMirrorImageHorizontally").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
 
-    document.getElementById("btnUndo").disabled = historyStack.length <= 1 || historyIndex <= 0;
-    document.getElementById("btnUndo").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
-    document.getElementById("btnRedo").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
-    document.getElementById("btnRedo").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
+    document.getElementById("btnUndoRegionEdit").disabled = historyStack.length <= 1 || historyIndex <= 0;
+    document.getElementById("btnUndoRegionEdit").style.display = cameraEditor.isEditing ? '' : 'none';
+    document.getElementById("btnRedoRegionEdit").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
+    document.getElementById("btnRedoRegionEdit").style.display = cameraEditor.isEditing ? '' : 'none';
+
+    document.getElementById("btnUndoMaterialEdit").disabled = historyStack.length <= 1 || historyIndex <= 0;
+    document.getElementById("btnUndoMaterialEdit").style.display = cameraEditor.isEditing ? '' : 'none';
+    document.getElementById("btnRedoMaterialEdit").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
+    document.getElementById("btnRedoMaterialEdit").style.display = cameraEditor.isEditing ? '' : 'none';
+
+    document.getElementById("btnUndoDistanceEdit").disabled = historyStack.length <= 1 || historyIndex <= 0;
+    document.getElementById("btnUndoDistanceEdit").style.display = cameraEditor.isEditing ? '' : 'none';
+    document.getElementById("btnRedoDistanceEdit").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
+    document.getElementById("btnRedoDistanceEdit").style.display = cameraEditor.isEditing ? '' : 'none';
+
+
+
     let hasActiveItem = false;
     let canSize = false;
     let canRotate = false;
@@ -349,25 +396,44 @@ function setButtons() {
     document.getElementById("btnRegionToolMove").disabled = !hasActiveItem;
     document.getElementById("btnRegionToolMove").style.color = (activeTool == 'move' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointAdd").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolPointAdd").style.display = (activeLayer == 'Region' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
     document.getElementById("btnRegionToolPointAdd").disabled = !polygonSelected;
     document.getElementById("btnRegionToolPointAdd").style.color = (activeTool == 'pointadd' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointMove").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolPointMove").style.display = (activeLayer == 'Region' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
     document.getElementById("btnRegionToolPointMove").disabled = !polygonSelected;
     document.getElementById("btnRegionToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointDelete").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer == 'Region' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
     document.getElementById("btnRegionToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
     document.getElementById("btnRegionToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolSample").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolSample").disabled = activeLayer == 'Region';
-    document.getElementById("btnRegionToolSample").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
+    document.getElementById("btnSetDefaultMaterial").disabled = !cameraEditor.isEditing || selectedMaterial == null;
+    document.getElementById("btnSetDefaultMaterial").style.display = cameraEditor.isEditing ? '' : 'none';
 
+    document.getElementById("btnSampleMaterial").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
+    document.getElementById("btnSampleMaterial").disabled = !cameraEditor.isEditing;
+    document.getElementById("btnSampleMaterial").style.display = cameraEditor.isEditing ? '' : 'none';
+
+    document.getElementById("btnSetDefaultDistance").disabled = !cameraEditor.isEditing;
+    document.getElementById("btnSetDefaultDistance").style.display = cameraEditor.isEditing ? '' : 'none';
+
+    document.getElementById("btnSampleDistance").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
+    document.getElementById("btnSampleDistance").disabled = !cameraEditor.isEditing;
+    document.getElementById("btnSampleDistance").style.display = cameraEditor.isEditing ? '' : 'none';
+
+    let fillSelected = activeLayer != 'Region' && cameraEditor.isEditing && (activeTool.indexOf('fill') > -1);
     document.getElementById("btnRegionToolFill").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
     document.getElementById("btnRegionToolFill").disabled = activeLayer == 'Region';
-    document.getElementById("btnRegionToolFill").style.color = (activeTool == 'fill' ? activeToolColor : inactiveToolColor);
+    document.getElementById("btnRegionToolFill").style.color = (fillSelected ? activeToolColor : inactiveToolColor);
+
+
+    document.getElementById("btnChangeFillRangeInfo").style.display = (!fillSelected ? 'none' : '');
+    document.getElementById("btnChangeFillRangeLess").style.display = (!fillSelected ? 'none' : '');
+    document.getElementById("btnChangeFillRangeLess").disabled = !fillSelected;
+    document.getElementById("btnChangeFillRangeMore").style.display = (!fillSelected ? 'none' : '');
+    document.getElementById("btnChangeFillRangeMore").disabled = !fillSelected;
+
 
     document.getElementById("btnRegionToolChange").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
     document.getElementById("btnRegionToolChange").disabled = activeLayer == 'Region';
@@ -377,18 +443,25 @@ function setButtons() {
     document.getElementById("btnRegionToolPaint").disabled = activeLayer == 'Region';
     document.getElementById("btnRegionToolPaint").style.color = (activeTool.indexOf('paint') > -1 ? activeToolColor : inactiveToolColor);
 
-    
+    let paintSelected = activeLayer != 'Region' && (activeTool.indexOf('paint') > -1);
+    document.getElementById("btnChangePaintSizeInfo").style.display = (!paintSelected ? 'none' : '');
+    document.getElementById("btnChangePaintSizeLess").style.display = (!paintSelected ? 'none' : '');
+    document.getElementById("btnChangePaintSizeLess").disabled = !paintSelected;
+    document.getElementById("btnChangePaintSizeMore").style.display = (!paintSelected ? 'none' : '');
+    document.getElementById("btnChangePaintSizeMore").disabled = !paintSelected;
+
+
     document.getElementById("btnRegionToolErase").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
     document.getElementById("btnRegionToolErase").disabled = activeLayer == 'Region';
     document.getElementById("btnRegionToolErase").style.color = (activeTool.indexOf('erase') > -1 ? activeToolColor : inactiveToolColor);
 
-    
-    let paintOrEraseSelected = activeLayer != 'Region' && (activeTool.indexOf('paint') > -1 || activeTool.indexOf('erase') > -1);
-    document.getElementById("btnChangeSizeInfo").style.display = (!paintOrEraseSelected ? 'none' : '');
-    document.getElementById("btnChangeSizeLess").style.display = (!paintOrEraseSelected ? 'none' : '');
-    document.getElementById("btnChangeSizeLess").disabled = !paintOrEraseSelected;
-    document.getElementById("btnChangeSizeMore").style.display = (!paintOrEraseSelected ? 'none' : '');
-    document.getElementById("btnChangeSizeMore").disabled = !paintOrEraseSelected
+
+    let eraseSelected = activeLayer != 'Region' && (activeTool.indexOf('erase') > -1);
+    document.getElementById("btnChangeEraseSizeInfo").style.display = (!eraseSelected ? 'none' : '');
+    document.getElementById("btnChangeEraseSizeLess").style.display = (!eraseSelected ? 'none' : '');
+    document.getElementById("btnChangeEraseSizeLess").disabled = !eraseSelected;
+    document.getElementById("btnChangeEraseSizeMore").style.display = (!eraseSelected ? 'none' : '');
+    document.getElementById("btnChangeEraseSizeMore").disabled = !eraseSelected;
 
 
 
@@ -482,7 +555,7 @@ function pickMaterial() {
         let sb = '';
         for (let i = 0; i < knownMaterials.length; i++) {
             let material = knownMaterials[i];
-            sb += '<button class="resizebutton2" onclick="changeMaterial(\'' + material.name +'\','+ material.emissivity + ')">';
+            sb += '<button class="resizebutton2" onclick="changeMaterial(\'' + material.name + '\',' + material.emissivity + ')">';
             sb += '<div style="line-height: 17px;">';
             sb += '<div class="regioneditortext2">Material</div>';
             sb += '<div class="regionditortextsub4">' + material.name + '</div>';
@@ -520,9 +593,9 @@ function changeMaterial(materialName, emissivity) {
         console.error('invalid emissivity');
         return;
     }
-    console.log ('old material: ' + selectedMaterial.name + ' with emissivity ' + selectedMaterial.emissivity.toFixed(2) + '');
+    console.log('old material: ' + selectedMaterial.name + ' with emissivity ' + selectedMaterial.emissivity.toFixed(2) + '');
     selectedMaterial = { "name": materialName, "emissivity": emissivity };
-    console.log ('changed material to: ' + selectedMaterial.name + ' with emissivity ' + selectedMaterial.emissivity.toFixed(2) + '');
+    console.log('changed material to: ' + selectedMaterial.name + ' with emissivity ' + selectedMaterial.emissivity.toFixed(2) + '');
     document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
     document.getElementById('valMaterialEmissivity').innerHTML = selectedMaterial.emissivity.toFixed(2);
     cancelMaterial();
@@ -597,7 +670,9 @@ function recalcEditor() {
 
 
     document.getElementById("valActiveLayer").innerHTML = activeLayer;
-    document.getElementById("valBrushSize").innerHTML = brushSize;
+    document.getElementById("valPaintBrushSize").innerHTML = paintBrushSize.toFixed(0);
+    document.getElementById("valEraseBrushSize").innerHTML = eraseBrushSize.toFixed(0);
+    document.getElementById("valFillRange").innerHTML = fillRange.toFixed(2);
 
     if (selectedDistance != null) {
         document.getElementById('valDistanceMeters').innerHTML = selectedDistance.toFixed(2) + "m";
@@ -2168,6 +2243,19 @@ function getMapIndex(offsetX, offsetY) {
     return myIndex;
 }
 
+function setDefaultDistance() {
+    if (selectedDistance == null) {
+        return;
+    }
+    for (let i = 0; i < distanceMap.length; i++) {
+        if (distanceMap[i] == null) {
+            distanceMap[i] = selectedDistance;
+        }
+    }
+    hideTips();
+    recalcEditor();
+}
+
 function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
     if (activeTool == 'sample') {
@@ -2193,7 +2281,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         let realX = pts[0];
         let realY = pts[1];
 
-        let indexes = getFillIndexesToChange(tempsCelsius, distanceMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, false);
+        let indexes = getFillIndexesToChange(tempsCelsius, distanceMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, fillRange, false);
 
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
@@ -2240,7 +2328,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
     }
     else if (activeTool == 'paintround' || activeTool == 'paintsquare') {
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, brushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, paintBrushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < distanceMap.length && index >= 0) {
@@ -2250,7 +2338,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         recalcEditor();
     }
     else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, brushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, eraseBrushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < distanceMap.length && index >= 0) {
@@ -2259,6 +2347,21 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         }
         recalcEditor();
     }
+}
+
+function setDefaultMaterial() {
+    if (selectedMaterial == null || selectedMaterial.name == null || selectedMaterial.emissivity == null) {
+        return;
+    }
+    for (let i = 0; i < materialMap.length; i++) {
+        let material = materialMap[i];
+        if (material == null || material.name == null || material.emissivity == null) {
+            materialMap[i] = { "name": selectedMaterial.name, "emissivity": selectedMaterial.emissivity };
+        }
+    }
+    hideTips();
+    recalcEditor();
+
 }
 
 function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
@@ -2284,7 +2387,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally);
         let realX = pts[0];
         let realY = pts[1];
-        let indexes = getFillIndexesToChange(tempsCelsius, materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, 1, true);
+        let indexes = getFillIndexesToChange(tempsCelsius, materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, fillRange, true);
 
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
@@ -2334,7 +2437,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         if (selectedMaterial == null || selectedMaterial.name == null || selectedMaterial.emissivity == null) {
             return;
         }
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, brushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, paintBrushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < materialMap.length && index >= 0) {
@@ -2349,7 +2452,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         recalcEditor();
     }
     else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, brushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, eraseBrushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < materialMap.length && index >= 0) {
@@ -2358,7 +2461,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         }
         recalcEditor();
     }
-    
+
 
 }
 
@@ -2411,9 +2514,9 @@ function getNativePoint(offsetX, offsetY, imageNativeWidth, imageNativeHeight, i
 
 
 
-function getFillIndexesToChange(map, map2, width, height, startX, startY, threshold, isMaterial) {
+function getFillIndexesToChange(mapTemperatures, map2, width, height, startX, startY, threshold, isMaterial) {
 
-    let newColor = -1;
+    let newPixel = -1;
 
     let startIndex = getIndexOfMapFromXY(startX, startY, 0, false);
 
@@ -2423,12 +2526,12 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
     }
 
 
-    let startColor = map[startIndex];
-    let existingColor = map2[startIndex];
+    let startTemperature = mapTemperatures[startIndex];
+    let existingStringifiedItem = JSON.stringify(map2[startIndex]);
 
 
     // Create a new array that will store the pixels that should be changed
-    let newPixels = JSON.parse(JSON.stringify(map)); // Copying by value
+    let newPixels = JSON.parse(JSON.stringify(mapTemperatures)); // Copying by value
 
     // Create a queue that will store the pixels that need to be checked for similarity
     let queue = [];
@@ -2441,7 +2544,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
     while (queue.length > 0) {
         // Dequeue a pixel from the queue and store it in a variable
         let currentIndex = queue.shift();
-        let currentColor = map[currentIndex];
+        let currentTemperature = mapTemperatures[currentIndex];
 
 
         let pt = getPointFromIndex(currentIndex, width, height);
@@ -2449,7 +2552,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
         let currentY = pt[1];
 
         // Calculate the color distance between this pixel and the starting pixel using Euclidean distance
-        let distance = Math.sqrt(Math.pow(currentColor - startColor, 2));
+        let distance = Math.sqrt(Math.pow(currentTemperature - startTemperature, 2));
 
         /*
         var distance = Math.sqrt(
@@ -2462,7 +2565,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
         // If the color distance is less than or equal to your threshold value, then do the following:
         if (distance <= threshold) {
             // Mark this pixel as visited by setting its value in the new array to newColor
-            newPixels[currentIndex] = newColor;
+            newPixels[currentIndex] = newPixel;
 
             // Enqueue the adjacent pixels of this pixel (up, down, left, right) to the queue,
             // if they are within the bounds of the array and have not been visited before
@@ -2473,7 +2576,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
                 let checkX = currentX - 1;
                 let checkY = currentY
                 let indexOfAdjacent = getIndexOfMapFromXY(checkX, checkY, 0, false);
-                if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
+                if (newPixels[indexOfAdjacent] != newPixel && JSON.stringify(map2[indexOfAdjacent]) == existingStringifiedItem) {
                     if (checked.indexOf(indexOfAdjacent) == -1) {
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
@@ -2483,7 +2586,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
             if (currentX < width - 1) {// && newPixels[currentX + 1][currentY] != newColor) {
                 // Right
                 let indexOfAdjacent = getIndexOfMapFromXY(currentX + 1, currentY, 0, false);
-                if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
+                if (newPixels[indexOfAdjacent] != newPixel && JSON.stringify(map2[indexOfAdjacent]) == existingStringifiedItem) {
                     if (checked.indexOf(indexOfAdjacent) == -1) {
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
@@ -2494,7 +2597,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
             if (currentY > 0) {// && newPixels[currentX][currentY - 1] != newColor) {
                 // Up
                 let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY - 1, 0, false);
-                if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
+                if (newPixels[indexOfAdjacent] != newPixel && JSON.stringify(map2[indexOfAdjacent]) == existingStringifiedItem) {
                     if (checked.indexOf(indexOfAdjacent) == -1) {
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
@@ -2505,7 +2608,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
             if (currentY < height - 1) {
                 // Down
                 let indexOfAdjacent = getIndexOfMapFromXY(currentX, currentY + 1, 0, false);
-                if (newPixels[indexOfAdjacent] != newColor && map2[indexOfAdjacent] == existingColor) {
+                if (newPixels[indexOfAdjacent] != newPixel && JSON.stringify(map2[indexOfAdjacent]) == existingStringifiedItem) {
                     if (checked.indexOf(indexOfAdjacent) == -1) {
                         checked.push(indexOfAdjacent);
                         queue.push(indexOfAdjacent);
@@ -2519,7 +2622,7 @@ function getFillIndexesToChange(map, map2, width, height, startX, startY, thresh
     // Return the new array of pixels that should be changed by the fill operation
     let indexes = [];
     for (let i = 0; i < newPixels.length; i++) {
-        if (newPixels[i] === newColor) {
+        if (newPixels[i] === newPixel) {
             indexes.push(i);
         }
     }
@@ -2871,10 +2974,11 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
     }
 
     if (activeTool == 'paintsquare' || activeTool == 'erasesquare') {
-        let width = (brushSize * regionEditor.imageScale) * 2;
-        let posOffSetX = (brushSize * regionEditor.imageScale);
-        let posOffSetY = (brushSize * regionEditor.imageScale);
-        if (brushSize == 1) {
+        let myBrushSize = activeTool == 'paintsquare' ? paintBrushSize : eraseBrushSize;
+        let width = (myBrushSize * regionEditor.imageScale) * 2;
+        let posOffSetX = (myBrushSize * regionEditor.imageScale);
+        let posOffSetY = (myBrushSize * regionEditor.imageScale);
+        if (myBrushSize == 1) {
             posOffSetY += 8;
         }
 
@@ -2883,10 +2987,11 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
         tiptarget.style.left = `${pageX - posOffSetX}px`;
     }
     else if (activeTool == 'paintround' || activeTool == 'eraseround') {
-        let width = (brushSize * regionEditor.imageScale) * 2;
-        let posOffSetX = (brushSize * regionEditor.imageScale);
-        let posOffSetY = (brushSize * regionEditor.imageScale);
-        if (brushSize == 1) {
+        let myBrushSize = activeTool == 'paintround' ? paintBrushSize : eraseBrushSize;
+        let width = (myBrushSize * regionEditor.imageScale) * 2;
+        let posOffSetX = (myBrushSize * regionEditor.imageScale);
+        let posOffSetY = (myBrushSize * regionEditor.imageScale);
+        if (myBrushSize == 1) {
             posOffSetY += 8;
         }
         tiptarget.innerHTML = `<svg width="${width + 2}" height="${width + 2}" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="${width / 2 + 1}" cy="${width / 2 + 1}" r="${width / 2}" stroke="red" stroke-width="2" /></svg>`;
@@ -3381,7 +3486,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
     };
 
     cameraTools.innerHTML = sb;
-    goRegion();
+    goRegionEditor();
 }
 
 function setupEvents() {
@@ -3539,8 +3644,9 @@ function setupEvents() {
 
 }
 
-function goRegion() {
-
+function goRegionEditor() {
+    historyStack = [];
+    historyIndex = -1;
     recalcEditor();
     setButtons();
     addHistory('Initial App State', null, true);

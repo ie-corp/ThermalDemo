@@ -131,30 +131,6 @@
 
             <div style="width:8px;">
             </div>
-
-            <button id="btnUndo" onclick="undoRegionEditor()" class="resizebutton">
-                <div style="line-height: 4px;">
-                    <span class="regioneditortext">Undo</span>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
-                            fill="white" />
-                    </svg>
-                </div>
-            </button>
-
-            <button id="btnRedo" onclick="redoRegionEditor()" class="resizebutton">
-                <div style="line-height: 4px;">
-                    <span class="regioneditortext">Redo</span>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
-                            fill="currentColor" />
-                    </svg>
-                </div>
-            </button>
-
-
         </div>
         <div id="rowRegionTools" class="editorrow">
 
@@ -239,7 +215,7 @@
                 </div>
             </button>
 
-            <div style="width:72px;">
+            <div style="width:8px;">
             </div>
 
 
@@ -249,6 +225,28 @@
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="2" y="0" width="20" height="20" stroke-dasharray="2" stroke="currentColor"
                             stroke-width="2" />
+                    </svg>
+                </div>
+            </button>
+
+            <button id="btnUndoRegionEdit" onclick="undoRegionEditor()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Undo</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
+                            fill="white" />
+                    </svg>
+                </div>
+            </button>
+
+            <button id="btnRedoRegionEdit" onclick="redoRegionEditor()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Redo</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
+                            fill="currentColor" />
                     </svg>
                 </div>
             </button>
@@ -264,7 +262,30 @@
             </button>
 
 
+            <button id="btnSetDefaultMaterial" onclick="setDefaultMaterial()" class="resizebutton">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Set<br/></span>
+                    <span class="regionditortextsub3">As</span>
+                    <span class="regionditortextsub3">Default</span>
+                </div>
+            </button>
 
+            
+            
+            <button id="btnSampleMaterial" onclick="selectRegionEditorTool('sample')" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Sample</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M20.3847 2.87868C19.2132 1.70711 17.3137 1.70711 16.1421 2.87868L14.0202 5.00052L13.313 4.29332C12.9225 3.9028 12.2894 3.9028 11.8988 4.29332C11.5083 4.68385 11.5083 5.31701 11.8988 5.70754L17.5557 11.3644C17.9462 11.7549 18.5794 11.7549 18.9699 11.3644C19.3604 10.9739 19.3604 10.3407 18.9699 9.95018L18.2629 9.24316L20.3847 7.12132C21.5563 5.94975 21.5563 4.05025 20.3847 2.87868Z"
+                            fill="currentColor" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M11.9297 7.09116L4.1515 14.8693C3.22786 15.793 3.03239 17.169 3.5651 18.2842L1.99994 19.8493L3.41415 21.2635L4.97931 19.6984C6.09444 20.2311 7.4705 20.0356 8.39414 19.112L16.1723 11.3338L11.9297 7.09116ZM13.3439 11.3338L11.9297 9.91959L5.56571 16.2835C5.17518 16.6741 5.17518 17.3072 5.56571 17.6978C5.95623 18.0883 6.5894 18.0883 6.97992 17.6978L13.3439 11.3338Z"
+                            fill="currentColor" />
+                    </svg>
+                </div>
+            </button>
 
 
             <button disabled class="resizebutton" style="background-color:black">
@@ -286,13 +307,34 @@
                 </div>
             </button>
 
-            <div style="width:8px;">
+            <div style="width:280px;">
             </div>
 
             <button id="btnClearMaterial" onclick="clearMaterialMap()" class="resizebutton">
                 <div style="line-height: 20px;">
                     <div class="regioneditortext">Clear</div>
                     <div class="regionditortextsub">Layer</div>
+                </div>
+            </button>
+            <button id="btnUndoMaterialEdit" onclick="undoRegionEditor()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Undo</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
+                            fill="white" />
+                    </svg>
+                </div>
+            </button>
+
+            <button id="btnRedoMaterialEdit" onclick="redoRegionEditor()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Redo</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
+                            fill="currentColor" />
+                    </svg>
                 </div>
             </button>
 
@@ -304,6 +346,29 @@
                     <div class="regioneditortext2">Distance</div>
                     <div id="valDistanceMeters" class="regionditortextsub3">--</div>
                     <div id="valDistanceInches" class="regionditortextsub3">--</div>
+                </div>
+            </button>
+
+            <button id="btnSetDefaultDistance" onclick="setDefaultDistance()" class="resizebutton">
+                <div style="line-height: 17px;">
+                    <span class="regioneditortext2">Set<br/></span>
+                    <span class="regionditortextsub3">As</span>
+                    <span class="regionditortextsub3">Default</span>
+                </div>
+            </button>
+
+            <button id="btnSampleDistance" onclick="selectRegionEditorTool('sample')" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Sample</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M20.3847 2.87868C19.2132 1.70711 17.3137 1.70711 16.1421 2.87868L14.0202 5.00052L13.313 4.29332C12.9225 3.9028 12.2894 3.9028 11.8988 4.29332C11.5083 4.68385 11.5083 5.31701 11.8988 5.70754L17.5557 11.3644C17.9462 11.7549 18.5794 11.7549 18.9699 11.3644C19.3604 10.9739 19.3604 10.3407 18.9699 9.95018L18.2629 9.24316L20.3847 7.12132C21.5563 5.94975 21.5563 4.05025 20.3847 2.87868Z"
+                            fill="currentColor" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M11.9297 7.09116L4.1515 14.8693C3.22786 15.793 3.03239 17.169 3.5651 18.2842L1.99994 19.8493L3.41415 21.2635L4.97931 19.6984C6.09444 20.2311 7.4705 20.0356 8.39414 19.112L16.1723 11.3338L11.9297 7.09116ZM13.3439 11.3338L11.9297 9.91959L5.56571 16.2835C5.17518 16.6741 5.17518 17.3072 5.56571 17.6978C5.95623 18.0883 6.5894 18.0883 6.97992 17.6978L13.3439 11.3338Z"
+                            fill="currentColor" />
+                    </svg>
                 </div>
             </button>
 
@@ -335,10 +400,35 @@
                 </div>
             </button>
 
+            <div style="width:144px;">
+            </div>
+
             <button id="btnClearDistance" onclick="clearDistanceMap()" class="resizebutton">
                 <div style="line-height: 20px;">
                     <div class="regioneditortext">Clear</div>
                     <div class="regionditortextsub">Layer</div>
+                </div>
+            </button>
+
+            <button id="btnUndoDistanceEdit" onclick="undoRegionEditor()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Undo</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M5.33929 4.46777H7.33929V7.02487C8.52931 6.08978 10.0299 5.53207 11.6607 5.53207C15.5267 5.53207 18.6607 8.66608 18.6607 12.5321C18.6607 16.3981 15.5267 19.5321 11.6607 19.5321C9.51025 19.5321 7.58625 18.5623 6.30219 17.0363L7.92151 15.8515C8.83741 16.8825 10.1732 17.5321 11.6607 17.5321C14.4222 17.5321 16.6607 15.2935 16.6607 12.5321C16.6607 9.77065 14.4222 7.53207 11.6607 7.53207C10.5739 7.53207 9.56805 7.87884 8.74779 8.46777L11.3393 8.46777V10.4678H5.33929V4.46777Z"
+                            fill="white" />
+                    </svg>
+                </div>
+            </button>
+
+            <button id="btnRedoDistanceEdit" onclick="redoRegionEditor()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Redo</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M13.1459 11.0499L12.9716 9.05752L15.3462 8.84977C14.4471 7.98322 13.2242 7.4503 11.8769 7.4503C9.11547 7.4503 6.87689 9.68888 6.87689 12.4503C6.87689 15.2117 9.11547 17.4503 11.8769 17.4503C13.6977 17.4503 15.2911 16.4771 16.1654 15.0224L18.1682 15.5231C17.0301 17.8487 14.6405 19.4503 11.8769 19.4503C8.0109 19.4503 4.87689 16.3163 4.87689 12.4503C4.87689 8.58431 8.0109 5.4503 11.8769 5.4503C13.8233 5.4503 15.5842 6.24474 16.853 7.52706L16.6078 4.72412L18.6002 4.5498L19.1231 10.527L13.1459 11.0499Z"
+                            fill="currentColor" />
+                    </svg>
                 </div>
             </button>
 
@@ -479,21 +569,6 @@
                         </div>
                     </button>
 
-                    <button id="btnRegionToolSample" onclick="selectRegionEditorTool('sample')" class="resizebutton">
-                        <div style="line-height: 4px;">
-                            <span class="regioneditortext">Sample</span>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M20.3847 2.87868C19.2132 1.70711 17.3137 1.70711 16.1421 2.87868L14.0202 5.00052L13.313 4.29332C12.9225 3.9028 12.2894 3.9028 11.8988 4.29332C11.5083 4.68385 11.5083 5.31701 11.8988 5.70754L17.5557 11.3644C17.9462 11.7549 18.5794 11.7549 18.9699 11.3644C19.3604 10.9739 19.3604 10.3407 18.9699 9.95018L18.2629 9.24316L20.3847 7.12132C21.5563 5.94975 21.5563 4.05025 20.3847 2.87868Z"
-                                    fill="currentColor" />
-                                <path fill-rule="evenodd" clip-rule="evenodd"
-                                    d="M11.9297 7.09116L4.1515 14.8693C3.22786 15.793 3.03239 17.169 3.5651 18.2842L1.99994 19.8493L3.41415 21.2635L4.97931 19.6984C6.09444 20.2311 7.4705 20.0356 8.39414 19.112L16.1723 11.3338L11.9297 7.09116ZM13.3439 11.3338L11.9297 9.91959L5.56571 16.2835C5.17518 16.6741 5.17518 17.3072 5.56571 17.6978C5.95623 18.0883 6.5894 18.0883 6.97992 17.6978L13.3439 11.3338Z"
-                                    fill="currentColor" />
-                            </svg>
-                        </div>
-                    </button>
-
                     <button id="btnRegionToolFill" onclick="selectRegionEditorTool('fill')" class="resizebutton">
                         <div style="line-height: 4px;">
                             <span class="regioneditortext">Fill</span>
@@ -508,6 +583,19 @@
                             </svg>
                         </div>
                     </button>
+
+                    <button id="btnChangeFillRangeInfo" disabled class="resizebutton" style="margin-left:18px;background-color: black;">
+                        <div style="line-height: 17px;">
+                            <span class="regioneditortext2">Range</span>
+                            <span id="valFillRange" class="regionditortextsub2">--</span>
+                        </div>
+                    </button>
+
+                    <button id="btnChangeFillRangeLess" style="margin-left:18px;" onmousedown="repeatFunc(changeFillRangeBy.bind(null,-.1))"
+                        onmouseup="clearFunc()" class="resizebutton">-</button>
+                    <button id="btnChangeFillRangeMore" style="margin-left:18px;" onmousedown="repeatFunc(changeFillRangeBy.bind(null,.1))"
+                        onmouseup="clearFunc()" class="resizebutton">+</button>
+
 
 
                     <button id="btnRegionToolChange" onclick="selectRegionEditorTool('change')" class="resizebutton">
@@ -551,7 +639,17 @@
                         </div>
                     </button>
 
-                    
+                    <button id="btnChangePaintSizeInfo" disabled class="resizebutton" style="margin-left:18px;background-color: black;">
+                        <div style="line-height: 17px;">
+                            <span class="regioneditortext2">Size</span>
+                            <span id="valPaintBrushSize" class="regionditortextsub2">--</span>
+                        </div>
+                    </button>
+
+                    <button id="btnChangePaintSizeLess" style="margin-left:18px;" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,true,-1))"
+                        onmouseup="clearFunc()" class="resizebutton">-</button>
+                    <button id="btnChangePaintSizeMore" style="margin-left:18px;" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,true,1))"
+                        onmouseup="clearFunc()" class="resizebutton">+</button>
 
                     <button id="btnRegionToolErase" onclick="selectRegionEditorTool('erase')"
                         class="resizebutton">
@@ -596,16 +694,16 @@
                     </button>
 
                     
-                    <button id="btnChangeSizeInfo" disabled class="resizebutton" style="background-color: black;">
+                    <button id="btnChangeEraseSizeInfo" disabled class="resizebutton" style="margin-left:18px;background-color: black;">
                         <div style="line-height: 17px;">
                             <span class="regioneditortext2">Size</span>
-                            <span id="valBrushSize" class="regionditortextsub2">--</span>
+                            <span id="valEraseBrushSize" class="regionditortextsub2">--</span>
                         </div>
                     </button>
 
-                    <button id="btnChangeSizeLess" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,-1))"
+                    <button id="btnChangeEraseSizeLess" style="margin-left:18px;" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,false,-1))"
                         onmouseup="clearFunc()" class="resizebutton">-</button>
-                    <button id="btnChangeSizeMore" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,1))"
+                    <button id="btnChangeEraseSizeMore" style="margin-left:18px;" onmousedown="repeatFunc(changeBrushSizeBy.bind(null,false,1))"
                         onmouseup="clearFunc()" class="resizebutton">+</button>
 
                 </div>
