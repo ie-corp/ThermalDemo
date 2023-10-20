@@ -3192,7 +3192,7 @@ function go() {
 
 function refreshCameras() {
     hideEverything();
-    fetch('../test_api_calls/test_getCams.json')
+    fetch('https://raw.githubusercontent.com/ie-corp/ThermalDemo/main/test_api_calls/test_getCams.json')
         .then(response => {
             if (!response.ok) {
                 //console.log('not found');
