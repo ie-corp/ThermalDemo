@@ -3192,25 +3192,33 @@ function go() {
 
 function refreshCameras() {
     hideEverything();
-    fetch('https://raw.githubusercontent.com/ie-corp/ThermalDemo/main/test_api_calls/test_getCams.json')
+    let strUrl = '/test_api_calls/test_getCams.json';
+    let urlPrefix = '';
+    //check if the site is on github pages, if so, we need to prefix the url with the github repo name.
+    if(location.href.indexOf('github.io') > -1){
+        //when hosted on github pages, we have to make json calls and image calls with this prefix.
+        urlPrefix = 'https://raw.githubusercontent.com/ie-corp/ThermalDemo/main';
+    }
+    console.log('fetching cameras from: ' + strUrl);
+    fetch(strUrl)
         .then(response => {
             if (!response.ok) {
                 //console.log('not found');
-                this.apiGetCamerasReceived({ "cameras": [] });
+                this.apiGetCamerasReceived(urlPrefix,{ "cameras": [] });
             }
             return response.json();
         })
         .then(json => {
 
-            this.apiGetCamerasReceived(json);
+            this.apiGetCamerasReceived(urlPrefix, json);
         })
         .catch(function () {
             //console.error('catch fetch');
-            this.apiGetCamerasReceived({ "cameras": [] });
+            this.apiGetCamerasReceived(urlPrefix, { "cameras": [] });
         })
 }
 
-function apiGetCamerasReceived(jsonResult) {
+function apiGetCamerasReceived(urlPrefix, jsonResult) {
     console.log('loading cameras')
     hideEverything();
     document.getElementById('mainEditor').style.display = 'block';
@@ -3222,7 +3230,7 @@ function apiGetCamerasReceived(jsonResult) {
                 "usbId": camera.usbId,
                 "name": ((camera.name ?? "-Unknown-").trim()),
                 "rotation": camera.rotation,
-                "url": camera.url,
+                "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                 "isOnline": camera.isOnline,
                 "isKnown": camera.isKnown,
                 "config": null
