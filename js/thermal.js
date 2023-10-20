@@ -3199,8 +3199,8 @@ function refreshCameras() {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         urlPrefix = 'https://raw.githubusercontent.com/ie-corp/ThermalDemo/main';
     }
-    console.log('fetching cameras from: ' + strUrl);
-    fetch(strUrl)
+    console.log('fetching cameras from: ' + urlPrefix + strUrl);
+    fetch(urlPrefix + strUrl)
         .then(response => {
             if (!response.ok) {
                 //console.log('not found');
