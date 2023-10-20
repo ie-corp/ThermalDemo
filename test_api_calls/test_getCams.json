@@ -3,42 +3,42 @@
         {
             "usbId":"0",
             "name":"Left",
-            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/test_images/reference_01.tiff",
+            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/main/test_images/reference_01.tiff",
             "isOnline":true,
             "isKnown":true
         },
         {
             "usbId":null,
             "name":"Right",
-            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/test_images/reference_02.tiff",
+            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/main/test_images/reference_02.tiff",
             "isOnline":false,
             "isKnown":true
         },
         {
             "usbId":"1",
             "name":"Top",
-            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/test_images/reference_03.tiff",
+            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/main/test_images/reference_03.tiff",
             "isOnline":false,
             "isKnown":true
         },
         {
             "usbId":"2",
             "name":"Bottom",
-            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/test_images/reference_04.tiff",
+            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/main/test_images/reference_04.tiff",
             "isOnline":false,
             "isKnown":true
         },
         {
             "usbId":"3",
             "name":null,
-            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/test_images/reference_05.tiff",
+            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/main/test_images/reference_05.tiff",
             "isOnline":true,
             "isKnown":false
         },
         {
             "usbId":"4",
             "name":null,
-            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/test_images/reference_06.tiff",
+            "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/main/test_images/reference_06.tiff",
             "isOnline":true,
             "isKnown":false
         }
