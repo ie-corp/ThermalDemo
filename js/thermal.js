@@ -116,7 +116,7 @@ function setActiveLayer(layer) {
 
 function changeBrushSizeBy(isPaint, amount) {
     if (isPaint) {
-        
+
         paintBrushSize += amount;
         if (paintBrushSize < 1) {
             paintBrushSize = 1;
@@ -125,10 +125,10 @@ function changeBrushSizeBy(isPaint, amount) {
             paintBrushSize = 100;
         }
         paintBrushSize = parseInt(paintBrushSize.toFixed(0));
-       
+
         document.getElementById("valPaintBrushSize").innerHTML = paintBrushSize.toFixed(0);
     }
-    else{
+    else {
         eraseBrushSize += amount;
         if (eraseBrushSize < 1) {
             eraseBrushSize = 1;
@@ -157,7 +157,7 @@ function changeFillRangeBy(amount) {
 }
 
 function selectRegionEditorTool(toolName) {
-    hideTips();//jjc
+    hideTips();
     if (toolName == 'erase') {
         if (activeTool.indexOf('erase') > -1) {//already active
             toolName = document.getElementById('shapeEraseRound').style.display == 'none' ? 'eraseround' : 'erasesquare';
@@ -3180,23 +3180,58 @@ function getEmptyRegionEditor() {
 let doEditing = false;
 function go() {
     hideEverything();
-    document.getElementById('mainEditor').style.display = 'block';
     setupEvents();
     let image = document.getElementById('regionEditorImageRef');
     image.onload = function () {
         cameraChangedImageLoaded(cameraEditor.selectedCameraIndex, doEditing);
     };
+    refreshCameras();
 
 
-    let cameras = [{ "name": "left", "rotation": 0, "url": "reference_01.tiff", "isSpecified": true, "config": null },
-    { "name": "right", "rotation": 0, "url": "reference_02.tiff", "config": null },
-    { "name": "front", "rotation": 0, "url": "reference_03.tiff", "config": null },
-    { "name": "back", "rotation": 0, "url": "reference_04.tiff", "config": null },
-    { "name": "unknown", "rotation": 0, "url": "reference_05.tiff", "config": null },
-    { "name": "unknown", "rotation": 0, "url": "reference_06.tiff", "config": null }
-    ];
+}
+
+function refreshCameras() {
+    hideEverything();
+    fetch('/test_api_calls/test_getCams.json')
+        .then(response => {
+            if (!response.ok) {
+                //console.log('not found');
+                this.apiGetCamerasReceived({ "cameras": [] });
+            }
+            return response.json();
+        })
+        .then(json => {
+
+            this.apiGetCamerasReceived(json);
+        })
+        .catch(function () {
+            //console.error('catch fetch');
+            this.apiGetCamerasReceived({ "cameras": [] });
+        })
+}
+
+function apiGetCamerasReceived(jsonResult) {
+    console.log('loading cameras')
+    hideEverything();
+    document.getElementById('mainEditor').style.display = 'block';
+    let cameras = [];
+    if (jsonResult != null && jsonResult.cameras != null) {
+        for (let i = 0; i < jsonResult.cameras.length; i++) {
+            let camera = jsonResult.cameras[i];
+            let newCamera = {
+                "usbId": camera.usbId,
+                "name": ((camera.name ?? "-Unknown-").trim()),
+                "rotation": camera.rotation,
+                "url": camera.url,
+                "isOnline": camera.isOnline,
+                "isKnown": camera.isKnown,
+                "config": null
+            };
+            cameras.push(newCamera);
+        }
+    }
     cameraEditor.cameras = cameras;
-    changeCamera(0, false);
+    changeCamera(cameraEditor.selectedCameraIndex, false);
 }
 
 function hideUI() {
@@ -3249,7 +3284,7 @@ let stagedUpdateCameraName = null;
 function renameCamera(cameraIndex) {
     cameraEditor.selectedCameraIndex = cameraIndex;
     let oldCamName = cameraEditor.cameras[cameraEditor.selectedCameraIndex].name;
-    if (oldCamName == null || oldCamName.trim().toLowerCase == "unknown") {
+    if (oldCamName == null || oldCamName.indexOf("-") > -1) {
         oldCamName = "";
     }
     let newName = prompt("Please enter a new camera name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", oldCamName);
@@ -3276,12 +3311,14 @@ function renameCamera(cameraIndex) {
                 continue;
             }
             if ((cameraEditor.cameras[i].name + "").toLocaleLowerCase() == newName) {
-                alert('The camera name already in use');
+                alert('The camera name is already in use');
                 return;
             }
         }
         stagedUpdateCameraName = newName;
-        document.getElementById('valCam' + cameraIndex.toString().padStart(2, '0') + 'Name').innerHTML = newName;
+        let elmName = document.getElementById('valCam' + cameraIndex.toString().padStart(2, '0') + 'Name');
+        elmName.innerHTML = newName;
+        elmName.style.color = white;
     }
 
 }
@@ -3289,6 +3326,7 @@ function renameCamera(cameraIndex) {
 
 
 function changeCamera(cameraIndex, editing) {
+
     activeTool = 'look';
     //activeLayer = 'Region';
     stagedUpdateCameraName = null;
@@ -3296,22 +3334,34 @@ function changeCamera(cameraIndex, editing) {
     cameraEditor.isEditing = false;//will flip if camera index is found
     hideUI();
     hideTips();
-    cameraEditor.selectedCameraIndex = cameraIndex;
+    if (cameraEditor.cameras.length > 0) {
+        cameraEditor.selectedCameraIndex = Math.max(0, Math.min(cameraIndex, cameraEditor.cameras.length - 1));
+        let src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", src);
+        xhr.responseType = "arraybuffer";
+        xhr.onload = imgLoaded;
+        xhr.send();
+    }
+    else {
+        //they need to see no cameras and a refresh button.
+        console.log('no cameras detected or configured');
+        cameraChangedImageLoaded(-1, editing)
 
+    }
+}
+
+function refreshImage() {
     let src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
     let xhr = new XMLHttpRequest();
     xhr.open("GET", src);
     xhr.responseType = "arraybuffer";
     xhr.onload = imgLoaded;
     xhr.send();
-
-
-
-
 }
 
 function imgLoaded(e) {
-
+    changeCamera
     //37510 User Comment
     var ifds = UTIF.decode(e.target.response);
     //console.log(JSON.stringify(ifds));
@@ -3344,149 +3394,217 @@ function imgLoaded(e) {
     let image = document.getElementById('regionEditorImageRef');
     image.src = canvas.toDataURL();
 
-    distanceMap = new Array(49152);
-    materialMap = new Array(49152);
+
     tempsCelsius = thermalData.TemperaturesInCelsius;
-
-
+    if (!cameraEditor.isEditing) {
+        //Todo these needs to be assigned what they are in the config.
+        distanceMap = new Array(49152);
+        materialMap = new Array(49152);
+    }
+    clearStoredImageData();
 
 
 }
 
 function cameraChangedImageLoaded(cameraIndex, editing) {
+    
     clearStoredImageData();
     showUI();
-    cameraEditor.selectedCameraIndex = cameraIndex;
-    if (regionEditor != null) {
 
-        if (historyStack != null && historyStack.length > 1) {
-            //todo save changes?
-        }
-        historyStack = [];
-        //tempsCelsius = [];
-        historyIndex = -1;
+    if (cameraEditor.cameras.length > 0) {
 
-        let oldImageScale = regionEditor.imageScale;
-        let oldImageFilter = regionEditor.imageFilter;
-        if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null) {
-            regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config));
-            regionEditor.imageScale = oldImageScale;
-            regionEditor.imageFilter = oldImageFilter;
+        cameraEditor.selectedCameraIndex = cameraIndex;
+        if (regionEditor != null) {
+
+            if (historyStack != null && historyStack.length > 1) {
+                //todo save changes?
+            }
+            historyStack = [];
+            //tempsCelsius = [];
+            historyIndex = -1;
+
+            let oldImageScale = regionEditor.imageScale;
+            let oldImageFilter = regionEditor.imageFilter;
+            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null) {
+                regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config));
+                regionEditor.imageScale = oldImageScale;
+                regionEditor.imageFilter = oldImageFilter;
+            }
+            else {
+                regionEditor = getEmptyRegionEditor();
+                regionEditor.imageScale = oldImageScale;
+                regionEditor.imageFilter = oldImageFilter;
+            }
+
         }
         else {
-            regionEditor = getEmptyRegionEditor();
-            regionEditor.imageScale = oldImageScale;
-            regionEditor.imageFilter = oldImageFilter;
-        }
-
-    }
-    else {
-        if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null) {
-            regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config));
-        }
-        else {
-            regionEditor = getEmptyRegionEditor();
-            regionEditor.imageScale = 3.0;
+            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null) {
+                regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config));
+            }
+            else {
+                regionEditor = getEmptyRegionEditor();
+                regionEditor.imageScale = 3.0;
+            }
         }
     }
 
     let cameraTools = document.getElementById('cameraTools');
     cameraTools.innerHTML = '';
     let sb = '';
-    for (let i = 0; i < cameraEditor.cameras.length; i++) {
-        let strIndex = i.toString().padStart(2, '0');
-        let camera = cameraEditor.cameras[i];
+    if (cameraEditor.cameras.length > 0) {
 
-        if (i == cameraIndex) {
-            if (editing) {
-                cameraEditor.isEditing = true;
-                sb += '<button disabled id="btnCam' + strIndex + '" class="resizebutton2" style="background-color:black">';
-                sb += '<div style="line-height: 14px;">';
-                sb += '<div class="regioneditortext">Editing</div>';
-                sb += '<div class="regionditortextsub3">Camera</div>';
-                sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">' + camera.name + '</div>';
-                sb += '</div>';
-                sb += '</button>';
+       
+        for (let i = 0; i < cameraEditor.cameras.length; i++) {
+            let strIndex = i.toString().padStart(2, '0');
+            let camera = cameraEditor.cameras[i];
 
-                sb += '<button id="btnRenameCamera" onclick="renameCamera(' + cameraIndex + ')" class="resizebutton">';
-                sb += '<div style="line-height: 4px;">';
-                sb += '<span class="regioneditortext">Rename</span>';
-                sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
-                sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M10 4H8V6H5C3.34315 6 2 7.34315 2 9V15C2 16.6569 3.34315 18 5 18H8V20H10V4ZM8 8V16H5C4.44772 16 4 15.5523 4 15V9C4 8.44772 4.44772 8 5 8H8Z" fill="currentColor"/>';
-                sb += '<path d="M19 16H12V18H19C20.6569 18 22 16.6569 22 15V9C22 7.34315 20.6569 6 19 6H12V8H19C19.5523 8 20 8.44771 20 9V15C20 15.5523 19.5523 16 19 16Z" fill="currentColor"/>';
-                sb += '</svg>';
-                sb += '</div>';
-                sb += '</button>';
+            if (i == cameraIndex) {
+                if (editing) {
+                    cameraEditor.isEditing = true;
+                    sb += '<button disabled id="btnCam' + strIndex + '" class="resizebutton2" style="background-color:black">';
+                    sb += '<div style="line-height: 14px;">';
+                    if(!camera.isOnline){
+                        sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>';
+                    }
+                    else{
+                        sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
+                    }
+                    sb += '<div class="regioneditortext" style="margin-top:-10px">Editing</div>';
+                    sb += '<div class="regionditortextsub3" style="margin-top:-10px">Camera</div>';
+                    let strStyle = '';
+                    if (camera.name == '-Unknown-') {
+                        strStyle = 'style="color:red"';
+                    }
+                    sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3" ' + strStyle + '>' + camera.name + '</div>';
+                    sb += '</div>';
+                    sb += '</button>';
 
-                sb += '<div style="width:72px;"></div>';
+                    sb += '<button id="btnRenameCamera" onclick="renameCamera(' + cameraIndex + ')" class="resizebutton">';
+                    sb += '<div style="line-height: 4px;">';
+                    sb += '<span class="regioneditortext">Rename</span>';
+                    sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+                    sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M10 4H8V6H5C3.34315 6 2 7.34315 2 9V15C2 16.6569 3.34315 18 5 18H8V20H10V4ZM8 8V16H5C4.44772 16 4 15.5523 4 15V9C4 8.44772 4.44772 8 5 8H8Z" fill="currentColor"/>';
+                    sb += '<path d="M19 16H12V18H19C20.6569 18 22 16.6569 22 15V9C22 7.34315 20.6569 6 19 6H12V8H19C19.5523 8 20 8.44771 20 9V15C20 15.5523 19.5523 16 19 16Z" fill="currentColor"/>';
+                    sb += '</svg>';
+                    sb += '</div>';
+                    sb += '</button>';
 
-                sb += '<button id="btnSaveCamera" onclick="saveCamera(' + cameraIndex + ')" class="resizebutton" style="background-color:green">';
-                sb += '<div style="line-height: 4px;">';
-                sb += '<span class="regioneditortext">Save</span>';
-                sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
-                sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7ZM9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12Z" fill="currentColor"/>';
-                sb += '<path d="M18 5C17.4477 5 17 5.44772 17 6C17 6.55228 17.4477 7 18 7C18.5523 7 19 6.55228 19 6C19 5.44772 18.5523 5 18 5Z" fill="currentColor" />';
-                sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M5 1C2.79086 1 1 2.79086 1 5V19C1 21.2091 2.79086 23 5 23H19C21.2091 23 23 21.2091 23 19V5C23 2.79086 21.2091 1 19 1H5ZM19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" fill="currentColor"/>';
-                sb += '</svg>';
-                sb += '</div>';
-                sb += '</button>';
+                    sb += '<div style="width:72px;"></div>';
 
-                sb += '<div style="width:64px;"></div>';
+                    sb += '<button id="btnSaveCamera" onclick="saveCamera(' + cameraIndex + ')" class="resizebutton" style="background-color:green">';
+                    sb += '<div style="line-height: 4px;">';
+                    sb += '<span class="regioneditortext">Save</span><br/>';
+                    sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+                    sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7ZM9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12Z" fill="currentColor"/>';
+                    sb += '<path d="M18 5C17.4477 5 17 5.44772 17 6C17 6.55228 17.4477 7 18 7C18.5523 7 19 6.55228 19 6C19 5.44772 18.5523 5 18 5Z" fill="currentColor" />';
+                    sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M5 1C2.79086 1 1 2.79086 1 5V19C1 21.2091 2.79086 23 5 23H19C21.2091 23 23 21.2091 23 19V5C23 2.79086 21.2091 1 19 1H5ZM19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" fill="currentColor"/>';
+                    sb += '</svg>';
+                    sb += '</div>';
+                    sb += '</button>';
 
-                sb += '<button id="btnCancelCamera" onclick="changeCamera(' + i + ',false)" class="resizebutton">';
-                sb += '<div style="line-height: 4px;">';
-                sb += '<span class="regioneditortext">Cancel</span>';
-                sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
-                sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7ZM9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12Z" fill="currentColor"/>';
-                sb += '<path d="M18 5C17.4477 5 17 5.44772 17 6C17 6.55228 17.4477 7 18 7C18.5523 7 19 6.55228 19 6C19 5.44772 18.5523 5 18 5Z" fill="currentColor" />';
-                sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M5 1C2.79086 1 1 2.79086 1 5V19C1 21.2091 2.79086 23 5 23H19C21.2091 23 23 21.2091 23 19V5C23 2.79086 21.2091 1 19 1H5ZM19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" fill="currentColor"/>';
-                sb += '</svg>';
-                sb += '</div>';
-                sb += '</button>';
+                    sb += '<div style="width:64px;"></div>';
 
-                sb += '<div style="width:72px;"></div>';
+                    sb += '<button id="btnDeleteCamera" onclick="deleteCamera(' + i + ')" class="resizebutton" style="background-color:red">';
+                    sb += '<div style="line-height: 4px;">';
+                    sb += '<span class="regioneditortext">Delete</span>';
+                    sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+                    sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7ZM9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12Z" fill="currentColor"/>';
+                    sb += '<path d="M18 5C17.4477 5 17 5.44772 17 6C17 6.55228 17.4477 7 18 7C18.5523 7 19 6.55228 19 6C19 5.44772 18.5523 5 18 5Z" fill="currentColor" />';
+                    sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M5 1C2.79086 1 1 2.79086 1 5V19C1 21.2091 2.79086 23 5 23H19C21.2091 23 23 21.2091 23 19V5C23 2.79086 21.2091 1 19 1H5ZM19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" fill="currentColor"/>';
+                    sb += '</svg>';
+                    sb += '</div>';
+                    sb += '</button>';
 
-                sb += '<button id="btnDeleteCamera" onclick="deleteCamera(' + i + ')" class="resizebutton" style="background-color:red">';
-                sb += '<div style="line-height: 4px;">';
-                sb += '<span class="regioneditortext">Delete</span>';
-                sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
-                sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7ZM9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12Z" fill="currentColor"/>';
-                sb += '<path d="M18 5C17.4477 5 17 5.44772 17 6C17 6.55228 17.4477 7 18 7C18.5523 7 19 6.55228 19 6C19 5.44772 18.5523 5 18 5Z" fill="currentColor" />';
-                sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M5 1C2.79086 1 1 2.79086 1 5V19C1 21.2091 2.79086 23 5 23H19C21.2091 23 23 21.2091 23 19V5C23 2.79086 21.2091 1 19 1H5ZM19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" fill="currentColor"/>';
-                sb += '</svg>';
-                sb += '</div>';
-                sb += '</button>';
+                    sb += '<div style="width:72px;"></div>';
 
 
-                //draw rename save and cancel buttons
-                break;
+
+                    sb += '<button id="btnCancelCamera" onclick="changeCamera(' + i + ',false)" class="resizebutton">';
+                    sb += '<div style="line-height: 4px;">';
+                    sb += '<span class="regioneditortext">Cancel</span>';
+                    sb += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
+                    sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7ZM9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12Z" fill="currentColor"/>';
+                    sb += '<path d="M18 5C17.4477 5 17 5.44772 17 6C17 6.55228 17.4477 7 18 7C18.5523 7 19 6.55228 19 6C19 5.44772 18.5523 5 18 5Z" fill="currentColor" />';
+                    sb += '<path fill-rule="evenodd" clip-rule="evenodd" d="M5 1C2.79086 1 1 2.79086 1 5V19C1 21.2091 2.79086 23 5 23H19C21.2091 23 23 21.2091 23 19V5C23 2.79086 21.2091 1 19 1H5ZM19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" fill="currentColor"/>';
+                    sb += '</svg>';
+                    sb += '</div>';
+                    sb += '</button>';
+
+                    sb += '<div style="width:72px;"></div>';
+
+
+
+
+                    //draw rename save and cancel buttons
+                    break;
+                }
+                else {
+                    sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',true)" class="resizebutton2" style="border-color:white">';
+                    sb += '<div style="line-height: 14px;">';
+                    if(!camera.isOnline){
+                        sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>';
+                    }
+                    else{
+                        sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
+                    }
+                    sb += '<div class="regioneditortext" style="margin-top:-12px">Tap To Edit</div>';
+                    //camera names were already sanitized
+                    sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">Viewing</div>';
+                    sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">' + camera.name + '</div>';
+                    sb += '</div>';
+                    sb += '</button>';
+                }
+
             }
-            else {
-                sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',true)" class="resizebutton2" style="background-color:green">';
-                sb += '<div style="line-height: 14px;">';
-                sb += '<div class="regioneditortext">Tap to Edit</div>';
+            else if (!editing) {
+                sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',false)" class="resizebutton2">';
+                
+                sb += '<div style="line-height: 20px;">';
+                if(!camera.isOnline){
+                    sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:-4px" class="regionditortextsub3">Offline</div>';
+                }
+                else{
+                    sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:-4px" class="regionditortextsub3">Online</div>';
+                }
+                sb += '<div class="regioneditortext" style="margin-top:-15px">View Camera</div>';
                 //camera names were already sanitized
-                sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">Viewing</div>';
                 sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">' + camera.name + '</div>';
+                
                 sb += '</div>';
                 sb += '</button>';
             }
 
         }
-        else if (!editing) {
-            sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',false)" class="resizebutton2">';
-            sb += '<div style="line-height: 20px;">';
-            sb += '<div class="regioneditortext">View Camera</div>';
-            //camera names were already sanitized
-            sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">' + camera.name + '</div>';
-            sb += '</div>';
-            sb += '</button>';
+    }
+    else{
+        //No Cameras and No configured Cameras
+        sb+= '<button id="btnNoCameras" disabled class="resizebutton2" style="background-color: black;">';
+        sb+= '<div style="line-height: 17px;">';
+        sb+= '<div class="regionditortextsub3">No Cameras</div>';
+        sb+= '<div class="regionditortextsub3">Found</div>';
+        sb+= '<div class="regionditortextsub3">Check Devices</div>';
+        sb+= '</div>';
+        sb+= '</button>';
         }
+    if (!editing) {
+        sb += '<button id="btnRefreshCameras" onclick="refreshCameras()" class="resizebutton">';
+        sb += '<div style="line-height: 19px;">';
+        sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Refresh</div>';
+        sb += '<div style="margin-bottom:14px" class="regioneditortext2">Camera</div>'
+        sb += '<div class="regioneditortext2">List</div>';
+        sb += '</div>';
+        sb += '</button>';
 
-    };
-
+       
+    }
     cameraTools.innerHTML = sb;
-    goRegionEditor();
+    if(cameraEditor.cameras.length > 0){
+        goRegionEditor();
+    }
+    else{
+        hideUI();
+        document.getElementById('cameraTools').style.display = '';
+    }
 }
 
 function setupEvents() {
