@@ -8,6 +8,7 @@ let cameraEditor = {
 };
 
 var regionEditor = null;
+
 var regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
 var tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
 let regionTypes = ['point', 'polygon'];
@@ -25,6 +26,7 @@ let paintBrushSize = 10;
 let eraseBrushSize = 10;
 let selectedDistance = 1.0;
 let fillRange = 1.0;
+const unknownCameraName = '-Unknown-';
 
 
 /*AI Prompt
@@ -3228,7 +3230,7 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
             let camera = jsonResult.cameras[i];
             let newCamera = {
                 "usbId": camera.usbId,
-                "name": ((camera.name ?? "-Unknown-").trim()),
+                "name": ((camera.name ?? unknownCameraName).trim()),
                 "rotation": camera.rotation,
                 "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                 "isOnline": camera.isOnline,
@@ -3266,7 +3268,7 @@ function showUI() {
 function deleteCamera(cameraIndex) {
     //todo prompt for confirm or tap again to confirm
     cameraEditor.selectedCameraIndex = cameraIndex;
-    cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = "unknown";
+    cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = unknownCameraName;
     cameraEditor.cameras[cameraEditor.selectedCameraIndex].isSpecified = false;
     changeCamera(cameraIndex, false);
 }
@@ -3279,7 +3281,7 @@ function saveCamera(cameraIndex) {
         stagedUpdateCameraName = null;
     }
     else {
-        if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == "unknown" || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
+        if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == unknownCameraName || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
             alert('Please rename the camera before saving it.');
             return;
         }
@@ -3326,7 +3328,7 @@ function renameCamera(cameraIndex) {
         stagedUpdateCameraName = newName;
         let elmName = document.getElementById('valCam' + cameraIndex.toString().padStart(2, '0') + 'Name');
         elmName.innerHTML = newName;
-        elmName.style.color = white;
+        elmName.style.color = 'yellow';
     }
 
 }
@@ -3480,7 +3482,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     sb += '<div class="regioneditortext" style="margin-top:-10px">Editing</div>';
                     sb += '<div class="regionditortextsub3" style="margin-top:-10px">Camera</div>';
                     let strStyle = '';
-                    if (camera.name == '-Unknown-') {
+                    if (camera.name == unknownCameraName) {
                         strStyle = 'style="color:red"';
                     }
                     sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3" ' + strStyle + '>' + camera.name + '</div>';
@@ -3541,9 +3543,16 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     sb += '<div style="width:72px;"></div>';
 
 
+                    sb += '<button id="btnReviewIssues" onclick="reviewIssues()" class="resizebutton">';
+                    sb += '<div style="line-height: 19px;">';
+                    sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Review</div>';
+                    sb += '<div style="margin-bottom:14px" class="regioneditortext2">0</div>'
+                    sb += '<div class="regioneditortext2">Issues</div>';
+                    sb += '</div>';
+                    sb += '</button>';
 
 
-                    //draw rename save and cancel buttons
+                    
                     break;
                 }
                 else {
@@ -3558,7 +3567,11 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     sb += '<div class="regioneditortext" style="margin-top:-12px">Tap To Edit</div>';
                     //camera names were already sanitized
                     sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">Viewing</div>';
-                    sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">' + camera.name + '</div>';
+                    let strStyle = '';
+                    if (camera.name == unknownCameraName) {
+                        strStyle = ' style="color:red"';
+                    }
+                    sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + camera.name + '</div>';
                     sb += '</div>';
                     sb += '</button>';
                 }
@@ -3576,7 +3589,11 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                 }
                 sb += '<div class="regioneditortext" style="margin-top:-15px">View Camera</div>';
                 //camera names were already sanitized
-                sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3">' + camera.name + '</div>';
+                let strStyle = '';
+                if (camera.name == unknownCameraName) {
+                    strStyle = ' style="color:red"';
+                }
+                sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + camera.name + '</div>';
                 
                 sb += '</div>';
                 sb += '</button>';
