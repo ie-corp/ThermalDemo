@@ -3192,7 +3192,7 @@ function go() {
 
 function refreshCameras() {
     hideEverything();
-    fetch('/test_api_calls/test_getCams.json')
+    fetch('../test_api_calls/test_getCams.json')
         .then(response => {
             if (!response.ok) {
                 //console.log('not found');
