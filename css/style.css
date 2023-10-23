@@ -65,6 +65,25 @@ body{
   line-height: 60px;       /* The same as your div height */
 }
 
+.resizebutton3{
+  padding:0px;
+  margin-bottom:4px;
+  margin-right:4px;
+  user-select: none; 
+  min-width: 190px;
+  width: 190px;
+  height: 60px;
+  color:white;
+  background-color:#353A3F;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 20px;
+  font-weight: bold;
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 60px;       /* The same as your div height */
+}
+
 .resizebutton2:disabled{
 background-color:grey;
 }

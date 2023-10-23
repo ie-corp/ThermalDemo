@@ -39,10 +39,25 @@
     <div id="mainEditor">
 
         <div id="cameraTools" class="editorrow">
+            
+            <div id="cameraList"></div>
+            <button id="btnRefreshCameras" onclick="refreshCameras()" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Refresh</div>
+                    <div style="margin-bottom:14px" class="regioneditortext2">Camera</div>
+                    <div class="regioneditortext2">List</div>
+                </div>
+            </button>
+
         </div>
 
         <div id="cameraEditTools" class="editorrow" style="display: none;">
-
+            <button id="btnChangeLayerEdit" onclick="changeLayerNext(true)" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Layer</span>
+                    <span id="valActiveLayerEdit" class="regioneditortext">--</span>
+                </div>
+            </button>
 
             <button disabled id="btnCam" class="resizebutton2" style="background-color:black">
                 <div style="line-height: 14px;">
@@ -92,7 +107,7 @@
                 </div>
             </button>
 
-            
+
 
             <button id="btnSaveCamera" onclick="saveCamera()" class="resizebutton" style="background-color:green">
                 <div style="line-height: 4px;">
@@ -111,7 +126,7 @@
                 </div>
             </button>
 
-            
+
 
             <button id="btnDeleteCamera" onclick="deleteCamera()" class="resizebutton" style="background-color:red">
                 <div style="line-height: 4px;">
@@ -130,7 +145,7 @@
                 </div>
             </button>
 
-           
+
 
 
             <button id="btnCancelCamera" onclick="cancelCameraEdit()" class="resizebutton">
@@ -158,27 +173,28 @@
                 </div>
             </button>
 
-            
-
-
-            
-
-
-            
 
         </div>
 
         <div id="imageTools" class="editorrow">
 
 
-            <button id="btnChangeLayer" onclick="changeLayerNext(true)" class="resizebutton">
-                <div style="line-height: 4px;">
-                    <span class="regioneditortext">Layer</span>
-                    <span id="valActiveLayer" class="regioneditortext">--</span>
+            <button id="btnChangeEvent" onclick="changeEventNext(true)" class="resizebutton">
+                <div style="line-height: 20px;">
+                    <span class="regioneditortext">Event</span>
+                    <span id="valEventIndex" class="regionditortextsub3">1 of 1</span>
                 </div>
             </button>
 
-            <div style="width:200px;">
+
+            <button id="btnChangeEventName" onclick="changeEventName()" class="resizebutton3">
+                <div style="line-height: 20px;">
+                    <div class="regioneditortext">Event Trigger</div>
+                    <div id="valEventName" class="regionditortextsub3">Always Evaluate</div>
+                </div>
+            </button>
+
+            <div style="width:6px;">
             </div>
 
             <button disabled class="resizebutton" style="background-color: black;">
@@ -235,15 +251,51 @@
                 </div>
             </button>
 
-            
+            <div style="width:8px;">
+            </div>
 
-            
+            <button id="btnCopyEvent" onclick="changeRegionNext(true)" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <span class="regioneditortext2">Copy</span>
+                    <span class="regioneditortext2"><br/></span>
+                    <span class="regionditortextsub3">Event</span>
+                </div>
+            </button>
+
+            <button id="btnAddEvent" onclick="changeRegionNext(true)" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <span class="regioneditortext2">Add</span>
+                    <span class="regioneditortext2"><br/></span>
+                    <span class="regionditortextsub3">Event</span>
+                </div>
+            </button>
+
+            <button id="btnClearEvent" onclick="changeRegionNext(true)" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <span class="regioneditortext2">Clear</span>
+                    <span class="regioneditortext2"><br/></span>
+                    <span class="regionditortextsub3">Event</span>
+                </div>
+            </button>
+
+            <button id="btnDeleteEvent" onclick="changeRegionNext(true)" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <span class="regioneditortext2">Delete</span>
+                    <span class="regioneditortext2"><br/></span>
+                    <span class="regionditortextsub3">Event</span>
+                </div>
+            </button>
+
+
+
+
         </div>
         <div id="rowRegionTools" class="editorrow">
 
             <button id="btnChangeRegion" onclick="changeRegionNext(true)" class="resizebutton">
-                <div style="line-height: 20px;">
-                    <span class="regioneditortext">Region</span>
+                <div style="line-height: 19px;">
+                    <span class="regioneditortext2">Event</span>
+                    <span class="regioneditortext2">Spots</span>
                     <span id="valRegionIndex" class="regionditortextsub3">0 of 0</span>
                 </div>
             </button>
@@ -270,7 +322,7 @@
 
             <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 17px;">
-                    <span class="regioneditortext2">Rgn Hi</span>
+                    <span class="regioneditortext2">Spot Hi</span>
                     <span id="valRegionHighTempC" class="regionditortextsub3">--&deg;C</span>
                     <span id="valRegionHighTempF" class="regionditortextsub3">--&deg;F</span>
                 </div>
@@ -298,7 +350,7 @@
 
             <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 17px;">
-                    <span class="regioneditortext2">Rgn Lo</span>
+                    <span class="regioneditortext2">Spot Lo</span>
                     <span id="valRegionLowTempC" class="regionditortextsub3">--&deg;C</span>
                     <span id="valRegionLowTempF" class="regionditortextsub3">--&deg;F</span>
                 </div>
@@ -541,7 +593,7 @@
         <div id="touchTools" class="editorrow">
             <div class="editorcolumn">
 
-               
+
                 <button id="btnZoomImage" onclick="zoomRegionEditor(.5)" class="resizebutton">
                     <div style="line-height: 4px;">
                         <span class="regioneditortext">Zoom</span>

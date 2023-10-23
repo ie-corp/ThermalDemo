@@ -13,9 +13,9 @@ var regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "
 var tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
 let regionTypes = ['point', 'polygon'];
 let regionEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete', 'sample', 'fill', 'change', 'paintround', 'paintsquare', 'eraseround', 'erasesquare'];
-let regionEditorLayers = ['Region', 'Matl', 'Dist'];
+let regionEditorLayers = ['Events', 'Matl', 'Dist'];
 let activeTool = 'look';
-let activeLayer = 'Region';
+let activeLayer = 'Events';
 const maxHistoryStackEntries = 50;
 let historyStack = [];
 let historyIndex = -1;
@@ -493,7 +493,7 @@ function setButtons() {
     let inactiveToolColor = 'white';
 
 
-    document.getElementById("rowRegionTools").style.display = (activeLayer != 'Region' ? 'none' : '');
+    document.getElementById("rowRegionTools").style.display = (activeLayer != 'Events' ? 'none' : '');
     document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
     document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
 
@@ -528,32 +528,37 @@ function setButtons() {
     document.getElementById("btnClearDistance").style.display = !cameraEditor.isEditing ? 'none' : '';
 
 
+    document.getElementById("btnCopyEvent").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnAddEvent").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnClearEvent").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnDeleteEvent").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
 
 
-    document.getElementById("btnPolygonAdd").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnPointAdd").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
+
+    document.getElementById("btnPolygonAdd").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnPointAdd").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
 
 
     document.getElementById("btnRegionToolLook").disabled = false;
     document.getElementById("btnRegionToolLook").style.color = (activeTool == 'look' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolSelect").style.display = (activeLayer != 'Region' ? 'none' : '');
+    document.getElementById("btnRegionToolSelect").style.display = (activeLayer != 'Events' ? 'none' : '');
     document.getElementById("btnRegionToolSelect").disabled = regionEditor.regions.length <= 1;
     document.getElementById("btnRegionToolSelect").style.color = (activeTool == 'select' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolMove").style.display = ((activeLayer != 'Region' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolMove").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
     document.getElementById("btnRegionToolMove").disabled = !hasActiveItem;
     document.getElementById("btnRegionToolMove").style.color = (activeTool == 'move' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointAdd").style.display = (activeLayer == 'Region' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
+    document.getElementById("btnRegionToolPointAdd").style.display = (activeLayer == 'Events' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
     document.getElementById("btnRegionToolPointAdd").disabled = !polygonSelected;
     document.getElementById("btnRegionToolPointAdd").style.color = (activeTool == 'pointadd' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointMove").style.display = (activeLayer == 'Region' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
+    document.getElementById("btnRegionToolPointMove").style.display = (activeLayer == 'Events' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
     document.getElementById("btnRegionToolPointMove").disabled = !polygonSelected;
     document.getElementById("btnRegionToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer == 'Region' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
+    document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer == 'Events' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
     document.getElementById("btnRegionToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
     document.getElementById("btnRegionToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
 
@@ -571,9 +576,9 @@ function setButtons() {
     document.getElementById("btnSampleDistance").disabled = !cameraEditor.isEditing;
     document.getElementById("btnSampleDistance").style.display = cameraEditor.isEditing ? '' : 'none';
 
-    let fillSelected = activeLayer != 'Region' && cameraEditor.isEditing && (activeTool.indexOf('fill') > -1);
-    document.getElementById("btnRegionToolFill").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolFill").disabled = activeLayer == 'Region';
+    let fillSelected = activeLayer != 'Events' && cameraEditor.isEditing && (activeTool.indexOf('fill') > -1);
+    document.getElementById("btnRegionToolFill").style.display = ((activeLayer == 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolFill").disabled = activeLayer == 'Events';
     document.getElementById("btnRegionToolFill").style.color = (fillSelected ? activeToolColor : inactiveToolColor);
 
 
@@ -584,15 +589,15 @@ function setButtons() {
     document.getElementById("btnChangeFillRangeMore").disabled = !fillSelected;
 
 
-    document.getElementById("btnRegionToolChange").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolChange").disabled = activeLayer == 'Region';
+    document.getElementById("btnRegionToolChange").style.display = ((activeLayer == 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolChange").disabled = activeLayer == 'Events';
     document.getElementById("btnRegionToolChange").style.color = (activeTool == 'change' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPaint").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolPaint").disabled = activeLayer == 'Region';
+    document.getElementById("btnRegionToolPaint").style.display = ((activeLayer == 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolPaint").disabled = activeLayer == 'Events';
     document.getElementById("btnRegionToolPaint").style.color = (activeTool.indexOf('paint') > -1 ? activeToolColor : inactiveToolColor);
 
-    let paintSelected = activeLayer != 'Region' && (activeTool.indexOf('paint') > -1);
+    let paintSelected = activeLayer != 'Events' && (activeTool.indexOf('paint') > -1);
     document.getElementById("btnChangePaintSizeInfo").style.display = (!paintSelected ? 'none' : '');
     document.getElementById("btnChangePaintSizeLess").style.display = (!paintSelected ? 'none' : '');
     document.getElementById("btnChangePaintSizeLess").disabled = !paintSelected;
@@ -600,12 +605,12 @@ function setButtons() {
     document.getElementById("btnChangePaintSizeMore").disabled = !paintSelected;
 
 
-    document.getElementById("btnRegionToolErase").style.display = ((activeLayer == 'Region' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolErase").disabled = activeLayer == 'Region';
+    document.getElementById("btnRegionToolErase").style.display = ((activeLayer == 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolErase").disabled = activeLayer == 'Events';
     document.getElementById("btnRegionToolErase").style.color = (activeTool.indexOf('erase') > -1 ? activeToolColor : inactiveToolColor);
 
 
-    let eraseSelected = activeLayer != 'Region' && (activeTool.indexOf('erase') > -1);
+    let eraseSelected = activeLayer != 'Events' && (activeTool.indexOf('erase') > -1);
     document.getElementById("btnChangeEraseSizeInfo").style.display = (!eraseSelected ? 'none' : '');
     document.getElementById("btnChangeEraseSizeLess").style.display = (!eraseSelected ? 'none' : '');
     document.getElementById("btnChangeEraseSizeLess").disabled = !eraseSelected;
@@ -821,7 +826,8 @@ function recalcEditor() {
 
 
 
-    document.getElementById("valActiveLayer").innerHTML = activeLayer;
+    
+    document.getElementById("valActiveLayerEdit").innerHTML = activeLayer;
     document.getElementById("valPaintBrushSize").innerHTML = paintBrushSize.toFixed(0);
     document.getElementById("valEraseBrushSize").innerHTML = eraseBrushSize.toFixed(0);
     document.getElementById("valFillRange").innerHTML = fillRange.toFixed(2);
@@ -1255,7 +1261,7 @@ function drawRegionMap(ctx, scale) {
         var region = regionEditor.regions[i];
         let isSelected = false;
         let drawControls = false;
-        if (activeLayer == 'Region') {
+        if (activeLayer == 'Events') {
             isSelected = i == regionEditor.selectedRegionIndex;
             drawControls = isSelected && region.type == 'polygon' && activeTool.indexOf('point') > -1;
             if (drawControls) {
@@ -2858,7 +2864,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
 }
 
 function processScreenTouchCoordinates(offsetX, offsetY, isMouseMoveEvent) {
-    if (activeLayer == 'Region') {
+    if (activeLayer == 'Events') {
         processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent);
     }
     else if (activeLayer == 'Dist') {
@@ -3508,9 +3514,9 @@ function renameCamera(cameraIndex) {
 
 
 function changeCamera(cameraIndex, editing) {
-
+    activeLayer = 'Events';
     activeTool = 'look';
-    //activeLayer = 'Region';
+    //activeLayer = 'Events';
     stagedUpdateCameraName = null;
     doEditing = editing;
     cameraEditor.isEditing = false;//will flip if camera index is found
@@ -3631,7 +3637,8 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
     }
 
     let cameraTools = document.getElementById('cameraTools');
-    cameraTools.innerHTML = '';
+    let cameraList = document.getElementById('cameraList');
+    cameraList.innerHTML = '';
     if (editing) {
         document.getElementById('cameraEditTools').style.display = '';
         cameraTools.style.display = 'none';
@@ -3720,18 +3727,8 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
         sb += '</div>';
         sb += '</button>';
     }
-    if (!editing) {
-        sb += '<button id="btnRefreshCameras" onclick="refreshCameras()" class="resizebutton">';
-        sb += '<div style="line-height: 19px;">';
-        sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Refresh</div>';
-        sb += '<div style="margin-bottom:14px" class="regioneditortext2">Camera</div>'
-        sb += '<div class="regioneditortext2">List</div>';
-        sb += '</div>';
-        sb += '</button>';
-
-
-    }
-    cameraTools.innerHTML = sb;
+    
+    cameraList.innerHTML = sb;
     if (cameraEditor.cameras.length > 0) {
         goRegionEditor();
     }
@@ -3902,7 +3899,7 @@ function goRegionEditor() {
     metaHistoryStack = [];
     metaHistoryIndex = -1;
     recalcEditor();
-    if(activeLayer == 'Region'){
+    if(activeLayer == 'Events'){
         addRegionHistory('Initial ' + activeLayer + ' State', null, true);
     }
     else{
