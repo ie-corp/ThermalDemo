@@ -16,12 +16,12 @@ let regionEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'poi
 let regionEditorLayers = ['Region', 'Matl', 'Dist'];
 let activeTool = 'look';
 let activeLayer = 'Region';
+const maxHistoryStackEntries = 50;
 let historyStack = [];
 let historyIndex = -1;
-let materialHistoryStack = [];
-let materialHistoryIndex = -1;
-let distanceHistoryStack = [];
-let distanceHistoryIndex = -1;
+const maxMetaHistoryStackEntries = 10;//material and distance are huge!
+let metaHistoryStack = [];//material and distance.
+let metaHistoryIndex = -1;
 
 let tempsCelsius = [];
 
@@ -90,9 +90,7 @@ var waiterTime = 100;
 let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
 
 function changeLayerNext(doNext) {
-    //changing layers clears the history stack;
-    goRegionEditor();
-    hideTips();
+    
     let index = regionEditorLayers.indexOf(activeLayer);
     if (doNext) {
         index++;
@@ -107,6 +105,10 @@ function changeLayerNext(doNext) {
         index = 0;
     }
     setActiveLayer(regionEditorLayers[index]);
+    //changing layers clears the history stack;
+    hideTips();
+    goRegionEditor();
+    
 
 
 }
@@ -201,6 +203,145 @@ function selectRegionEditorTool(toolName) {
     recalcEditor();
 }
 
+function redoMetaHistory() {
+
+    if (metaHistoryIndex < 0 || metaHistoryStack.length <= 1) {
+        //console.log('nothing to redo');
+        return;
+    }
+    if (metaHistoryIndex < metaHistoryStack.length - 1) {
+        this.closeAlarmTemp();//close alarm temp if open
+        metaHistoryIndex++;
+        let historyEntry = metaHistoryStack[metaHistoryIndex];
+        if (historyEntry.materialMap != null) {
+            materialMap = [...historyEntry.materialMap];
+        }
+        if (historyEntry.distanceMap != null) {
+            distanceMap = [...historyEntry.distanceMap];
+        }
+        recalcEditor();
+    }
+    else {
+        //console.log('nothing to redo');
+        return;
+    }
+}
+
+
+
+function undoMetaHistory() {
+    if (metaHistoryStack.length <= 1) {//first entry is initial state
+        //console.log('nothing to undo');
+        return;
+    }
+
+    if (metaHistoryIndex < 0 || metaHistoryIndex >= metaHistoryStack.length) {
+        //console.log('adjusting out of bounds history index to last entry');
+        metaHistoryIndex = metaHistoryStack.length - 1;
+    }
+
+    if (metaHistoryIndex >= 1) {
+        this.closeAlarmTemp();//close alarm temp if open
+        metaHistoryIndex--;
+        let historyEntry = metaHistoryStack[metaHistoryIndex];
+        if (historyEntry.materialMap != null) {
+            materialMap = [...historyEntry.materialMap];
+        }
+        if (historyEntry.distanceMap != null) {
+            distanceMap = [...historyEntry.distanceMap];
+        }
+        recalcEditor();
+    }
+    else {
+        console.log('nothing to undo');
+
+    }
+
+}
+
+
+function addMetaHistory(historyType, force) {
+    if (!cameraEditor.isEditing) {
+        setButtons();
+        return;
+    }
+    this.closeAlarmTemp();//close alarm temp if open
+    let time = new Date().getTime();
+    let historyEntry = { "historyType": historyType, "time":time, "materialMap": null, "distanceMap": null };
+    if(activeLayer == 'Matl'){
+        historyEntry.materialMap = [...materialMap];
+    }
+    else if(activeLayer == 'Dist'){
+        historyEntry.distanceMap = [...distanceMap];
+    }
+    else{
+        console.error('invalid layer: ' + activeLayer);
+        return;
+    }
+
+    let lastHistoryEntry = null;
+    if (metaHistoryStack.length > 0) {
+        console.log('evaluating new history entry of ' + historyEntry.historyType);
+        if (metaHistoryIndex < 0 || metaHistoryIndex > metaHistoryStack.length) {
+            //console.log('adjusting out of bounds history index to last entry');
+            metaHistoryIndex = metaHistoryStack.length - 1;
+        }
+        lastHistoryEntry = metaHistoryStack[metaHistoryIndex];
+        //even for a force this doesn't make sense.
+        if (historyEntry.materialMap == lastHistoryEntry.materialMap && historyEntry.distanceMap == lastHistoryEntry.distanceMap) {
+            setButtons();
+            return;
+        }
+        
+
+        if (force) {
+            console.log('force add history entry of ' + historyEntry.historyType)
+            metaHistoryStack.splice(metaHistoryIndex + 1, 0, historyEntry);
+            metaHistoryStack.length = metaHistoryIndex + 2;//new action clears redo stack
+        }
+        else {
+            if (historyEntry.historyType == lastHistoryEntry.historyType && (historyEntry.time - lastHistoryEntry.time) < 250) {
+                //just replace if there hasn't been a break in editing.
+                console.log('replace existing history entry of' + historyEntry.historyType);
+                metaHistoryStack[metaHistoryIndex] = historyEntry;
+                setButtons();
+                return;
+            }
+            else {
+                console.log('add history entry of ' + historyEntry.historyType);
+                metaHistoryStack.splice(metaHistoryIndex + 1, 0, historyEntry);
+                metaHistoryStack.length = metaHistoryIndex + 2;//new action clears redo stack
+            }
+
+        }
+    }
+    else {
+        console.log('add initial history entry of ' + historyEntry.historyType)
+        metaHistoryStack.push(historyEntry);
+        metaHistoryIndex = 0;
+        setButtons();
+        return;
+    }
+    metaHistoryIndex++;
+    if (metaHistoryStack.length > maxMetaHistoryStackEntries) {
+        if (metaHistoryIndex > 1) {
+            metaHistoryStack.shift();
+            metaHistoryIndex--;
+        }
+        else {
+            metaHistoryStack.pop();
+        }
+    }
+    setButtons();
+
+
+
+
+}
+
+
+
+
 function redoRegionEditor() {
     if (historyIndex < 0 || historyStack.length <= 1) {
         //console.log('nothing to redo');
@@ -252,7 +393,8 @@ function undoRegionEditor() {
 
 }
 
-function addHistory(historyType, selectedIndex, force) {
+
+function addRegionHistory(historyType, selectedIndex, force) {
     if (!cameraEditor.isEditing) {
         setButtons();
         return;
@@ -292,14 +434,14 @@ function addHistory(historyType, selectedIndex, force) {
         }
     }
     else {
-        //console.log('add initial history entry of ' + historyEntry.historyType)
+        console.log('add initial history entry of ' + historyEntry.historyType)
         historyStack.push(historyEntry);
         historyIndex = 0;
         setButtons();
         return;
     }
     historyIndex++;
-    if (historyStack.length > 50) {
+    if (historyStack.length > maxHistoryStackEntries) {
         if (historyIndex > 1) {
             historyStack.shift();
             historyIndex--;
@@ -317,21 +459,21 @@ function addHistory(historyType, selectedIndex, force) {
 
 function setButtons() {
 
-    
+
 
     document.getElementById("btnUndoRegionEdit").disabled = historyStack.length <= 1 || historyIndex <= 0;
     document.getElementById("btnUndoRegionEdit").style.display = cameraEditor.isEditing ? '' : 'none';
     document.getElementById("btnRedoRegionEdit").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
     document.getElementById("btnRedoRegionEdit").style.display = cameraEditor.isEditing ? '' : 'none';
 
-    document.getElementById("btnUndoMaterialEdit").disabled = historyStack.length <= 1 || historyIndex <= 0;
+    document.getElementById("btnUndoMaterialEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex <= 0;
     document.getElementById("btnUndoMaterialEdit").style.display = cameraEditor.isEditing ? '' : 'none';
-    document.getElementById("btnRedoMaterialEdit").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
+    document.getElementById("btnRedoMaterialEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex >= metaHistoryStack.length - 1;
     document.getElementById("btnRedoMaterialEdit").style.display = cameraEditor.isEditing ? '' : 'none';
 
-    document.getElementById("btnUndoDistanceEdit").disabled = historyStack.length <= 1 || historyIndex <= 0;
+    document.getElementById("btnUndoDistanceEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex <= 0;
     document.getElementById("btnUndoDistanceEdit").style.display = cameraEditor.isEditing ? '' : 'none';
-    document.getElementById("btnRedoDistanceEdit").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
+    document.getElementById("btnRedoDistanceEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex >= metaHistoryStack.length - 1;
     document.getElementById("btnRedoDistanceEdit").style.display = cameraEditor.isEditing ? '' : 'none';
 
 
@@ -540,6 +682,8 @@ function clearDistanceMap() {
     hideTips();
     distanceMap = new Array(49152);
     recalcEditor();
+    addMetaHistory('clear distance', false);//prevent double click
+
 }
 
 function hideEverything() {
@@ -612,6 +756,7 @@ function clearMaterialMap() {
     hideTips();
     materialMap = new Array(49152);
     recalcEditor();
+    addMetaHistory('clear material', false);//prevent double click
 }
 
 
@@ -869,7 +1014,7 @@ function rotateImage() {
         }
     }
     recalcEditor();
-    addHistory('rotate image', null, false);//I don't think this needs a undo.
+    addRegionHistory('rotate image', null, false);//I don't think this needs a undo.
 }
 
 let lastRedrawDate = null;
@@ -1325,7 +1470,7 @@ function deleteRegionEditor() {
             regionEditor.selectedRegionIndex = 0;
         }
         recalcEditor();
-        addHistory('delete ' + region.type, selIndex, true);
+        addRegionHistory('delete ' + region.type, selIndex, true);
     }
 }
 
@@ -1364,7 +1509,7 @@ function changeImageMirror() {
         }
     }
     hideTips();
-    addHistory('image mirror horizontally', null, false);
+    addRegionHistory('image mirror horizontally', null, false);
     recalcEditor();
 }
 
@@ -1538,7 +1683,7 @@ function saveAlarmTemp() {
         }
         recalcEditor();
         if (hadChange) {
-            addHistory('change alarm temp', null, true);//force this
+            addRegionHistory('change alarm temp', null, true);//force this
         }
     }
 
@@ -1595,7 +1740,7 @@ function changeImageFilterNext(nextFilter) {
     regionEditor.imageFilter = imageFilter;
 
     recalcEditor();
-    addHistory('change image filter', null, false);//I don't think this needs a undo.
+    addRegionHistory('change image filter', null, false);//I don't think this needs a undo.
 }
 
 function changeRegionName() {
@@ -1618,7 +1763,7 @@ function changeRegionName() {
             }
             region.name = newName;
             recalcEditor();
-            addHistory('change ' + region.type + ' name', regionEditor.selectedRegionIndex, true);
+            addRegionHistory('change ' + region.type + ' name', regionEditor.selectedRegionIndex, true);
         }
     }
 }
@@ -1896,7 +2041,7 @@ function moveRegionAbsolute(x, y) {
         fixRegionOutOfBounds(region);
         recalcEditor();
         let strTag = 'dragged';
-        addHistory('move ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
+        addRegionHistory('move ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
     }
 }
 
@@ -1930,7 +2075,7 @@ function moveRegionBy(x, y) {
         else {
             strTag = 'vertically';
         }
-        addHistory('move ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
+        addRegionHistory('move ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
     }
 }
 
@@ -1963,7 +2108,7 @@ function resizeRegionBy(w, h) {
         else {
             strTag = 'width';
         }
-        addHistory('resize ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
+        addRegionHistory('resize ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
     }
 }
 
@@ -1986,7 +2131,7 @@ function rotateRegionBy(rotateBy) {
         }
         fixRegionOutOfBounds(region);
         recalcEditor();
-        addHistory('rotate ' + region.type, regionEditor.selectedRegionIndex, false);
+        addRegionHistory('rotate ' + region.type, regionEditor.selectedRegionIndex, false);
     }
 }
 
@@ -2013,7 +2158,7 @@ function changeRegionColorNext(goNext) {
         }
         region.color = regionColors[currentIndex];
         recalcEditor();
-        addHistory('change ' + region.type + ' color', regionEditor.selectedRegionIndex, false);
+        addRegionHistory('change ' + region.type + ' color', regionEditor.selectedRegionIndex, false);
     }
 }
 
@@ -2209,7 +2354,7 @@ function processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
                 selectedPointIndex = insertIndex;
                 activeTool = 'pointmove';
                 recalcEditor();
-                addHistory('add point to ' + region.type, regionEditor.selectedRegionIndex, true);//force this
+                addRegionHistory('add point to ' + region.type, regionEditor.selectedRegionIndex, true);//force this
             }
 
         }
@@ -2219,7 +2364,7 @@ function processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
                 if (indexOfClosestPoint > -1) {
                     region.points.splice(indexOfClosestPoint, 1);
                     recalcEditor();
-                    addHistory('remove point from ' + region.type, regionEditor.selectedRegionIndex, true);//force this
+                    addRegionHistory('remove point from ' + region.type, regionEditor.selectedRegionIndex, true);//force this
                 }
             }
         }
@@ -2237,7 +2382,7 @@ function processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
                 region.points[selectedPointIndex].x = dragX;
                 region.points[selectedPointIndex].y = dragY;
                 recalcEditor();
-                addHistory('move point in ' + region.type + 'pt:' + selectedPointIndex, regionEditor.selectedRegionIndex, false);
+                addRegionHistory('move point in ' + region.type + 'pt:' + selectedPointIndex, regionEditor.selectedRegionIndex, false);
             }
         }
     }
@@ -2302,6 +2447,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
         }
         recalcEditor();
+        addMetaHistory('fill distance', true);
 
 
     }
@@ -2331,6 +2477,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
                 }
             }
             recalcEditor();
+            addMetaHistory('change distance', true);
         }
 
     }
@@ -2343,6 +2490,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             }
         }
         recalcEditor();
+        addMetaHistory(activeTool + ' distance', false);
     }
     else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
         let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, eraseBrushSize);
@@ -2353,6 +2501,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             }
         }
         recalcEditor();
+        addMetaHistory(activeTool + ' distance', false);
     }
 }
 
@@ -2408,6 +2557,8 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
         }
         recalcEditor();
+        
+        addMetaHistory('fill material', true);
 
 
 
@@ -2438,6 +2589,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
                 }
             }
             recalcEditor();
+            addMetaHistory('change material', true);
         }
     }
     else if (activeTool == 'paintround' || activeTool == 'paintsquare') {
@@ -2457,6 +2609,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             }
         }
         recalcEditor();
+        addMetaHistory(activeTool + ' material', false);
     }
     else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
         let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, eraseBrushSize);
@@ -2467,6 +2620,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             }
         }
         recalcEditor();
+        addMetaHistory(activeTool + ' material', false);
     }
 
 
@@ -3202,7 +3356,7 @@ function refreshCameras() {
     let strUrl = '/test_api_calls/test_getCams.json';
     let urlPrefix = '';
     //check if the site is on github pages, if so, we need to prefix the url with the github repo name.
-    if(location.href.indexOf('github.io') > -1){
+    if (location.href.indexOf('github.io') > -1) {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         urlPrefix = 'https://raw.githubusercontent.com/ie-corp/ThermalDemo/main';
     }
@@ -3211,7 +3365,7 @@ function refreshCameras() {
         .then(response => {
             if (!response.ok) {
                 //console.log('not found');
-                this.apiGetCamerasReceived(urlPrefix,{ "cameras": [] });
+                this.apiGetCamerasReceived(urlPrefix, { "cameras": [] });
             }
             return response.json();
         })
@@ -3262,10 +3416,10 @@ function hideUI() {
 }
 
 function showUI() {
-    if(cameraEditor.isEditing){
+    if (cameraEditor.isEditing) {
         document.getElementById('cameraEditTools').style.display = '';
     }
-    else{
+    else {
         document.getElementById('cameraTools').style.display = '';
     }
     document.getElementById('imageTools').style.display = '';
@@ -3277,7 +3431,7 @@ function showUI() {
 
 function deleteCamera() {
     //todo prompt for confirm or tap again to confirm
-    
+
     cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = unknownCameraName;
     cameraEditor.cameras[cameraEditor.selectedCameraIndex].isSpecified = false;
     changeCamera(cameraEditor.selectedCameraIndex, false);
@@ -3285,7 +3439,7 @@ function deleteCamera() {
 
 function cancelCameraEdit() {
     //todo prompt for confirm or tap again to confirm
-    
+
     changeCamera(cameraEditor.selectedCameraIndex, false);
 }
 
@@ -3435,7 +3589,7 @@ function imgLoaded(e) {
 }
 
 function cameraChangedImageLoaded(cameraIndex, editing) {
-    
+
     clearStoredImageData();
     showUI();
 
@@ -3478,18 +3632,18 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
 
     let cameraTools = document.getElementById('cameraTools');
     cameraTools.innerHTML = '';
-    if(editing){
+    if (editing) {
         document.getElementById('cameraEditTools').style.display = '';
         cameraTools.style.display = 'none';
     }
-    else{
+    else {
         document.getElementById('cameraEditTools').style.display = 'none';
         cameraTools.style.display = '';
     }
     let sb = '';
     if (cameraEditor.cameras.length > 0) {
 
-       
+
         for (let i = 0; i < cameraEditor.cameras.length; i++) {
             let strIndex = i.toString().padStart(2, '0');
             let camera = cameraEditor.cameras[i];
@@ -3500,7 +3654,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     let elmCamStatus = document.getElementById('valCamStatus');
                     elmCamStatus.style.color = camera.isOnline ? "green" : "red";
                     elmCamStatus.innerHTML = camera.isOnline ? "Online" : "Offline";
-                    
+
                     let elmCamName = document.getElementById('valCamName');
                     elmCamName.innerHTML = camera.name;
                     elmCamName.style.color = camera.name == unknownCameraName ? "red" : "white";
@@ -3513,10 +3667,10 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                 else {
                     sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',true)" class="resizebutton2" style="border-color:white">';
                     sb += '<div style="line-height: 14px;">';
-                    if(!camera.isOnline){
+                    if (!camera.isOnline) {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>';
                     }
-                    else{
+                    else {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
                     }
                     sb += '<div class="regioneditortext" style="margin-top:-12px">Tap To Edit</div>';
@@ -3534,12 +3688,12 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             }
             else if (!editing) {
                 sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',false)" class="resizebutton2">';
-                
+
                 sb += '<div style="line-height: 20px;">';
-                if(!camera.isOnline){
+                if (!camera.isOnline) {
                     sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:-4px" class="regionditortextsub3">Offline</div>';
                 }
-                else{
+                else {
                     sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:-4px" class="regionditortextsub3">Online</div>';
                 }
                 sb += '<div class="regioneditortext" style="margin-top:-15px">View Camera</div>';
@@ -3549,23 +3703,23 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     strStyle = ' style="color:red"';
                 }
                 sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + camera.name + '</div>';
-                
+
                 sb += '</div>';
                 sb += '</button>';
             }
 
         }
     }
-    else{
+    else {
         //No Cameras and No configured Cameras
-        sb+= '<button id="btnNoCameras" disabled class="resizebutton2" style="background-color: black;">';
-        sb+= '<div style="line-height: 17px;">';
-        sb+= '<div class="regionditortextsub3">No Cameras</div>';
-        sb+= '<div class="regionditortextsub3">Found</div>';
-        sb+= '<div class="regionditortextsub3">Check Devices</div>';
-        sb+= '</div>';
-        sb+= '</button>';
-        }
+        sb += '<button id="btnNoCameras" disabled class="resizebutton2" style="background-color: black;">';
+        sb += '<div style="line-height: 17px;">';
+        sb += '<div class="regionditortextsub3">No Cameras</div>';
+        sb += '<div class="regionditortextsub3">Found</div>';
+        sb += '<div class="regionditortextsub3">Check Devices</div>';
+        sb += '</div>';
+        sb += '</button>';
+    }
     if (!editing) {
         sb += '<button id="btnRefreshCameras" onclick="refreshCameras()" class="resizebutton">';
         sb += '<div style="line-height: 19px;">';
@@ -3575,13 +3729,13 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
         sb += '</div>';
         sb += '</button>';
 
-       
+
     }
     cameraTools.innerHTML = sb;
-    if(cameraEditor.cameras.length > 0){
+    if (cameraEditor.cameras.length > 0) {
         goRegionEditor();
     }
-    else{
+    else {
         hideUI();
         document.getElementById('cameraTools').style.display = '';
     }
@@ -3745,9 +3899,16 @@ function setupEvents() {
 function goRegionEditor() {
     historyStack = [];
     historyIndex = -1;
+    metaHistoryStack = [];
+    metaHistoryIndex = -1;
     recalcEditor();
+    if(activeLayer == 'Region'){
+        addRegionHistory('Initial ' + activeLayer + ' State', null, true);
+    }
+    else{
+        addMetaHistory('Initial ' + activeLayer + ' State', true);
+    }
     setButtons();
-    addHistory('Initial App State', null, true);
     displayImageTemps();
 }
 
@@ -3763,7 +3924,7 @@ function zoomRegionEditor(scale) {
 
     regionEditor.imageScale = value;
     recalcEditor();
-    addHistory('zoom image', null, false);//I don't think this needs a undo.
+    addRegionHistory('zoom image', null, false);//I don't think this needs a undo.
 }
 
 function addRegion(regionType) {
@@ -3865,5 +4026,5 @@ function addRegion(regionType) {
     regionEditor.selectedRegionIndex = regionEditor.regions.length - 1;
     activeTool = 'move';//this makes the most sense to me.
     recalcEditor();
-    addHistory('new ' + regionType, regionEditor.selectedRegionIndex, true);
+    addRegionHistory('new ' + regionType, regionEditor.selectedRegionIndex, true);
 }
