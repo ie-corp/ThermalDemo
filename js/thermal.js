@@ -492,8 +492,8 @@ function setButtons() {
     let activeToolColor = 'yellow';
     let inactiveToolColor = 'white';
 
-
-    document.getElementById("rowRegionTools").style.display = (activeLayer != 'Events' ? 'none' : '');
+    document.getElementById('rowEventTools').style.display = (activeLayer != 'Events' ? 'none' : '');
+    document.getElementById("rowSpotTools").style.display = (activeLayer != 'Events' ? 'none' : '');
     document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
     document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
 
@@ -3412,8 +3412,8 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
 function hideUI() {
     document.getElementById('cameraTools').style.display = 'none';
     document.getElementById('cameraEditTools').style.display = 'none';
-    document.getElementById('imageTools').style.display = 'none';
-    document.getElementById('rowRegionTools').style.display = 'none';
+    document.getElementById('rowEventTools').style.display = 'none';
+    document.getElementById('rowSpotTools').style.display = 'none';
     document.getElementById('rowMaterialTools').style.display = 'none';
     document.getElementById('rowDistanceTools').style.display = 'none';
     document.getElementById('touchTools').style.display = 'none';
@@ -3428,7 +3428,7 @@ function showUI() {
     else {
         document.getElementById('cameraTools').style.display = '';
     }
-    document.getElementById('imageTools').style.display = '';
+    document.getElementById('rowEventTools').style.display = (activeLayer == 'Events') ? '' : 'none';
     document.getElementById('touchTools').style.display = '';
 
 
