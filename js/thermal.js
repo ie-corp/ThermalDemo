@@ -89,8 +89,8 @@ let storedImageMirrorHorizontally = null;
 var activeFunc = null;
 var waiterTime = 100;
 
-const imageFilters = ['none', 'inferno', 'bluered', 'ripple'];
-let imageFilter = imageFilters[0];
+const imageFilters = ['none', 'inferno', 'bluered', 'light','dark'];
+let imageFilter = imageFilters[1];
 let imageScale = 1.0;
 
 function changeLayerNext(doNext) {
