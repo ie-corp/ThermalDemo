@@ -89,7 +89,7 @@ let storedImageMirrorHorizontally = null;
 var activeFunc = null;
 var waiterTime = 100;
 
-const imageFilters = ['none', 'contrast', 'invert', 'sepia'];
+const imageFilters = ['none', 'inferno', 'bluered', 'ripple'];
 let imageFilter = imageFilters[0];
 let imageScale = 1.0;
 
@@ -1066,18 +1066,11 @@ function drawRegions() {
     resetSelectedRegionAttributes();
 
     let rotation = regionEditor.imageRotation * Math.PI / 180;
-    if (imageFilter == 'sepia') {
-        ctx.filter = "sepia(1)";
-    }
-    else if (imageFilter == 'contrast') {
-        ctx.filter = ' contrast(150%) brightness(60%)';
-    }
-    else if (imageFilter == 'invert') {
-        ctx.filter = 'invert(75%)';
-    }
-    else {
-        ctx.filter = 'none';
-    }
+    
+    let strFilter = imageFilter == 'none' ? '' : 'url(#' + imageFilter + ')';
+    regionEditorImage.style.filter = strFilter;
+    console.log('filter: ' + strFilter);
+    
     let scale = imageScale;
     //fix this
     if (rotation != 0 || regionEditor.imageMirrorHorizontally) {
@@ -1106,7 +1099,7 @@ function drawRegions() {
     else {
         ctx.drawImage(regionEditorImageRef, 0, 0, canvas.width, canvas.height);
     }
-    ctx.filter = 'none';
+    
     if (activeLayer == 'Matl') {
 
         drawMaterialMap(ctx, scale);
@@ -1735,7 +1728,7 @@ function changeAlarmTemp(isImage, isMax) {
 
 function changeImageFilterNext(nextFilter) {
     hideTips();
-    let imageFilter = imageFilters[0];
+    let defaultImageFilter = imageFilters[0];
     let imageFilterIndex = 0;
     if (imageFilter != null) {
         imageFilterIndex = imageFilters.indexOf(imageFilter);
@@ -1757,7 +1750,7 @@ function changeImageFilterNext(nextFilter) {
         imageFilterIndex = 0;
     }
     imageFilter = imageFilters[imageFilterIndex];
-    imageFilter = imageFilter;
+   
 
     recalcEditor();
     //filter is not part of history
