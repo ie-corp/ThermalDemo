@@ -733,8 +733,64 @@ function showEventDialog(){
 }
 
 function populateEventDialog(){
-    document.getElementById('eventList').innerHTML = '<div style="color:white">Loaded With ' + cameraEditor.tags.length  + ' tags</div>';
+    let sb = '';
+    sb += '<div style="color:white">The System Has ' + cameraEditor.tags.length  + ' tags</div>';
+    sb += '<ul style="list-style-type: none;">';
+    for(let i = 0; i < cameraEditor.tags.length; i++){
+        let item = cameraEditor.tags[i];
+        sb += '<li>';
+        sb += '<button class="resizebutton" onclick="tagClicked(' + i.toString() + ')">';
+        sb += '<div style="line-height: 4px;">';
+        sb += '<span class="regioneditortext">Choose</span>';
+        sb += '</div>';
+        sb += '</button>';
+        sb += '<span style="color:white">' + escapeHTML(item.tag) + '</span>';
+        sb += '</li>';
+    }
+    document.getElementById('eventList').innerHTML = sb;
 }
+
+function changeEventTimeTrigger(dateInterval, value){
+    
+    
+    let eventTriggerHoursSlider = document.getElementById('eventTriggerHoursSlider');
+    let eventTriggerMinutesSlider = document.getElementById('eventTriggerMinutesSlider');
+    let eventTriggerSecondsSlider = document.getElementById('eventTriggerSecondsSlider');
+    
+    let eventTriggerHours = document.getElementById('eventTriggerHours');
+    let eventTriggerMinutes = document.getElementById('eventTriggerMinutes');
+    let eventTriggerSeconds = document.getElementById('eventTriggerSeconds');
+    
+    let intValue = parseInt(value.toString(),10);
+    let hoursValue = parseInt(eventTriggerHoursSlider.value.toString(),10);
+    let minutesValue = parseInt(eventTriggerMinutesSlider.value.toString(),10);
+    let secondsValue = parseInt(eventTriggerSecondsSlider.value.toString(),10);
+
+    if(dateInterval == 'hours'){
+        hoursValue = intValue;
+    }
+    else if(dateInterval == 'minutes'){
+        minutesValue = intValue;
+    }
+    else if(dateInterval == 'seconds'){
+        secondsValue = intValue;
+    }
+
+    hoursValue = Math.min(23, Math.max(0, hoursValue));
+    minutesValue = Math.min(59, Math.max(0, minutesValue));
+    secondsValue = Math.min(59, Math.max(0, secondsValue));
+
+    eventTriggerHoursSlider.value = hoursValue;
+    eventTriggerMinutesSlider.value = minutesValue;
+    eventTriggerSecondsSlider.value = secondsValue;
+    
+    eventTriggerHours.value = hoursValue.toFixed(0);
+    eventTriggerMinutes.value = minutesValue.toFixed(0);
+    eventTriggerSeconds.value = secondsValue.toFixed(0);
+    
+} 
+
+
 
 function cancelMaterial() {
     hideEverything();
@@ -775,7 +831,7 @@ function filterMaterials(minEmissivity, maxEmissivity){
 
 function changeMaterialEmissivityFilter(isFrom, value){
     
-    suspendMaterialChange = true;
+    
     let fromMaterialSlider = document.getElementById('fromMaterialSlider');
     let toMaterialSlider = document.getElementById('toMaterialSlider');
     let fromMaterialInput = document.getElementById('fromMaterialInput');
@@ -799,7 +855,7 @@ function changeMaterialEmissivityFilter(isFrom, value){
 
     fromMaterialSlider.value = frmValue;
     toMaterialSlider.value = toValue;
-    fromMaterialInput.value = fltValue.toFixed(2);
+    fromMaterialInput.value = frmValue.toFixed(2);
     toMaterialInput.value = toValue.toFixed(2);
     filterMaterials(frmValue, toValue);
 

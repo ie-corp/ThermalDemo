@@ -57,7 +57,7 @@
     <div id="dialogEvent" style="display:none">
         <table width="100%">
             <tr>
-                <td width="50%"><span style="font-size:28px;color:white">Define Event</span></td>
+                <td width="50%"><span style="font-size:28px;color:white">Trigger Event</span></td>
                 <td width="50%" style="text-align:right">
                     <button id="btnEventCancel" onclick="cancelEventDialog()" class="resizebutton">
                         <div style="line-height: 4px;">
@@ -67,6 +67,46 @@
                 </td>
             </tr>
         </table>
+        <div id="eventTimeTrigger" style="padding-top: 24px;">
+            <table width="100%">
+                <tr>
+                    <td style="padding-bottom:12px">
+                        <input id="eventTriggerHoursSlider" class="slider"  type="range" value="0" min="0" max="23" step="1" 
+                        oninput="changeEventTimeTrigger('hours',this.value)"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-bottom:22px">
+                        <input style="width:60px;background-color:black;color:grey;border: 3px solid black;" disabled type="text" id="eventTriggerHours" value="0"/>
+                        <span style="color:white">Hours</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-bottom:12px">
+                        <input id="eventTriggerMinutesSlider" class="slider"  type="range" value="0" min="0" max="59" step="1" 
+                        oninput="changeEventTimeTrigger('minutes',this.value)"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-bottom:22px">
+                        <input style="width:60px;background-color:black;color:grey;border: 3px solid black;" disabled type="text" id="eventTriggerMinutes" value="0"/>
+                        <span style="color:white">Minutes</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-bottom:12px">
+                        <input id="eventTriggerSecondsSlider" class="slider"  type="range" value="0" min="0" max="59" step="1" 
+                        oninput="changeEventTimeTrigger('seconds',this.value)"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-bottom:12px">
+                        <input style="width:60px;background-color:black;color:grey;border: 3px solid black;" disabled type="text" id="eventTriggerSeconds" value="0"/>
+                        <span style="color:white">Seconds</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
         <div id="eventList">Loading...</div>
     </div>
     <div id="dialogDistance" style="display:none"></div>

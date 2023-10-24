@@ -342,7 +342,27 @@ background-color:grey;
     box-shadow: 5px 10px rgba(0, 0, 0, 0.4);
   }
 
+  .slider {
+    -webkit-appearance: none;
+    height: 7px;
+    margin-left:0px;
+    background: rgba(255, 255, 255, 1.0);
+    border-radius: 5px;
+    pointer-events: none;
+    width:100%;
+    
+    
+  }
 
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    background:#007BFF;
+    cursor: ew-resize;
+    pointer-events: auto !important;
+  }
 
   .sliderFrom {
     -webkit-appearance: none;
