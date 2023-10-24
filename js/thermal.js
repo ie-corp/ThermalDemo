@@ -700,8 +700,18 @@ function hideEverything() {
     document.getElementById('mainEditor').style.display = 'none';
     document.getElementById('dialogDistance').style.display = 'none';
     document.getElementById('dialogMaterials').style.display = 'none';
+    document.getElementById('dialogEvent').style.display = 'none';
 }
 
+function cancelEventDialog(){
+    hideEverything();
+    document.getElementById('mainEditor').style.display = 'block';
+}
+
+function showEventDialog(){
+    hideEverything();
+    document.getElementById('dialogEvent').style.display = '';
+}
 
 function cancelMaterial() {
     hideEverything();
