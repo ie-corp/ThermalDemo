@@ -7,10 +7,10 @@ let cameraEditor = {
     "cameras": []
 };
 
-var regionEditor = null;
+let regionEditor = null;
 
-var regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
-var tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
+let regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
+let tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
 let regionTypes = ['point', 'polygon'];
 let regionEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete', 'sample', 'fill', 'change', 'paintround', 'paintsquare', 'eraseround', 'erasesquare'];
 let regionEditorLayers = ['Events', 'Matl', 'Dist'];
@@ -88,6 +88,8 @@ var activeFunc = null;
 var waiterTime = 100;
 
 let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
+let imageFilter = imageFilters[0];
+let imageScale = 1.0;
 
 function changeLayerNext(doNext) {
     
@@ -489,8 +491,8 @@ function setButtons() {
         canSize = region.type != 'point' && region.type != 'polygon';
         polygonSelected = region.type == 'polygon';
     }
-    let activeToolColor = 'yellow';
-    let inactiveToolColor = 'white';
+    const activeToolColor = 'yellow';
+    const inactiveToolColor = 'white';
 
     document.getElementById('rowEventTools').style.display = (activeLayer != 'Events' ? 'none' : '');
     document.getElementById("rowSpotTools").style.display = (activeLayer != 'Events' ? 'none' : '');
@@ -813,12 +815,12 @@ function recalcEditor() {
 
     clearStoredImageData();
     if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
-        regionEditor.imageWidth = regionEditor.imageNativeWidth * regionEditor.imageScale;
-        regionEditor.imageHeight = regionEditor.imageNativeHeight * regionEditor.imageScale;
+        regionEditor.imageWidth = regionEditor.imageNativeWidth * imageScale;
+        regionEditor.imageHeight = regionEditor.imageNativeHeight * imageScale;
     }
     else {
-        regionEditor.imageWidth = regionEditor.imageNativeHeight * regionEditor.imageScale;
-        regionEditor.imageHeight = regionEditor.imageNativeWidth * regionEditor.imageScale;
+        regionEditor.imageWidth = regionEditor.imageNativeHeight * imageScale;
+        regionEditor.imageHeight = regionEditor.imageNativeWidth * imageScale;
     }
 
 
@@ -852,9 +854,9 @@ function recalcEditor() {
 
 
     var valueZoom = document.getElementById("valueZoom");
-    valueZoom.innerHTML = Math.round(regionEditor.imageScale * 100) + "%";
+    valueZoom.innerHTML = Math.round(imageScale * 100) + "%";
 
-    document.getElementById("valueFilter").innerHTML = regionEditor.imageFilter;
+    document.getElementById("valueFilter").innerHTML = imageFilter;
     document.getElementById("valueImageMirrorHorizontally").innerHTML = regionEditor.imageMirrorHorizontally ? 'On' : 'Off';
 
     document.getElementById("valImageMaxTempC").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.hiTempC, false) + '&deg;C';
@@ -1052,19 +1054,19 @@ function drawRegions() {
     resetSelectedRegionAttributes();
 
     let rotation = regionEditor.imageRotation * Math.PI / 180;
-    if (regionEditor.imageFilter == 'sepia') {
+    if (imageFilter == 'sepia') {
         ctx.filter = "sepia(1)";
     }
-    else if (regionEditor.imageFilter == 'contrast') {
+    else if (imageFilter == 'contrast') {
         ctx.filter = ' contrast(150%) brightness(60%)';
     }
-    else if (regionEditor.imageFilter == 'invert') {
+    else if (imageFilter == 'invert') {
         ctx.filter = 'invert(75%)';
     }
     else {
         ctx.filter = 'none';
     }
-    let scale = regionEditor.imageScale;
+    let scale = imageScale;
     //fix this
     if (rotation != 0 || regionEditor.imageMirrorHorizontally) {
         ctx.save();
@@ -1081,7 +1083,7 @@ function drawRegions() {
         ctx.scale(scale, scale);
         ctx.drawImage(regionEditorImageRef, (-regionEditor.imageNativeWidth / 2), (-regionEditor.imageNativeHeight / 2));
         ctx.scale(1 / scale, 1 / scale);
-        //ctx.drawImage(regionEditorImageRef,(-regionEditor.imageNativeWidth * regionEditor.imageScale) / 2, (-regionEditor.imageNativeHeight * regionEditor.imageScale) / 2);
+        //ctx.drawImage(regionEditorImageRef,(-regionEditor.imageNativeWidth * imageScale) / 2, (-regionEditor.imageNativeHeight * imageScale) / 2);
         //unrotate
         ctx.rotate(-rotation);
         // un-translate the canvas back to origin==top-left canvas
@@ -1723,8 +1725,8 @@ function changeImageFilterNext(nextFilter) {
     hideTips();
     let imageFilter = imageFilters[0];
     let imageFilterIndex = 0;
-    if (regionEditor.imageFilter != null) {
-        imageFilterIndex = imageFilters.indexOf(regionEditor.imageFilter);
+    if (imageFilter != null) {
+        imageFilterIndex = imageFilters.indexOf(imageFilter);
         if (imageFilterIndex == -1) {
             imageFilterIndex = 0;
         }
@@ -1743,10 +1745,10 @@ function changeImageFilterNext(nextFilter) {
         imageFilterIndex = 0;
     }
     imageFilter = imageFilters[imageFilterIndex];
-    regionEditor.imageFilter = imageFilter;
+    imageFilter = imageFilter;
 
     recalcEditor();
-    addRegionHistory('change image filter', null, false);//I don't think this needs a undo.
+    //filter is not part of history
 }
 
 function changeRegionName() {
@@ -1944,12 +1946,12 @@ function fixRegionOutOfBounds(region) {
         region.x = Math.max(region.x, 0);
         region.y = Math.max(region.y, 0);
         if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
-            region.x = Math.min(region.x, regionEditor.imageNativeWidth);
-            region.y = Math.min(region.y, regionEditor.imageNativeHeight);
+            region.x = Math.min(region.x, regionEditor.imageNativeWidth-1);
+            region.y = Math.min(region.y, regionEditor.imageNativeHeight-1);
         }
         else {
-            region.x = Math.min(region.x, regionEditor.imageNativeHeight);
-            region.y = Math.min(region.y, regionEditor.imageNativeWidth);
+            region.x = Math.min(region.x, regionEditor.imageNativeHeight-1);
+            region.y = Math.min(region.y, regionEditor.imageNativeWidth-1);
         }
     }
     else if (region.type == 'polygon') {
@@ -2323,8 +2325,8 @@ function processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         return;
     }
     let region = regionEditor.regions[regionEditor.selectedRegionIndex];
-    let dragX = Math.max(-200, Math.round(offsetX / regionEditor.imageScale));
-    let dragY = Math.max(-200, Math.round(offsetY / regionEditor.imageScale));
+    let dragX = Math.max(-200, Math.round(offsetX / imageScale));
+    let dragY = Math.max(-200, Math.round(offsetY / imageScale));
     if (activeTool == 'look') {
         return;//nothing to do
     }
@@ -2395,8 +2397,8 @@ function processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 }
 
 function getMapIndex(offsetX, offsetY) {
-    let realX = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
-    let realY = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+    let realX = Math.max(0, Math.round(offsetX / imageScale));
+    let realY = Math.max(0, Math.round(offsetY / imageScale));
     let myIndex = realX + (realY * regionEditor.imageNativeWidth);
     return myIndex;
 }
@@ -2435,7 +2437,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         if (selectedDistance == null) {
             return;
         }
-        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally);
+        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally);
         let realX = pts[0];
         let realY = pts[1];
 
@@ -2462,7 +2464,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             return;
         }
 
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, false, 1);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally, false, 1);
         if (indexes.length == 0) {
             return;
         }
@@ -2488,7 +2490,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
     }
     else if (activeTool == 'paintround' || activeTool == 'paintsquare') {
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, paintBrushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, paintBrushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < distanceMap.length && index >= 0) {
@@ -2499,7 +2501,7 @@ function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         addMetaHistory(activeTool + ' distance', false);
     }
     else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, eraseBrushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, eraseBrushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < distanceMap.length && index >= 0) {
@@ -2546,7 +2548,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         if (selectedMaterial == null) {
             return;
         }
-        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally);
+        let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally);
         let realX = pts[0];
         let realY = pts[1];
         let indexes = getFillIndexesToChange(tempsCelsius, materialMap, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, realX, realY, fillRange, true);
@@ -2575,7 +2577,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             return;
         }
 
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, false, 1);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally, false, 1);
         if (indexes.length == 0) {
             return;
         }
@@ -2602,7 +2604,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         if (selectedMaterial == null || selectedMaterial.name == null || selectedMaterial.emissivity == null) {
             return;
         }
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, paintBrushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, paintBrushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < materialMap.length && index >= 0) {
@@ -2618,7 +2620,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
         addMetaHistory(activeTool + ' material', false);
     }
     else if (activeTool == 'eraseround' || activeTool == 'erasesquare') {
-        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, regionEditor.imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, eraseBrushSize);
+        let indexes = getPaintIndexes(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally, activeTool.indexOf('round') > -1, eraseBrushSize);
         for (let i = 0; i < indexes.length; i++) {
             let index = indexes[i];
             if (index < materialMap.length && index >= 0) {
@@ -3111,8 +3113,8 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
     const tooltip = document.getElementById('tooltip');
     const tipmagnifier = document.getElementById('tipmagnifier');
     const tiptarget = document.getElementById('tiptarget');
-    let x = Math.max(0, Math.round(offsetX / regionEditor.imageScale));
-    let y = Math.max(0, Math.round(offsetY / regionEditor.imageScale));
+    let x = Math.max(0, Math.round(offsetX / imageScale));
+    let y = Math.max(0, Math.round(offsetY / imageScale));
     let indexMap = -1;
     let posX = -1;
     let posY = -1;
@@ -3122,7 +3124,7 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
     let magOffsetX = pageX - 100;
     let magOffsetY = pageY - 100;
 
-    if (regionEditor.imageScale > 2 && offsetX > regionEditor.imageWidth / 2) {
+    if (imageScale > 2 && offsetX > regionEditor.imageWidth / 2) {
         placementOffsetX -= 256;//bottom left x
         magOffsetX -= 340;
     }
@@ -3142,9 +3144,9 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
 
     if (activeTool == 'paintsquare' || activeTool == 'erasesquare') {
         let myBrushSize = activeTool == 'paintsquare' ? paintBrushSize : eraseBrushSize;
-        let width = (myBrushSize * regionEditor.imageScale) * 2;
-        let posOffSetX = (myBrushSize * regionEditor.imageScale);
-        let posOffSetY = (myBrushSize * regionEditor.imageScale);
+        let width = (myBrushSize * imageScale) * 2;
+        let posOffSetX = (myBrushSize * imageScale);
+        let posOffSetY = (myBrushSize * imageScale);
         if (myBrushSize == 1) {
             posOffSetY += 8;
         }
@@ -3155,9 +3157,9 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
     }
     else if (activeTool == 'paintround' || activeTool == 'eraseround') {
         let myBrushSize = activeTool == 'paintround' ? paintBrushSize : eraseBrushSize;
-        let width = (myBrushSize * regionEditor.imageScale) * 2;
-        let posOffSetX = (myBrushSize * regionEditor.imageScale);
-        let posOffSetY = (myBrushSize * regionEditor.imageScale);
+        let width = (myBrushSize * imageScale) * 2;
+        let posOffSetX = (myBrushSize * imageScale);
+        let posOffSetY = (myBrushSize * imageScale);
         if (myBrushSize == 1) {
             posOffSetY += 8;
         }
@@ -3331,14 +3333,12 @@ function getEmptyRegionEditor() {
     return {
         "imageAlarmThresh": { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null },
         "imageRotation": 0,
-        "imageFilter": "none",
         "imageMirrorHorizontally": false,
         "maxNameLength": 16,
         "imageNativeWidth": 256,
         "imageNativeHeight": 192,
         "imageWidth": 256,
         "imageHeight": 192,
-        "imageScale": 1.0,
         "regions": [],
         "selectedRegionIndex": -1
     };
@@ -3396,7 +3396,6 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
             let newCamera = {
                 "usbId": camera.usbId,
                 "name": ((camera.name ?? unknownCameraName).trim()),
-                "rotation": camera.rotation,
                 "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                 "isOnline": camera.isOnline,
                 "isKnown": camera.isKnown,
@@ -3611,17 +3610,17 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             //tempsCelsius = [];
             historyIndex = -1;
 
-            let oldImageScale = regionEditor.imageScale;
-            let oldImageFilter = regionEditor.imageFilter;
+            let oldImageScale = imageScale;
+            let oldImageFilter = imageFilter;
             if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null) {
                 regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config));
-                regionEditor.imageScale = oldImageScale;
-                regionEditor.imageFilter = oldImageFilter;
+                imageScale = oldImageScale;
+                imageFilter = oldImageFilter;
             }
             else {
                 regionEditor = getEmptyRegionEditor();
-                regionEditor.imageScale = oldImageScale;
-                regionEditor.imageFilter = oldImageFilter;
+                imageScale = oldImageScale;
+                imageFilter = oldImageFilter;
             }
 
         }
@@ -3631,7 +3630,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             }
             else {
                 regionEditor = getEmptyRegionEditor();
-                regionEditor.imageScale = 3.0;
+                imageScale = 3.0;
             }
         }
     }
@@ -3911,7 +3910,7 @@ function goRegionEditor() {
 
 function zoomRegionEditor(scale) {
     hideTips();
-    let value = regionEditor.imageScale + scale;
+    let value = imageScale + scale;
     if (value < 1) {
         value = 5;
     }
@@ -3919,9 +3918,9 @@ function zoomRegionEditor(scale) {
         value = 1;
     }
 
-    regionEditor.imageScale = value;
+    imageScale = value;
     recalcEditor();
-    addRegionHistory('zoom image', null, false);//I don't think this needs a undo.
+    //Zoom Is not Part of History
 }
 
 function addRegion(regionType) {
