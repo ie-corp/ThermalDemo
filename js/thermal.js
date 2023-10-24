@@ -1,5 +1,7 @@
 let materialMap = [];
 let distanceMap = [];
+//let eventMap = [];
+let selectedEventIndex = -1;
 
 let cameraEditor = {
     "selectedCameraIndex": 0,
@@ -7,15 +9,15 @@ let cameraEditor = {
     "cameras": []
 };
 
-let regionEditor = null;
+let regionEditor = null;//the active region.
 
-let regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
+const regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
 let tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
-let regionTypes = ['point', 'polygon'];
-let regionEditorTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete', 'sample', 'fill', 'change', 'paintround', 'paintsquare', 'eraseround', 'erasesquare'];
-let regionEditorLayers = ['Events', 'Matl', 'Dist'];
-let activeTool = 'look';
-let activeLayer = 'Events';
+const regionTypes = ['point', 'polygon'];
+const touchTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete', 'sample', 'fill', 'change', 'paintround', 'paintsquare', 'eraseround', 'erasesquare'];
+const cameraLayers = ['Events', 'Matl', 'Dist'];
+let activeTool = touchTools[0];
+let activeLayer = cameraLayers[0];
 const maxHistoryStackEntries = 50;
 let historyStack = [];
 let historyIndex = -1;
@@ -25,7 +27,7 @@ let metaHistoryIndex = -1;
 
 let tempsCelsius = [];
 
-let selectedPointIndex = -1;
+let selectedSpotIndex = -1;
 let editAlarmThresh = { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null };
 let editAlarmIsImage = true;
 let paintBrushSize = 10;
@@ -87,13 +89,13 @@ let storedImageMirrorHorizontally = null;
 var activeFunc = null;
 var waiterTime = 100;
 
-let imageFilters = ['none', 'contrast', 'invert', 'sepia'];
+const imageFilters = ['none', 'contrast', 'invert', 'sepia'];
 let imageFilter = imageFilters[0];
 let imageScale = 1.0;
 
 function changeLayerNext(doNext) {
     
-    let index = regionEditorLayers.indexOf(activeLayer);
+    let index = cameraLayers.indexOf(activeLayer);
     if (doNext) {
         index++;
     }
@@ -101,12 +103,12 @@ function changeLayerNext(doNext) {
         index--;
     }
     if (index < 0) {
-        index = regionEditorLayers.length - 1;
+        index = cameraLayers.length - 1;
     }
-    else if (index >= regionEditorLayers.length) {
+    else if (index >= cameraLayers.length) {
         index = 0;
     }
-    setActiveLayer(regionEditorLayers[index]);
+    setActiveLayer(cameraLayers[index]);
     //changing layers clears the history stack;
     hideTips();
     goRegionEditor();
@@ -116,7 +118,7 @@ function changeLayerNext(doNext) {
 }
 
 function setActiveLayer(layer) {
-    if (regionEditorLayers.indexOf(layer) == -1) {
+    if (cameraLayers.indexOf(layer) == -1) {
         console.error('invalid layer: ' + layer);
         return;
     }
@@ -193,7 +195,7 @@ function selectRegionEditorTool(toolName) {
         document.getElementById('shapePaintSquare').style.display = toolName == 'paintsquare' ? '' : 'none';
     }
 
-    if (regionEditorTools.indexOf(toolName) == -1) {
+    if (touchTools.indexOf(toolName) == -1) {
         console.error('invalid tool name: ' + toolName);
         recalcEditor();
         return;
@@ -283,7 +285,7 @@ function addMetaHistory(historyType, force) {
 
     let lastHistoryEntry = null;
     if (metaHistoryStack.length > 0) {
-        console.log('evaluating new history entry of ' + historyEntry.historyType);
+        //console.log('evaluating new history entry of ' + historyEntry.historyType);
         if (metaHistoryIndex < 0 || metaHistoryIndex > metaHistoryStack.length) {
             //console.log('adjusting out of bounds history index to last entry');
             metaHistoryIndex = metaHistoryStack.length - 1;
@@ -297,20 +299,20 @@ function addMetaHistory(historyType, force) {
         
 
         if (force) {
-            console.log('force add history entry of ' + historyEntry.historyType)
+            //console.log('force add history entry of ' + historyEntry.historyType)
             metaHistoryStack.splice(metaHistoryIndex + 1, 0, historyEntry);
             metaHistoryStack.length = metaHistoryIndex + 2;//new action clears redo stack
         }
         else {
             if (historyEntry.historyType == lastHistoryEntry.historyType && (historyEntry.time - lastHistoryEntry.time) < 250) {
                 //just replace if there hasn't been a break in editing.
-                console.log('replace existing history entry of' + historyEntry.historyType);
+                //console.log('replace existing history entry of' + historyEntry.historyType);
                 metaHistoryStack[metaHistoryIndex] = historyEntry;
                 setButtons();
                 return;
             }
             else {
-                console.log('add history entry of ' + historyEntry.historyType);
+                //console.log('add history entry of ' + historyEntry.historyType);
                 metaHistoryStack.splice(metaHistoryIndex + 1, 0, historyEntry);
                 metaHistoryStack.length = metaHistoryIndex + 2;//new action clears redo stack
             }
@@ -318,7 +320,7 @@ function addMetaHistory(historyType, force) {
         }
     }
     else {
-        console.log('add initial history entry of ' + historyEntry.historyType)
+        //console.log('add initial history entry of ' + historyEntry.historyType)
         metaHistoryStack.push(historyEntry);
         metaHistoryIndex = 0;
         setButtons();
@@ -1324,12 +1326,12 @@ function setRegionIndex(regionIndex) {
     if (regionIndex != regionEditor.selectedRegionIndex) {
         let region = regionEditor.regions[regionIndex];
         if (region.type == 'polygon') {
-            if (selectedPointIndex < 0 || selectedPointIndex >= region.points.length) {
-                selectedPointIndex = 0;
+            if (selectedSpotIndex < 0 || selectedSpotIndex >= region.points.length) {
+                selectedSpotIndex = 0;
             }
         }
         else {
-            selectedPointIndex = -1;
+            selectedSpotIndex = -1;
         }
 
 
@@ -1862,7 +1864,7 @@ function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, draw
                             ctx.fill();
                         }
 
-                        if ((i == selectedPointIndex || activeTool == 'pointmove')) {
+                        if ((i == selectedSpotIndex || activeTool == 'pointmove')) {
 
                             ctx.beginPath();
                             ctx.setLineDash([]);
@@ -2359,7 +2361,7 @@ function processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
                 let point = { "x": dragX, "y": dragY };
                 let insertIndex = indexOfClosestPoint + 1;
                 region.points.splice(insertIndex, 0, point);
-                selectedPointIndex = insertIndex;
+                selectedSpotIndex = insertIndex;
                 activeTool = 'pointmove';
                 recalcEditor();
                 addRegionHistory('add point to ' + region.type, regionEditor.selectedRegionIndex, true);//force this
@@ -2380,28 +2382,23 @@ function processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             if (!isMouseMoveEvent) {
                 let indexOfClosestPoint = findIndexOfClosestPoint(dragX, dragY, region.points, []);
                 if (indexOfClosestPoint > -1) {
-                    selectedPointIndex = indexOfClosestPoint;
+                    selectedSpotIndex = indexOfClosestPoint;
                 }
                 else {
                     return;
                 }
             }
-            if (selectedPointIndex > -1 && selectedPointIndex < region.points.length) {
-                region.points[selectedPointIndex].x = dragX;
-                region.points[selectedPointIndex].y = dragY;
+            if (selectedSpotIndex > -1 && selectedSpotIndex < region.points.length) {
+                region.points[selectedSpotIndex].x = dragX;
+                region.points[selectedSpotIndex].y = dragY;
                 recalcEditor();
-                addRegionHistory('move point in ' + region.type + 'pt:' + selectedPointIndex, regionEditor.selectedRegionIndex, false);
+                addRegionHistory('move point in ' + region.type + 'pt:' + selectedSpotIndex, regionEditor.selectedRegionIndex, false);
             }
         }
     }
 }
 
-function getMapIndex(offsetX, offsetY) {
-    let realX = Math.max(0, Math.round(offsetX / imageScale));
-    let realY = Math.max(0, Math.round(offsetY / imageScale));
-    let myIndex = realX + (realY * regionEditor.imageNativeWidth);
-    return myIndex;
-}
+
 
 function setDefaultDistance() {
     if (selectedDistance == null) {
@@ -2414,13 +2411,17 @@ function setDefaultDistance() {
     }
     hideTips();
     recalcEditor();
+    addMetaHistory('set default distance ' + selectedDistance, false);
 }
 
 function processDistanceMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
     if (activeTool == 'sample') {
         if (!isMouseMoveEvent) {
-            let myIndex = getMapIndex(offsetX, offsetY);
+            let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally);
+            let realX = pts[0];
+            let realY = pts[1];
+            let myIndex = getIndexOfMapFromXY(realX, realY, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally);
             if (myIndex >= 0 && myIndex < distanceMap.length) {
                 let distance = distanceMap[myIndex];
                 if (distance != null) {
@@ -2525,6 +2526,7 @@ function setDefaultMaterial() {
     }
     hideTips();
     recalcEditor();
+    addMetaHistory('set default material ' + JSON.stringify(selectedMaterial), false);
 
 }
 
@@ -2532,15 +2534,19 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
     if (activeTool == 'sample') {
         if (!isMouseMoveEvent) {
-            let myIndex = getMapIndex(offsetX, offsetY);
-
+            let pts = getNativePoint(offsetX, offsetY, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageRotation, imageScale, regionEditor.imageMirrorHorizontally);
+            let realX = pts[0];
+            let realY = pts[1];
+            let myIndex = getIndexOfMapFromXY(realX, realY, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally);
             if (myIndex >= 0 && myIndex < materialMap.length) {
                 let material = materialMap[myIndex];
                 if (material != null) {
-                    changeMaterial(material);
-
+                    
+                    changeMaterial(material.name, material.emissivity);
+                    return;
                 }
             }
+            console.log('no material found at Index: ' + myIndex);
         }
     }
     else if (activeTool == 'fill') {
@@ -3399,7 +3405,9 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
                 "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                 "isOnline": camera.isOnline,
                 "isKnown": camera.isKnown,
-                "config": null
+                "eventLayers": null,
+                "materialMap":null,
+                "distanceMap":null,
             };
             cameras.push(newCamera);
         }
@@ -3463,7 +3471,9 @@ function saveCamera() {
             return;
         }
     }
-    cameraEditor.cameras[cameraEditor.selectedCameraIndex].config = JSON.parse(JSON.stringify(regionEditor));
+    cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers = JSON.parse(JSON.stringify(regionEditor));
+    cameraEditor.cameras[cameraEditor.selectedCameraIndex].materialMap = [...materialMap];
+    cameraEditor.cameras[cameraEditor.selectedCameraIndex].distanceMap = [...distanceMap];
     changeCamera(cameraIndex, false);
 }
 
@@ -3610,26 +3620,39 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             //tempsCelsius = [];
             historyIndex = -1;
 
-            let oldImageScale = imageScale;
-            let oldImageFilter = imageFilter;
-            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null) {
-                regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config));
-                imageScale = oldImageScale;
-                imageFilter = oldImageFilter;
+            
+            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers != null) {
+                regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers));
+                if(cameraEditor.cameras[cameraEditor.selectedCameraIndex].materialMap != null){
+                    materialMap = [...cameraEditor.cameras[cameraEditor.selectedCameraIndex].materialMap];
+                }
+                else{
+                    materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
+                }
+                if(cameraEditor.cameras[cameraEditor.selectedCameraIndex].distanceMap != null){
+                    distanceMap = [...cameraEditor.cameras[cameraEditor.selectedCameraIndex].distanceMap];
+                }
+                else{
+                    distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
+                }
             }
             else {
                 regionEditor = getEmptyRegionEditor();
-                imageScale = oldImageScale;
-                imageFilter = oldImageFilter;
+                materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
+                distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
+                
+                
             }
 
         }
         else {
-            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].config != null) {
-                regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].config));
+            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers != null) {
+                regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers));
             }
             else {
                 regionEditor = getEmptyRegionEditor();
+                materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
+                distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
                 imageScale = 3.0;
             }
         }
@@ -4002,7 +4025,7 @@ function addRegion(regionType) {
         regionWidth = bounds.width;
         regionHeight = bounds.height;
 
-        selectedPointIndex = 0;
+        selectedSpotIndex = 0;
     }
     let region = {
         "name": regionName,
