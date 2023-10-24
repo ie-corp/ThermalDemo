@@ -67,13 +67,13 @@
                 </td>
             </tr>
         </table>
-        <div id="eventList" style="color:red">This dialog is still under development</div>
+        <div id="eventList">Loading...</div>
     </div>
     <div id="dialogDistance" style="display:none"></div>
     <div id="dialogMaterials" style="display:none">
         <table width="100%">
             <tr>
-                <td width="50%"><span style="font-size:28px;color:white">Choose Material</span></td>
+                <td width="50%"><span style="font-size:28px;color:white">Material</span></td>
                 <td width="50%" style="text-align:right">
                     <button id="btnMaterialCancel" onclick="cancelMaterial()" class="resizebutton">
                         <div style="line-height: 4px;">
@@ -83,6 +83,33 @@
                 </td>
             </tr>
         </table>
+        <div>
+            <div style="padding-top: 12px;">
+                <table width="95%">
+                    <tr>
+                        <td colspan="2" width="100%">
+                            <div>
+                                <hr style="margin-left:15px;margin-bottom:-12px"/>
+                            <input id="fromMaterialSlider" class="sliderFrom"  type="range" value="0" min="0" max="1" step="0.01" 
+                                oninput="changeMaterialEmissivityFilter(true,this.value)"/>
+                            <input id="toMaterialSlider" class="sliderTo"    type="range" value="1" min="0" max="1" step="0.01" 
+                                oninput="changeMaterialEmissivityFilter(false,this.value)"/>
+                            </div>
+                            
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="50%"><span style="color:white">Min</span></td>
+                        <td width="50%" style="text-align:right"><span style="color:white">Max</span></td>
+                    </tr>
+                    <tr>
+                        <td width="50%"><input style="width:60px;background-color:black;color:grey;border: 3px solid black;" disabled type="text" id="fromMaterialInput" value="0.00"/></td>
+                        <td width="50%"  style="text-align:right"><input style="width:60px;background-color:black;color:grey;border: 3px solid black;" disabled type="text" id="toMaterialInput" value="1.00"/></td>
+                    </tr>
+                </table>
+                
+            </div>
+        </div>
         <div id="materialList"></div>
 
     </div>

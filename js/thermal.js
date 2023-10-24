@@ -6,7 +6,8 @@ let selectedEventIndex = -1;
 let cameraEditor = {
     "selectedCameraIndex": 0,
     "isEditing": false,
-    "cameras": []
+    "cameras": [],
+    "tags": [],
 };
 
 let regionEditor = null;//the active region.
@@ -36,6 +37,22 @@ let selectedDistance = 1.0;
 let fillRange = 1.0;
 const unknownCameraName = '-Unknown-';
 
+var escapeElm = null;
+function escapeHTML(html) {
+    if(html == null || html.trim() == ''){
+        return '';
+    }
+
+    if(escapeElm == null){
+        escapeElm = document.createElement('textarea');
+    }
+
+    escapeElm.textContent = html;
+    return escapeElm.innerHTML;
+}
+
+
+
 
 /*AI Prompt
 Give me a list of 25 common materials found in an electrical cabinet and their emissivity values.
@@ -52,7 +69,7 @@ Give me the results as a javascript array in the following format:var knownMater
 */
 const knownMaterials = [
     { "name": "Black Body", "emissivity": 1.00 },
-    { "name": "Black Elec. Tape", "emissivity": 0.95 },
+    { "name": "Black ElecTape", "emissivity": 0.95 },
     { "name": "Polypropylene", "emissivity": 0.97 },
     { "name": "Polystyrene", "emissivity": 0.95 },
     { "name": "Rubber, hard glossy", "emissivity": 0.94 },
@@ -711,6 +728,12 @@ function cancelEventDialog(){
 function showEventDialog(){
     hideEverything();
     document.getElementById('dialogEvent').style.display = '';
+    document.getElementById('eventList').innerHTML = '<h2 style="color:green">loading...</h2>';
+    refreshTags(populateEventDialog);
+}
+
+function populateEventDialog(){
+    document.getElementById('eventList').innerHTML = '<div style="color:white">Loaded With ' + cameraEditor.tags.length  + ' tags</div>';
 }
 
 function cancelMaterial() {
@@ -720,23 +743,68 @@ function cancelMaterial() {
 
 function pickMaterial() {
     hideEverything();
+    changeMaterialEmissivityFilter(true, 0);
+    changeMaterialEmissivityFilter(false, 1);
+    document.getElementById('dialogMaterials').style.display = 'block';
+}
+
+function filterMaterials(minEmissivity, maxEmissivity){
     let materialList = document.getElementById('materialList');
     if (knownMaterials != null && knownMaterials.length > 0) {
         let sb = '';
         for (let i = 0; i < knownMaterials.length; i++) {
             let material = knownMaterials[i];
-            sb += '<button class="resizebutton2" onclick="changeMaterial(\'' + material.name + '\',' + material.emissivity + ')">';
-            sb += '<div style="line-height: 17px;">';
-            sb += '<div class="regioneditortext2">Material</div>';
-            sb += '<div class="regionditortextsub4">' + material.name + '</div>';
-            sb += '<div class="regionditortextsub3">' + material.emissivity.toFixed(2) + '</div>';
-            sb += '</div>';
-            sb += '</button>';
+            if(material.emissivity >= minEmissivity && material.emissivity <= maxEmissivity){
+
+                sb += '<button class="resizebutton2" onclick="changeMaterial(\'' + material.name + '\',' + material.emissivity + ')">';
+                sb += '<div style="line-height: 17px;">';
+                sb += '<div class="regioneditortext2">Material</div>';
+                sb += '<div class="regionditortextsub4">' + escapeHTML(material.name) + '</div>';
+                sb += '<div class="regionditortextsub3">' + material.emissivity.toFixed(2) + '</div>';
+                sb += '</div>';
+                sb += '</button>';
+            }
+        }
+        if(sb.length == 0){
+            sb = '<div style="color:red">No Materials In Emissivity Range</div>';
         }
         materialList.innerHTML = sb;
     }
-    document.getElementById('dialogMaterials').style.display = 'block';
 }
+
+
+function changeMaterialEmissivityFilter(isFrom, value){
+    
+    suspendMaterialChange = true;
+    let fromMaterialSlider = document.getElementById('fromMaterialSlider');
+    let toMaterialSlider = document.getElementById('toMaterialSlider');
+    let fromMaterialInput = document.getElementById('fromMaterialInput');
+    let toMaterialInput = document.getElementById('toMaterialInput');
+    let fltValue = parseFloat(value.toString());
+    let frmValue = parseFloat(fromMaterialSlider.value.toString());
+    let toValue = parseFloat(toMaterialSlider.value.toString());
+    //logic.
+    if(isFrom){
+        frmValue = fltValue;
+        if(frmValue > toValue){
+            toValue = frmValue;
+        } 
+    }
+    else{
+        
+        if(frmValue > toValue){
+            frmValue = toValue;
+        } 
+    }
+
+    fromMaterialSlider.value = frmValue;
+    toMaterialSlider.value = toValue;
+    fromMaterialInput.value = fltValue.toFixed(2);
+    toMaterialInput.value = toValue.toFixed(2);
+    filterMaterials(frmValue, toValue);
+
+} 
+
 
 function changeMaterial(materialName, emissivity) {
     if (materialName == null || emissivity == null) {
@@ -3366,15 +3434,54 @@ function go() {
 
 }
 
+function getUrlPrefix(){
+    if (location.href.indexOf('github.io') > -1) {
+        //when hosted on github pages, we have to make json calls and image calls with this prefix.
+        return 'https://raw.githubusercontent.com/ie-corp/ThermalDemo/main';
+    }
+    else{
+        return '';
+    }
+}
+
+function refreshTags(callback){
+    let strUrl = '/test_api_calls/test_getTags.json';
+    let urlPrefix = getUrlPrefix();
+    console.log('fetching tags from: ' + urlPrefix + strUrl);
+    fetch(urlPrefix + strUrl)
+        .then(response => {
+            if (!response.ok) {
+                //console.log('not found');
+                this.apiTagsReceived(urlPrefix, { "tags": [] }, callback);
+            }
+            return response.json();
+        })
+        .then(json => {
+
+            this.apiTagsReceived(urlPrefix, json, callback);
+        })
+        .catch(function () {
+            //console.error('catch fetch');
+            this.apiTagsReceived(urlPrefix, { "tags": [] }, callback);
+        })
+}
+
+function apiTagsReceived(urlPrefix, tagsResponse, callback){
+    if(tagsResponse != null && tagsResponse.tags != null){
+     cameraEditor.tags = tagsResponse.tags;
+    }
+    if(callback != null){
+        callback();
+    }
+}
+
+
 function refreshCameras() {
     hideEverything();
     let strUrl = '/test_api_calls/test_getCams.json';
-    let urlPrefix = '';
+    let urlPrefix = getUrlPrefix();
     //check if the site is on github pages, if so, we need to prefix the url with the github repo name.
-    if (location.href.indexOf('github.io') > -1) {
-        //when hosted on github pages, we have to make json calls and image calls with this prefix.
-        urlPrefix = 'https://raw.githubusercontent.com/ie-corp/ThermalDemo/main';
-    }
+    
     console.log('fetching cameras from: ' + urlPrefix + strUrl);
     fetch(urlPrefix + strUrl)
         .then(response => {
@@ -3706,13 +3813,13 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
                     }
                     sb += '<div class="regioneditortext" style="margin-top:-12px">Tap To Edit</div>';
-                    //camera names were already sanitized
+                    
                     sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">Viewing</div>';
                     let strStyle = '';
                     if (camera.name == unknownCameraName) {
                         strStyle = ' style="color:red"';
                     }
-                    sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + camera.name + '</div>';
+                    sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + escapeHTML(camera.name) + '</div>';
                     sb += '</div>';
                     sb += '</button>';
                 }
@@ -3734,7 +3841,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                 if (camera.name == unknownCameraName) {
                     strStyle = ' style="color:red"';
                 }
-                sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + camera.name + '</div>';
+                sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + escapeHTML(camera.name) + '</div>';
 
                 sb += '</div>';
                 sb += '</button>';
