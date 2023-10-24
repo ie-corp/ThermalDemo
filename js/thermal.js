@@ -3468,8 +3468,8 @@ function saveCamera() {
 }
 
 let stagedUpdateCameraName = null;
-function renameCamera(cameraIndex) {
-    cameraEditor.selectedCameraIndex = cameraIndex;
+function renameCamera() {
+    let cameraIndex = cameraEditor.selectedCameraIndex;
     let oldCamName = cameraEditor.cameras[cameraEditor.selectedCameraIndex].name;
     if (oldCamName == null || oldCamName.indexOf("-") > -1) {
         oldCamName = "";
@@ -3503,7 +3503,7 @@ function renameCamera(cameraIndex) {
             }
         }
         stagedUpdateCameraName = newName;
-        let elmName = document.getElementById('valCam' + cameraIndex.toString().padStart(2, '0') + 'Name');
+        let elmName = document.getElementById('valCamName');
         elmName.innerHTML = newName;
         elmName.style.color = 'yellow';
     }
