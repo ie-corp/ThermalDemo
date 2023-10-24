@@ -1069,7 +1069,7 @@ function drawRegions() {
     
     let strFilter = imageFilter == 'none' ? '' : 'url(#' + imageFilter + ')';
     regionEditorImage.style.filter = strFilter;
-    console.log('filter: ' + strFilter);
+    
     
     let scale = imageScale;
     //fix this
@@ -1602,12 +1602,12 @@ function clearAlarmThresh(isMaxTemp) {
 
 
 function updateThreshDisplay(isImage, thresh) {
-    if (!isImage && (this.regionEditor.selectedRegionIndex < 0 || this.regionEditor.selectedRegionIndex >= this.regionEditor.regions.length)) {
+    if (!isImage && (regionEditor.selectedRegionIndex < 0 || regionEditor.selectedRegionIndex >= regionEditor.regions.length)) {
         this.closeAlarmTemp();
         return;
     }
 
-    let region = isImage ? null : this.regionEditor.regions[this.regionEditor.selectedRegionIndex];
+    let region = isImage ? null : regionEditor.regions[regionEditor.selectedRegionIndex];
     let strElm = "edtImage";
     let strBtnChange = "btnChangeImage";
     let strBtnClear = "btnClearImage";
@@ -1680,15 +1680,15 @@ function saveAlarmTemp() {
             return;
         }
         if (this.editAlarmIsImage) {
-            if (JSON.stringify(this.regionEditor.imageAlarmThresh) != JSON.stringify(this.editAlarmThresh)) {
+            if (JSON.stringify(regionEditor.imageAlarmThresh) != JSON.stringify(this.editAlarmThresh)) {
                 hadChange = true;
-                this.regionEditor.imageAlarmThresh = JSON.parse(JSON.stringify(this.editAlarmThresh));
+                regionEditor.imageAlarmThresh = JSON.parse(JSON.stringify(this.editAlarmThresh));
             }
 
 
         }
         else {
-            let region = this.regionEditor.regions[this.regionEditor.selectedRegionIndex];
+            let region = regionEditor.regions[regionEditor.selectedRegionIndex];
             if (JSON.stringify(region.alarmThresh) != JSON.stringify(this.editAlarmThresh)) {
                 hadChange = true;
                 region.alarmThresh = JSON.parse(JSON.stringify(this.editAlarmThresh));
@@ -1706,12 +1706,12 @@ function saveAlarmTemp() {
 function changeAlarmTemp(isImage, isMax) {
     console.log('showing alarm settings');
     if (isImage) {
-        this.editAlarmThresh = JSON.parse(JSON.stringify(this.regionEditor.imageAlarmThresh));
+        this.editAlarmThresh = JSON.parse(JSON.stringify(regionEditor.imageAlarmThresh));
         this.editAlarmIsImage = true;
     }
     else {
-        if (this.regionEditor.selectedRegionIndex >= 0 && this.regionEditor.selectedRegionIndex < this.regionEditor.regions.length) {
-            this.editAlarmThresh = JSON.parse(JSON.stringify(this.regionEditor.regions[this.regionEditor.selectedRegionIndex].alarmThresh));
+        if (regionEditor.selectedRegionIndex >= 0 && regionEditor.selectedRegionIndex < regionEditor.regions.length) {
+            this.editAlarmThresh = JSON.parse(JSON.stringify(regionEditor.regions[regionEditor.selectedRegionIndex].alarmThresh));
             this.editAlarmIsImage = false;
         }
         else {
@@ -3395,7 +3395,7 @@ function refreshCameras() {
 }
 
 function apiGetCamerasReceived(urlPrefix, jsonResult) {
-    console.log('loading cameras')
+    
     hideEverything();
     document.getElementById('mainEditor').style.display = 'block';
     let cameras = [];
