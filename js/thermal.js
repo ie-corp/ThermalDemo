@@ -16,7 +16,7 @@ const regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink",
 let tempRanges = { "highCelsius": 250.0, "lowCelsius": 0 };
 const regionTypes = ['point', 'polygon'];
 const touchTools = ['look', 'select', 'move', 'pointadd', 'pointmove', 'pointdelete', 'sample', 'fill', 'change', 'paintround', 'paintsquare', 'eraseround', 'erasesquare'];
-const cameraLayers = ['Events', 'Matl', 'Dist'];
+const cameraLayers = ['Spots', 'Matl', 'Dist'];
 let activeTool = touchTools[0];
 let activeLayer = cameraLayers[0];
 const maxHistoryStackEntries = 50;
@@ -29,8 +29,7 @@ let metaHistoryIndex = -1;
 let tempsCelsius = [];
 
 let selectedSpotIndex = -1;
-let editAlarmThresh = { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null };
-let editAlarmIsImage = true;
+
 let paintBrushSize = 10;
 let eraseBrushSize = 10;
 let selectedDistance = 1.0;
@@ -139,7 +138,6 @@ function setActiveLayer(layer) {
         console.error('invalid layer: ' + layer);
         return;
     }
-    this.closeAlarmTemp();
     activeLayer = layer;
     activeTool = 'look';
     recalcEditor();
@@ -217,7 +215,7 @@ function selectRegionEditorTool(toolName) {
         recalcEditor();
         return;
     }
-    this.closeAlarmTemp();//close alarm temp if open
+    
     let oldActiveTool = activeTool;
     //put some logic here
     activeTool = toolName;
@@ -231,7 +229,7 @@ function redoMetaHistory() {
         return;
     }
     if (metaHistoryIndex < metaHistoryStack.length - 1) {
-        this.closeAlarmTemp();//close alarm temp if open
+       
         metaHistoryIndex++;
         let historyEntry = metaHistoryStack[metaHistoryIndex];
         if (historyEntry.materialMap != null) {
@@ -262,7 +260,7 @@ function undoMetaHistory() {
     }
 
     if (metaHistoryIndex >= 1) {
-        this.closeAlarmTemp();//close alarm temp if open
+       
         metaHistoryIndex--;
         let historyEntry = metaHistoryStack[metaHistoryIndex];
         if (historyEntry.materialMap != null) {
@@ -286,7 +284,7 @@ function addMetaHistory(historyType, force) {
         setButtons();
         return;
     }
-    this.closeAlarmTemp();//close alarm temp if open
+   
     let time = new Date().getTime();
     let historyEntry = { "historyType": historyType, "time":time, "materialMap": null, "distanceMap": null };
     if(activeLayer == 'Matl'){
@@ -369,7 +367,7 @@ function redoRegionEditor() {
         return;
     }
     if (historyIndex < historyStack.length - 1) {
-        this.closeAlarmTemp();//close alarm temp if open
+       
         historyIndex++;
         let historyEntry = historyStack[historyIndex];
         //console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
@@ -396,7 +394,7 @@ function undoRegionEditor() {
     }
 
     if (historyIndex >= 1) {
-        this.closeAlarmTemp();//close alarm temp if open
+       
         let currentHistoryEntry = historyStack[historyIndex];
         //console.log('undoing ' + currentHistoryEntry.historyType + ' with index ' + currentHistoryEntry.selectedIndex);
         historyIndex--;
@@ -420,7 +418,7 @@ function addRegionHistory(historyType, selectedIndex, force) {
         setButtons();
         return;
     }
-    this.closeAlarmTemp();//close alarm temp if open
+   
     let historyEntry = { "historyType": historyType, "selectedIndex": selectedIndex, "regionEditor": JSON.stringify(regionEditor) };
     let lastHistoryEntry = null;
     if (historyStack.length > 0) {
@@ -513,8 +511,7 @@ function setButtons() {
     const activeToolColor = 'yellow';
     const inactiveToolColor = 'white';
 
-    document.getElementById('rowEventTools').style.display = (activeLayer != 'Events' ? 'none' : '');
-    document.getElementById("rowSpotTools").style.display = (activeLayer != 'Events' ? 'none' : '');
+    document.getElementById("rowSpotTools").style.display = (activeLayer != 'Spots' ? 'none' : '');
     document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
     document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
 
@@ -545,41 +542,37 @@ function setButtons() {
     document.getElementById("btnDistance").disabled = !cameraEditor.isEditing;
     document.getElementById("btnChangeDistanceLess").style.display = !cameraEditor.isEditing ? 'none' : '';
     document.getElementById("btnChangeDistanceMore").style.display = !cameraEditor.isEditing ? 'none' : '';
-    document.getElementById("spacerDistanceColorRampMin").style.display = !cameraEditor.isEditing ? 'none' : '';
     document.getElementById("btnClearDistance").style.display = !cameraEditor.isEditing ? 'none' : '';
 
 
-    document.getElementById("btnCopyEvent").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnAddEvent").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnClearEvent").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnDeleteEvent").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    
 
 
 
-    document.getElementById("btnPolygonAdd").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnPointAdd").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnPolygonAdd").style.display = ((activeLayer != 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnPointAdd").style.display = ((activeLayer != 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
 
 
     document.getElementById("btnRegionToolLook").disabled = false;
     document.getElementById("btnRegionToolLook").style.color = (activeTool == 'look' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolSelect").style.display = (activeLayer != 'Events' ? 'none' : '');
+    document.getElementById("btnRegionToolSelect").style.display = (activeLayer != 'Spots' ? 'none' : '');
     document.getElementById("btnRegionToolSelect").disabled = regionEditor.regions.length <= 1;
     document.getElementById("btnRegionToolSelect").style.color = (activeTool == 'select' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolMove").style.display = ((activeLayer != 'Events' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolMove").style.display = ((activeLayer != 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
     document.getElementById("btnRegionToolMove").disabled = !hasActiveItem;
     document.getElementById("btnRegionToolMove").style.color = (activeTool == 'move' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointAdd").style.display = (activeLayer == 'Events' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
+    document.getElementById("btnRegionToolPointAdd").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
     document.getElementById("btnRegionToolPointAdd").disabled = !polygonSelected;
     document.getElementById("btnRegionToolPointAdd").style.color = (activeTool == 'pointadd' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointMove").style.display = (activeLayer == 'Events' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
+    document.getElementById("btnRegionToolPointMove").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
     document.getElementById("btnRegionToolPointMove").disabled = !polygonSelected;
     document.getElementById("btnRegionToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer == 'Events' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
+    document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
     document.getElementById("btnRegionToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
     document.getElementById("btnRegionToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
 
@@ -597,9 +590,9 @@ function setButtons() {
     document.getElementById("btnSampleDistance").disabled = !cameraEditor.isEditing;
     document.getElementById("btnSampleDistance").style.display = cameraEditor.isEditing ? '' : 'none';
 
-    let fillSelected = activeLayer != 'Events' && cameraEditor.isEditing && (activeTool.indexOf('fill') > -1);
-    document.getElementById("btnRegionToolFill").style.display = ((activeLayer == 'Events' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolFill").disabled = activeLayer == 'Events';
+    let fillSelected = activeLayer != 'Spots' && cameraEditor.isEditing && (activeTool.indexOf('fill') > -1);
+    document.getElementById("btnRegionToolFill").style.display = ((activeLayer == 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolFill").disabled = activeLayer == 'Spots';
     document.getElementById("btnRegionToolFill").style.color = (fillSelected ? activeToolColor : inactiveToolColor);
 
 
@@ -610,15 +603,15 @@ function setButtons() {
     document.getElementById("btnChangeFillRangeMore").disabled = !fillSelected;
 
 
-    document.getElementById("btnRegionToolChange").style.display = ((activeLayer == 'Events' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolChange").disabled = activeLayer == 'Events';
+    document.getElementById("btnRegionToolChange").style.display = ((activeLayer == 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolChange").disabled = activeLayer == 'Spots';
     document.getElementById("btnRegionToolChange").style.color = (activeTool == 'change' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPaint").style.display = ((activeLayer == 'Events' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolPaint").disabled = activeLayer == 'Events';
+    document.getElementById("btnRegionToolPaint").style.display = ((activeLayer == 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolPaint").disabled = activeLayer == 'Spots';
     document.getElementById("btnRegionToolPaint").style.color = (activeTool.indexOf('paint') > -1 ? activeToolColor : inactiveToolColor);
 
-    let paintSelected = activeLayer != 'Events' && (activeTool.indexOf('paint') > -1);
+    let paintSelected = activeLayer != 'Spots' && (activeTool.indexOf('paint') > -1);
     document.getElementById("btnChangePaintSizeInfo").style.display = (!paintSelected ? 'none' : '');
     document.getElementById("btnChangePaintSizeLess").style.display = (!paintSelected ? 'none' : '');
     document.getElementById("btnChangePaintSizeLess").disabled = !paintSelected;
@@ -626,12 +619,12 @@ function setButtons() {
     document.getElementById("btnChangePaintSizeMore").disabled = !paintSelected;
 
 
-    document.getElementById("btnRegionToolErase").style.display = ((activeLayer == 'Events' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolErase").disabled = activeLayer == 'Events';
+    document.getElementById("btnRegionToolErase").style.display = ((activeLayer == 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolErase").disabled = activeLayer == 'Spots';
     document.getElementById("btnRegionToolErase").style.color = (activeTool.indexOf('erase') > -1 ? activeToolColor : inactiveToolColor);
 
 
-    let eraseSelected = activeLayer != 'Events' && (activeTool.indexOf('erase') > -1);
+    let eraseSelected = activeLayer != 'Spots' && (activeTool.indexOf('erase') > -1);
     document.getElementById("btnChangeEraseSizeInfo").style.display = (!eraseSelected ? 'none' : '');
     document.getElementById("btnChangeEraseSizeLess").style.display = (!eraseSelected ? 'none' : '');
     document.getElementById("btnChangeEraseSizeLess").disabled = !eraseSelected;
@@ -648,33 +641,10 @@ function setButtons() {
 
     document.getElementById("btnChangeRegionName").disabled = !hasActiveItem || !cameraEditor.isEditing;
     document.getElementById("btnChangeColor").disabled = !hasActiveItem || !cameraEditor.isEditing;
-    document.getElementById("btnChangeImageMaxTemp").disabled = !cameraEditor.isEditing;
-    document.getElementById("btnChangeImageMinTemp").disabled = !cameraEditor.isEditing;
-    document.getElementById("btnChangeImageMaxPriorityLevel").disabled = !cameraEditor.isEditing;
-    document.getElementById("btnChangeImageMinPriorityLevel").disabled = !cameraEditor.isEditing;
-
-    document.getElementById("btnChangeRegionMaxTemp").disabled = !hasActiveItem || !cameraEditor.isEditing;
-    document.getElementById("btnChangeRegionMinTemp").disabled = !hasActiveItem || !cameraEditor.isEditing;
-
-    document.getElementById("btnChangeRegionMaxPriorityLevel").disabled = !hasActiveItem || !cameraEditor.isEditing;
-    document.getElementById("btnChangeRegionMinPriorityLevel").disabled = !hasActiveItem || !cameraEditor.isEditing;
-
-
-
-
+    
 
 
 }
-
-function randomNumberGenerator(min = 0, max = 1, fractionDigits = 0, inclusive = true) {
-    const precision = Math.pow(10, Math.max(fractionDigits, 0));
-    const scaledMax = max * precision;
-    const scaledMin = min * precision;
-    const offset = inclusive ? 1 : 0;
-    const num = Math.floor(Math.random() * (scaledMax - scaledMin + offset)) + scaledMin;
-
-    return num / precision;
-};
 
 
 function changeDistanceBy(amount) {
@@ -717,7 +687,6 @@ function hideEverything() {
     document.getElementById('mainEditor').style.display = 'none';
     document.getElementById('dialogDistance').style.display = 'none';
     document.getElementById('dialogMaterials').style.display = 'none';
-    document.getElementById('dialogEvent').style.display = 'none';
 }
 
 function cancelEventDialog(){
@@ -725,70 +694,8 @@ function cancelEventDialog(){
     document.getElementById('mainEditor').style.display = 'block';
 }
 
-function showEventDialog(){
-    hideEverything();
-    document.getElementById('dialogEvent').style.display = '';
-    document.getElementById('eventList').innerHTML = '<h2 style="color:green">loading...</h2>';
-    refreshTags(populateEventDialog);
-}
 
-function populateEventDialog(){
-    let sb = '';
-    sb += '<div style="color:white">The System Has ' + cameraEditor.tags.length  + ' tags</div>';
-    sb += '<ul style="list-style-type: none;">';
-    for(let i = 0; i < cameraEditor.tags.length; i++){
-        let item = cameraEditor.tags[i];
-        sb += '<li>';
-        sb += '<button class="resizebutton" onclick="tagClicked(' + i.toString() + ')">';
-        sb += '<div style="line-height: 4px;">';
-        sb += '<span class="regioneditortext">Choose</span>';
-        sb += '</div>';
-        sb += '</button>';
-        sb += '<span style="color:white">' + escapeHTML(item.tag) + '</span>';
-        sb += '</li>';
-    }
-    document.getElementById('eventList').innerHTML = sb;
-}
 
-function changeEventTimeTrigger(dateInterval, value){
-    
-    
-    let eventTriggerHoursSlider = document.getElementById('eventTriggerHoursSlider');
-    let eventTriggerMinutesSlider = document.getElementById('eventTriggerMinutesSlider');
-    let eventTriggerSecondsSlider = document.getElementById('eventTriggerSecondsSlider');
-    
-    let eventTriggerHours = document.getElementById('eventTriggerHours');
-    let eventTriggerMinutes = document.getElementById('eventTriggerMinutes');
-    let eventTriggerSeconds = document.getElementById('eventTriggerSeconds');
-    
-    let intValue = parseInt(value.toString(),10);
-    let hoursValue = parseInt(eventTriggerHoursSlider.value.toString(),10);
-    let minutesValue = parseInt(eventTriggerMinutesSlider.value.toString(),10);
-    let secondsValue = parseInt(eventTriggerSecondsSlider.value.toString(),10);
-
-    if(dateInterval == 'hours'){
-        hoursValue = intValue;
-    }
-    else if(dateInterval == 'minutes'){
-        minutesValue = intValue;
-    }
-    else if(dateInterval == 'seconds'){
-        secondsValue = intValue;
-    }
-
-    hoursValue = Math.min(23, Math.max(0, hoursValue));
-    minutesValue = Math.min(59, Math.max(0, minutesValue));
-    secondsValue = Math.min(59, Math.max(0, secondsValue));
-
-    eventTriggerHoursSlider.value = hoursValue;
-    eventTriggerMinutesSlider.value = minutesValue;
-    eventTriggerSecondsSlider.value = secondsValue;
-    
-    eventTriggerHours.value = hoursValue.toFixed(0);
-    eventTriggerMinutes.value = minutesValue.toFixed(0);
-    eventTriggerSeconds.value = secondsValue.toFixed(0);
-    
-} 
 
 
 
@@ -995,12 +902,7 @@ function recalcEditor() {
     document.getElementById("valueFilter").innerHTML = imageFilter;
     document.getElementById("valueImageMirrorHorizontally").innerHTML = regionEditor.imageMirrorHorizontally ? 'On' : 'Off';
 
-    document.getElementById("valImageMaxTempC").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.hiTempC, false) + '&deg;C';
-    document.getElementById("valImageMaxTempF").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.hiTempC, true) + '&deg;F';
-    document.getElementById("valImageMaxPriorityLevel").innerHTML = regionEditor.imageAlarmThresh.hiTempC == null ? '--' : regionEditor.imageAlarmThresh.hiPriority;
-    document.getElementById("valImageMinTempC").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.loTempC, false) + '&deg;C';
-    document.getElementById("valImageMinTempF").innerHTML = getDisplayTempFromCelsius(regionEditor.imageAlarmThresh.loTempC, true) + '&deg;F';
-    document.getElementById("valImageMinPriorityLevel").innerHTML = regionEditor.imageAlarmThresh.loTempC == null ? '--' : regionEditor.imageAlarmThresh.loPriority;
+    
 
 
     var valImageRotation = document.getElementById("valImageRotation");
@@ -1392,7 +1294,7 @@ function drawRegionMap(ctx, scale) {
         var region = regionEditor.regions[i];
         let isSelected = false;
         let drawControls = false;
-        if (activeLayer == 'Events') {
+        if (activeLayer == 'Spots') {
             isSelected = i == regionEditor.selectedRegionIndex;
             drawControls = isSelected && region.type == 'polygon' && activeTool.indexOf('point') > -1;
             if (drawControls) {
@@ -1427,7 +1329,7 @@ function changeRegionNext(nextRegion) {
     if (regionEditor.regions.length <= 1) {
         return;
     }
-    this.closeAlarmTemp();//close alarm temp if open
+   
     let regionIndex = regionEditor.selectedRegionIndex;
     if (nextRegion) {
         regionIndex++;
@@ -1567,12 +1469,6 @@ function updateSelectedRegionAttributes(region) {
 
 
     document.getElementById("valRegionName").innerHTML = region.name;
-    document.getElementById("valRegionMaxTempC").innerHTML = getDisplayTempFromCelsius(region.alarmThresh.hiTempC, false) + '&deg;C';
-    document.getElementById("valRegionMaxTempF").innerHTML = getDisplayTempFromCelsius(region.alarmThresh.hiTempC, true) + '&deg;F';
-    document.getElementById("valRegionMaxPriorityLevel").innerHTML = region.alarmThresh.hiTempC == null ? '--' : region.alarmThresh.hiPriority;
-    document.getElementById("valRegionMinTempC").innerHTML = getDisplayTempFromCelsius(region.alarmThresh.loTempC, false) + '&deg;C';
-    document.getElementById("valRegionMinTempF").innerHTML = getDisplayTempFromCelsius(region.alarmThresh.loTempC, true) + '&deg;F';
-    document.getElementById("valRegionMinPriorityLevel").innerHTML = region.alarmThresh.loTempC == null ? '--' : region.alarmThresh.loPriority;
     document.getElementById("valRegionColor").innerHTML = region.color;
     document.getElementById("valRegionColorDemo").style.backgroundColor = region.color;
 }
@@ -1586,12 +1482,6 @@ function resetSelectedRegionAttributes() {
     document.getElementById("valRegionLowTempF").innerHTML = "--&deg;F";
 
     document.getElementById("valRegionName").innerHTML = "--";
-    document.getElementById("valRegionMaxTempC").innerHTML = "--&deg;C";
-    document.getElementById("valRegionMaxTempF").innerHTML = "--&deg;F";
-    document.getElementById("valRegionMinTempC").innerHTML = "--&deg;C";
-    document.getElementById("valRegionMinTempF").innerHTML = "--&deg;F";
-    document.getElementById("valRegionMaxPriorityLevel").innerHTML = "--";
-    document.getElementById("valRegionMinPriorityLevel").innerHTML = "--";
     document.getElementById("valRegionColor").innerHTML = "--";
     document.getElementById("valRegionColorDemo").style.backgroundColor = "grey";
 
@@ -1650,205 +1540,10 @@ function changeImageMirror() {
     recalcEditor();
 }
 
-function changeAlarmPriority(isMax, value) {
-    if (this.editAlarmThresh == null) {
-        return;
-    }
-    if (isMax) {
-        this.editAlarmThresh.hiPriority += value;
-        if (this.editAlarmThresh.hiPriority > 9) {
-            this.editAlarmThresh.hiPriority = 1;
-        }
-        else if (this.editAlarmThresh.hiPriority < 1) {
-            this.editAlarmThresh.hiPriority = 9;
-        }
-    }
-    else {
-        this.editAlarmThresh.loPriority += value;
-        if (this.editAlarmThresh.loPriority > 9) {
-            this.editAlarmThresh.loPriority = 1;
-        }
-        else if (this.editAlarmThresh.loPriority < 1) {
-            this.editAlarmThresh.loPriority = 9;
-        }
-    }
-    updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
-
-}
-
-function changeAlarmTempBy(isMaxTemp, changeAmount) {
-
-    if (this.editAlarmThresh == null) {
-        return;
-    }
-    if (isMaxTemp) {
-
-        let defaultTempC = this.editAlarmThresh.hiTempC;
-        if (defaultTempC == null) {
-            defaultTempC = tempRanges.highCelsius;
-        }
-        let tempCelsius = defaultTempC + changeAmount;
-        tempCelsius = Math.round(tempCelsius * 10) / 10;//round to .1
-        tempCelsius = Math.min(999, tempCelsius);
-        tempCelsius = Math.max(-999, tempCelsius);
-        this.editAlarmThresh.hiTempC = tempCelsius;
-
-    }
-    else {
-        let defaultTempC = this.editAlarmThresh.loTempC;
-        if (defaultTempC == null) {
-            defaultTempC = tempRanges.lowCelsius;
-        }
-        let tempCelsius = defaultTempC + changeAmount;
-        tempCelsius = Math.round(tempCelsius * 10) / 10;//round to .1
-        tempCelsius = Math.min(999, tempCelsius);
-        tempCelsius = Math.max(-999, tempCelsius);
-        this.editAlarmThresh.loTempC = tempCelsius;
-    }
-
-    updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
-}
-
-function clearAlarmThresh(isMaxTemp) {
-    if (this.editAlarmThresh == null) {
-        return;
-    }
-    if (isMaxTemp) {
-        this.editAlarmThresh.hiTempC = null;
-        this.editAlarmThresh.hiPriority = 1;
-    }
-    else {
-        this.editAlarmThresh.loTempC = null;
-        this.editAlarmThresh.loPriority = 1;
-    }
-    updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
-}
-
-
-function updateThreshDisplay(isImage, thresh) {
-    if (!isImage && (regionEditor.selectedRegionIndex < 0 || regionEditor.selectedRegionIndex >= regionEditor.regions.length)) {
-        this.closeAlarmTemp();
-        return;
-    }
-
-    let region = isImage ? null : regionEditor.regions[regionEditor.selectedRegionIndex];
-    let strElm = "edtImage";
-    let strBtnChange = "btnChangeImage";
-    let strBtnClear = "btnClearImage";
-    lblEditThreshTitle.innerHTML = isImage ? "Entire Image Alarm Settings" : 'Region "' + region.name + '" Alarm Settings';
-
-    document.getElementById(strElm + "HighLabel").innerHTML = isImage ? "Img Hi" : "Rgn Hi";
-    document.getElementById(strElm + "LowLabel").innerHTML = isImage ? "Img Lo" : "Rgn Lo";
-
-    if (isImage) {
-        document.getElementById(strElm + "HighTempC").innerHTML = document.getElementById("valImageHighTempC").innerHTML;
-        document.getElementById(strElm + "HighTempF").innerHTML = document.getElementById("valImageHighTempF").innerHTML;
-        document.getElementById(strElm + "LowTempC").innerHTML = document.getElementById("valImageLowTempC").innerHTML;
-        document.getElementById(strElm + "LowTempF").innerHTML = document.getElementById("valImageLowTempF").innerHTML;
-    }
-    else {
-        document.getElementById(strElm + "HighTempC").innerHTML = document.getElementById("valRegionHighTempC").innerHTML;
-        document.getElementById(strElm + "HighTempF").innerHTML = document.getElementById("valRegionHighTempF").innerHTML;
-        document.getElementById(strElm + "LowTempC").innerHTML = document.getElementById("valRegionLowTempC").innerHTML;
-        document.getElementById(strElm + "LowTempF").innerHTML = document.getElementById("valRegionLowTempF").innerHTML;
-    }
-
-
-    document.getElementById(strElm + "MaxAlarmTempC").innerHTML = getDisplayTempFromCelsius(thresh.hiTempC, false) + '&deg;C';
-    document.getElementById(strElm + "MaxAlarmTempF").innerHTML = getDisplayTempFromCelsius(thresh.hiTempC, true) + '&deg;F';
-    document.getElementById(strElm + "MaxAlarmPriority").innerHTML = (thresh.hiTempC == null ? "--" : thresh.hiPriority);
-    document.getElementById(strBtnChange + "MaxAlarmPriorityLess").disabled = thresh.hiTempC == null;
-    document.getElementById(strBtnChange + "MaxAlarmPriorityMore").disabled = thresh.hiTempC == null;
-    document.getElementById(strBtnClear + "MaxAlarmPriority").disabled = thresh.hiTempC == null;
 
 
 
-    document.getElementById(strElm + "MinAlarmTempC").innerHTML = getDisplayTempFromCelsius(thresh.loTempC, false) + '&deg;C';
-    document.getElementById(strElm + "MinAlarmTempF").innerHTML = getDisplayTempFromCelsius(thresh.loTempC, true) + '&deg;F';
-    document.getElementById(strElm + "MinAlarmPriority").innerHTML = (thresh.loTempC == null ? "--" : thresh.loPriority);
-    document.getElementById(strBtnChange + "MinAlarmPriorityLess").disabled = thresh.loTempC == null;
-    document.getElementById(strBtnChange + "MinAlarmPriorityMore").disabled = thresh.loTempC == null;
-    document.getElementById(strBtnClear + "MinAlarmPriority").disabled = thresh.loTempC == null;
 
-    let invalidMessage = getAlarmThreshIsValidMessage(this.editAlarmIsImage, this.editAlarmThresh);
-    document.getElementById("btnSaveImageAlarms").disabled = invalidMessage.length > 0;
-
-    document.getElementById("threshWindowMessage").innerHTML = invalidMessage;
-
-
-    document.getElementById("threshwindow").style.display = "block";
-
-
-}
-
-function closeAlarmTemp() {
-    document.getElementById("threshwindow").style.display = "none";
-}
-
-function getAlarmThreshIsValidMessage(isImage, thresh) {
-    if (thresh == null) {
-        return "Thresholds are null";
-    }
-    if (thresh.hiTempC != null && thresh.loTempC != null && thresh.hiTempC < thresh.loTempC) {
-        return "Alarm High Temp Is Less Than Alarm Low Temp.";
-    }
-
-    return '';
-}
-
-function saveAlarmTemp() {
-    let hadChange = false;
-    if (this.editAlarmThresh != null) {
-        let strValidMessage = getAlarmThreshIsValidMessage(this.editAlarmIsImage, this.editAlarmThresh);
-        if (strValidMessage.length > 0) {
-            return;
-        }
-        if (this.editAlarmIsImage) {
-            if (JSON.stringify(regionEditor.imageAlarmThresh) != JSON.stringify(this.editAlarmThresh)) {
-                hadChange = true;
-                regionEditor.imageAlarmThresh = JSON.parse(JSON.stringify(this.editAlarmThresh));
-            }
-
-
-        }
-        else {
-            let region = regionEditor.regions[regionEditor.selectedRegionIndex];
-            if (JSON.stringify(region.alarmThresh) != JSON.stringify(this.editAlarmThresh)) {
-                hadChange = true;
-                region.alarmThresh = JSON.parse(JSON.stringify(this.editAlarmThresh));
-            }
-        }
-        recalcEditor();
-        if (hadChange) {
-            addRegionHistory('change alarm temp', null, true);//force this
-        }
-    }
-
-    this.closeAlarmTemp();
-}
-
-function changeAlarmTemp(isImage, isMax) {
-    console.log('showing alarm settings');
-    if (isImage) {
-        this.editAlarmThresh = JSON.parse(JSON.stringify(regionEditor.imageAlarmThresh));
-        this.editAlarmIsImage = true;
-    }
-    else {
-        if (regionEditor.selectedRegionIndex >= 0 && regionEditor.selectedRegionIndex < regionEditor.regions.length) {
-            this.editAlarmThresh = JSON.parse(JSON.stringify(regionEditor.regions[regionEditor.selectedRegionIndex].alarmThresh));
-            this.editAlarmIsImage = false;
-        }
-        else {
-            return;
-        }
-    }
-    selectRegionEditorTool('look');
-    updateThreshDisplay(this.editAlarmIsImage, this.editAlarmThresh);
-
-    //{"loPriority" : 1, "hiPriority" : 1, "loTempC" : null, "hiTempC" : null}
-
-
-}
 
 function changeImageFilterNext(nextFilter) {
     hideTips();
@@ -1882,7 +1577,7 @@ function changeImageFilterNext(nextFilter) {
 
 function changeRegionName() {
     if (regionEditor.selectedRegionIndex >= 0) {
-        this.closeAlarmTemp();//close alarm temp if open
+       
         var region = regionEditor.regions[regionEditor.selectedRegionIndex];
         var newName = prompt("Please enter a new region name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", region.name);
         if (newName != null && newName.trim() != "") {
@@ -2274,7 +1969,7 @@ function rotateRegionBy(rotateBy) {
 
 function changeRegionColorNext(goNext) {
     if (regionEditor.selectedRegionIndex >= 0) {
-        this.closeAlarmTemp();//close alarm temp if open
+       
         var region = regionEditor.regions[regionEditor.selectedRegionIndex];
         var currentIndex = regionColors.indexOf(region.color);
         if (currentIndex == -1) {
@@ -2999,7 +2694,7 @@ function getPaintIndexes(offsetX, offsetY, imageNativeWidth, imageNativeHeight, 
 }
 
 function processScreenTouchCoordinates(offsetX, offsetY, isMouseMoveEvent) {
-    if (activeLayer == 'Events') {
+    if (activeLayer == 'Spots') {
         processRegionMouseEvent(offsetX, offsetY, isMouseMoveEvent);
     }
     else if (activeLayer == 'Dist') {
@@ -3464,7 +3159,7 @@ function isTouchEventWithElement(element, e) {
 
 function getEmptyRegionEditor() {
     return {
-        "imageAlarmThresh": { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null },
+
         "imageRotation": 0,
         "imageMirrorHorizontally": false,
         "maxNameLength": 16,
@@ -3480,7 +3175,7 @@ function getEmptyRegionEditor() {
 let doEditing = false;
 function go() {
     hideEverything();
-    setupEvents();
+    setupMouseEvents();
     let image = document.getElementById('regionEditorImageRef');
     image.onload = function () {
         cameraChangedImageLoaded(cameraEditor.selectedCameraIndex, doEditing);
@@ -3585,12 +3280,10 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
 function hideUI() {
     document.getElementById('cameraTools').style.display = 'none';
     document.getElementById('cameraEditTools').style.display = 'none';
-    document.getElementById('rowEventTools').style.display = 'none';
     document.getElementById('rowSpotTools').style.display = 'none';
     document.getElementById('rowMaterialTools').style.display = 'none';
     document.getElementById('rowDistanceTools').style.display = 'none';
     document.getElementById('touchTools').style.display = 'none';
-    document.getElementById('threshwindow').style.display = 'none';
 
 }
 
@@ -3601,7 +3294,6 @@ function showUI() {
     else {
         document.getElementById('cameraTools').style.display = '';
     }
-    document.getElementById('rowEventTools').style.display = (activeLayer == 'Events') ? '' : 'none';
     document.getElementById('touchTools').style.display = '';
 
 
@@ -3689,9 +3381,9 @@ function renameCamera() {
 
 
 function changeCamera(cameraIndex, editing) {
-    activeLayer = 'Events';
+    activeLayer = 'Spots';
     activeTool = 'look';
-    //activeLayer = 'Events';
+    //activeLayer = 'Spots';
     stagedUpdateCameraName = null;
     doEditing = editing;
     cameraEditor.isEditing = false;//will flip if camera index is found
@@ -3926,7 +3618,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
     }
 }
 
-function setupEvents() {
+function setupMouseEvents() {
     const image = document.querySelector('#regionEditorImage');
     const border = document.querySelector('#regionEditorBorder');
     const tooltip = document.getElementById('tooltip');
@@ -4087,7 +3779,7 @@ function goRegionEditor() {
     metaHistoryStack = [];
     metaHistoryIndex = -1;
     recalcEditor();
-    if(activeLayer == 'Events'){
+    if(activeLayer == 'Spots'){
         addRegionHistory('Initial ' + activeLayer + ' State', null, true);
     }
     else{
@@ -4195,7 +3887,6 @@ function addRegion(regionType) {
     }
     let region = {
         "name": regionName,
-        "alarmThresh": { "loPriority": 1, "hiPriority": 1, "loTempC": null, "hiTempC": null },
         "type": regionType,
         "color": colorToUse,
         "x": regionX,

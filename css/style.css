@@ -6,9 +6,6 @@ body{
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-   
-    
-    
   }
   
   .editorcolumn {
@@ -17,11 +14,6 @@ body{
     width:min-content;
     min-width: 80px;
   }
-
-
-
-
-
 
 .resizebutton{
     padding:0px;
@@ -325,44 +317,9 @@ background-color:grey;
 
   }
 
-  #threshwindow {
-    border: 3px solid black; 
-    user-select: none; 
-    font-family: 'Courier New', Courier, monospace;
-    font-weight: bold;
-    position: absolute;
-    top: 140px;
-    left: 270px;
-  z-index: 1;
-    padding: 5px;
-    background-color: #DADADA;
-    color: #fff;
-    font-size: 16px;
-   
-    box-shadow: 5px 10px rgba(0, 0, 0, 0.4);
-  }
+  
 
-  .slider {
-    -webkit-appearance: none;
-    height: 1px;
-    margin-left:0px;
-    background: rgba(255, 255, 255, 1.0);
-    border-radius: 5px;
-    pointer-events: none;
-    width:100%;
-    
-    
-  }
-
-  .slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    height: 40px;
-    width: 40px;
-    border-radius: 50%;
-    background:#007BFF;
-    cursor: ew-resize;
-    pointer-events: auto !important;
-  }
+  
 
   .sliderFrom {
     -webkit-appearance: none;
