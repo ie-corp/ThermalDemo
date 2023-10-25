@@ -22,7 +22,7 @@
                 <feFuncG type="table" tableValues=".7 .8 .9 1" />
                 <feFuncB type="table" tableValues=".7 .8 .9 1" />
             </feComponentTransfer>
-            </filter>
+        </filter>
     </svg>
 
     <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0">
@@ -32,28 +32,28 @@
                 <feFuncG type="table" tableValues="0 .1 .2 .3" />
                 <feFuncB type="table" tableValues="0 .1 .2 .3" />
             </feComponentTransfer>
-            </filter>
+        </filter>
     </svg>
 
 
     <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0">
         <filter id="bluered" color-interpolation-filters="sRGB">
-        <feComponentTransfer>
-            <feFuncR type="table" tableValues="0 1" />
-            <feFuncG type="table" tableValues="0 0" />
-            <feFuncB type="table" tableValues="1 0" />
-        </feComponentTransfer>
+            <feComponentTransfer>
+                <feFuncR type="table" tableValues="0 1" />
+                <feFuncG type="table" tableValues="0 0" />
+                <feFuncB type="table" tableValues="1 0" />
+            </feComponentTransfer>
         </filter>
     </svg>
     <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0">
         <filter id="inferno" color-interpolation-filters="sRGB">
-          <feComponentTransfer>
-            <feFuncR type="table" tableValues="0  0.125  0.8    1      1" />
-            <feFuncG type="table" tableValues="0  0      0      0.843  1" />
-            <feFuncB type="table" tableValues="0  0.549  0.466  0      1" />
-          </feComponentTransfer>
+            <feComponentTransfer>
+                <feFuncR type="table" tableValues="0  0.125  0.8    1      1" />
+                <feFuncG type="table" tableValues="0  0      0      0.843  1" />
+                <feFuncB type="table" tableValues="0  0.549  0.466  0      1" />
+            </feComponentTransfer>
         </filter>
-      </svg>
+    </svg>
     <div id="dialogEvent" style="display:none">
         <table width="100%">
             <tr>
@@ -67,41 +67,224 @@
                 </td>
             </tr>
         </table>
+        <div id="eventOption">
+            <button id="btnEventAlways" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Always</span>
+                </div>
+            </button>
+            <button id="btnEventValue" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <span class="regioneditortext">Value</span>
+                </div>
+            </button>
+        </div>
+        <div id="eventTag">
+            <div style="color:white">Primary/Primary Current/Average</div>
+            <table>
+                <tr>
+                    <td>
+                        <button id="btnEventOperatorUp" class="resizebutton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M14.8285 11.9481L16.2427 10.5339L12 6.29122L7.7574 10.5339L9.17161 11.9481L11 10.1196V17.6568H13V10.1196L14.8285 11.9481Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M19.7782 4.22183C15.4824 -0.0739415 8.51759 -0.0739422 4.22183 4.22183C-0.0739415 8.51759 -0.0739422 15.4824 4.22183 19.7782C8.51759 24.0739 15.4824 24.0739 19.7782 19.7782C24.0739 15.4824 24.0739 8.51759 19.7782 4.22183ZM18.364 5.63604C14.8492 2.12132 9.15076 2.12132 5.63604 5.63604C2.12132 9.15076 2.12132 14.8492 5.63604 18.364C9.15076 21.8787 14.8492 21.8787 18.364 18.364C21.8787 14.8492 21.8787 9.15076 18.364 5.63604Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td>&nbsp;</td>
+                    <td>
+                        <button id="btnEventOperatorUp" class="resizebutton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M14.8285 11.9481L16.2427 10.5339L12 6.29122L7.7574 10.5339L9.17161 11.9481L11 10.1196V17.6568H13V10.1196L14.8285 11.9481Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M19.7782 4.22183C15.4824 -0.0739415 8.51759 -0.0739422 4.22183 4.22183C-0.0739415 8.51759 -0.0739422 15.4824 4.22183 19.7782C8.51759 24.0739 15.4824 24.0739 19.7782 19.7782C24.0739 15.4824 24.0739 8.51759 19.7782 4.22183ZM18.364 5.63604C14.8492 2.12132 9.15076 2.12132 5.63604 5.63604C2.12132 9.15076 2.12132 14.8492 5.63604 18.364C9.15076 21.8787 14.8492 21.8787 18.364 18.364C21.8787 14.8492 21.8787 9.15076 18.364 5.63604Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td>
+                        <button id="btnEventOperatorUp" class="resizebutton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M14.8285 11.9481L16.2427 10.5339L12 6.29122L7.7574 10.5339L9.17161 11.9481L11 10.1196V17.6568H13V10.1196L14.8285 11.9481Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M19.7782 4.22183C15.4824 -0.0739415 8.51759 -0.0739422 4.22183 4.22183C-0.0739415 8.51759 -0.0739422 15.4824 4.22183 19.7782C8.51759 24.0739 15.4824 24.0739 19.7782 19.7782C24.0739 15.4824 24.0739 8.51759 19.7782 4.22183ZM18.364 5.63604C14.8492 2.12132 9.15076 2.12132 5.63604 5.63604C2.12132 9.15076 2.12132 14.8492 5.63604 18.364C9.15076 21.8787 14.8492 21.8787 18.364 18.364C21.8787 14.8492 21.8787 9.15076 18.364 5.63604Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td>&nbsp;</td>
+                    <td>
+                        <button id="btnEventOperatorUp" class="resizebutton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M14.8285 11.9481L16.2427 10.5339L12 6.29122L7.7574 10.5339L9.17161 11.9481L11 10.1196V17.6568H13V10.1196L14.8285 11.9481Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M19.7782 4.22183C15.4824 -0.0739415 8.51759 -0.0739422 4.22183 4.22183C-0.0739415 8.51759 -0.0739422 15.4824 4.22183 19.7782C8.51759 24.0739 15.4824 24.0739 19.7782 19.7782C24.0739 15.4824 24.0739 8.51759 19.7782 4.22183ZM18.364 5.63604C14.8492 2.12132 9.15076 2.12132 5.63604 5.63604C2.12132 9.15076 2.12132 14.8492 5.63604 18.364C9.15076 21.8787 14.8492 21.8787 18.364 18.364C21.8787 14.8492 21.8787 9.15076 18.364 5.63604Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><button disabled id="btnEventValue" style="background:black" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">&gt;&nbsp;=</span>
+                            </div>
+                        </button>
+                    </td>
+                    <td>&nbsp;</td>
+                    <td><button disabled id="btnEventValue" style="background:black" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">+</span>
+                            </div>
+                        </button>
+                    </td>
+                    <td><button disabled id="btnEventValue" style="background:black" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">0</span>
+                            </div>
+                        </button>
+                    </td>
+                    <td><button disabled id="btnEventValue" style="background:black" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">.</span>
+                            </div>
+                        </button>
+                    </td>
+                    <td><button disabled id="btnEventValue" style="background:black" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">0</span>
+                        </div>
+                    </button>
+                </td>
+                <td>
+                    <button id="btnEventOperatorUp" class="resizebutton">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M14.8285 11.9481L16.2427 10.5339L12 6.29122L7.7574 10.5339L9.17161 11.9481L11 10.1196V17.6568H13V10.1196L14.8285 11.9481Z"
+                                fill="currentColor" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M19.7782 4.22183C15.4824 -0.0739415 8.51759 -0.0739422 4.22183 4.22183C-0.0739415 8.51759 -0.0739422 15.4824 4.22183 19.7782C8.51759 24.0739 15.4824 24.0739 19.7782 19.7782C24.0739 15.4824 24.0739 8.51759 19.7782 4.22183ZM18.364 5.63604C14.8492 2.12132 9.15076 2.12132 5.63604 5.63604C2.12132 9.15076 2.12132 14.8492 5.63604 18.364C9.15076 21.8787 14.8492 21.8787 18.364 18.364C21.8787 14.8492 21.8787 9.15076 18.364 5.63604Z"
+                                fill="currentColor" />
+                        </svg>
+                    </button>
+                </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button id="btnEventOperatorDown" class="resizebutton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M14.8285 12.0259L16.2427 13.4402L12 17.6828L7.7574 13.4402L9.17161 12.0259L11 13.8544V6.31724H13V13.8544L14.8285 12.0259Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M19.7782 19.7782C15.4824 24.0739 8.51759 24.0739 4.22183 19.7782C-0.0739417 15.4824 -0.0739417 8.51759 4.22183 4.22183C8.51759 -0.0739419 15.4824 -0.0739419 19.7782 4.22183C24.0739 8.51759 24.0739 15.4824 19.7782 19.7782ZM18.364 18.364C14.8492 21.8787 9.15076 21.8787 5.63604 18.364C2.12132 14.8492 2.12132 9.15076 5.63604 5.63604C9.15076 2.12132 14.8492 2.12132 18.364 5.63604C21.8787 9.15076 21.8787 14.8492 18.364 18.364Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td>&nbsp;</td>
+                    <td>
+                        <button id="btnEventOperatorDown" class="resizebutton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M14.8285 12.0259L16.2427 13.4402L12 17.6828L7.7574 13.4402L9.17161 12.0259L11 13.8544V6.31724H13V13.8544L14.8285 12.0259Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M19.7782 19.7782C15.4824 24.0739 8.51759 24.0739 4.22183 19.7782C-0.0739417 15.4824 -0.0739417 8.51759 4.22183 4.22183C8.51759 -0.0739419 15.4824 -0.0739419 19.7782 4.22183C24.0739 8.51759 24.0739 15.4824 19.7782 19.7782ZM18.364 18.364C14.8492 21.8787 9.15076 21.8787 5.63604 18.364C2.12132 14.8492 2.12132 9.15076 5.63604 5.63604C9.15076 2.12132 14.8492 2.12132 18.364 5.63604C21.8787 9.15076 21.8787 14.8492 18.364 18.364Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td>
+                        <button id="btnEventOperatorDown" class="resizebutton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M14.8285 12.0259L16.2427 13.4402L12 17.6828L7.7574 13.4402L9.17161 12.0259L11 13.8544V6.31724H13V13.8544L14.8285 12.0259Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M19.7782 19.7782C15.4824 24.0739 8.51759 24.0739 4.22183 19.7782C-0.0739417 15.4824 -0.0739417 8.51759 4.22183 4.22183C8.51759 -0.0739419 15.4824 -0.0739419 19.7782 4.22183C24.0739 8.51759 24.0739 15.4824 19.7782 19.7782ZM18.364 18.364C14.8492 21.8787 9.15076 21.8787 5.63604 18.364C2.12132 14.8492 2.12132 9.15076 5.63604 5.63604C9.15076 2.12132 14.8492 2.12132 18.364 5.63604C21.8787 9.15076 21.8787 14.8492 18.364 18.364Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td>&nbsp;</td>
+                    <td>
+                        <button id="btnEventOperatorDown" class="resizebutton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M14.8285 12.0259L16.2427 13.4402L12 17.6828L7.7574 13.4402L9.17161 12.0259L11 13.8544V6.31724H13V13.8544L14.8285 12.0259Z"
+                                    fill="currentColor" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M19.7782 19.7782C15.4824 24.0739 8.51759 24.0739 4.22183 19.7782C-0.0739417 15.4824 -0.0739417 8.51759 4.22183 4.22183C8.51759 -0.0739419 15.4824 -0.0739419 19.7782 4.22183C24.0739 8.51759 24.0739 15.4824 19.7782 19.7782ZM18.364 18.364C14.8492 21.8787 9.15076 21.8787 5.63604 18.364C2.12132 14.8492 2.12132 9.15076 5.63604 5.63604C9.15076 2.12132 14.8492 2.12132 18.364 5.63604C21.8787 9.15076 21.8787 14.8492 18.364 18.364Z"
+                                    fill="currentColor" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td>&nbsp;</td>
+                </tr>
+            </table>
+
+        </div>
         <div id="eventTimeTrigger" style="padding-top: 24px;">
+            <h3 style="color:white">For At Least:</h3>
+
             <table width="100%">
                 <tr>
                     <td style="padding-bottom:18px">
-                        <input id="eventTriggerHoursSlider" class="slider"  type="range" value="0" min="0" max="23" step="1" 
-                        oninput="changeEventTimeTrigger('hours',this.value)"/>
+                        <input id="eventTriggerHoursSlider" class="slider" type="range" value="0" min="0" max="23"
+                            step="1" oninput="changeEventTimeTrigger('hours',this.value)" />
                     </td>
                 </tr>
                 <tr>
                     <td style="padding-bottom:22px">
-                        <input style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled type="text" id="eventTriggerHours" value="0"/>
+                        <input style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled
+                            type="text" id="eventTriggerHours" value="0" />
                         <span style="color:white">Hours</span>
                     </td>
                 </tr>
                 <tr>
                     <td style="padding-bottom:18px">
-                        <input id="eventTriggerMinutesSlider" class="slider"  type="range" value="0" min="0" max="59" step="1" 
-                        oninput="changeEventTimeTrigger('minutes',this.value)"/>
+                        <input id="eventTriggerMinutesSlider" class="slider" type="range" value="0" min="0" max="59"
+                            step="1" oninput="changeEventTimeTrigger('minutes',this.value)" />
                     </td>
                 </tr>
                 <tr>
                     <td style="padding-bottom:22px">
-                        <input style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled type="text" id="eventTriggerMinutes" value="0"/>
+                        <input style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled
+                            type="text" id="eventTriggerMinutes" value="0" />
                         <span style="color:white">Minutes</span>
                     </td>
                 </tr>
                 <tr>
                     <td style="padding-bottom:18px">
-                        <input id="eventTriggerSecondsSlider" class="slider"  type="range" value="0" min="0" max="59" step="1" 
-                        oninput="changeEventTimeTrigger('seconds',this.value)"/>
+                        <input id="eventTriggerSecondsSlider" class="slider" type="range" value="0" min="0" max="59"
+                            step="1" oninput="changeEventTimeTrigger('seconds',this.value)" />
                     </td>
                 </tr>
                 <tr>
                     <td style="padding-bottom:12px">
-                        <input style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled type="text" id="eventTriggerSeconds" value="0"/>
+                        <input style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled
+                            type="text" id="eventTriggerSeconds" value="0" />
                         <span style="color:white">Seconds</span>
                     </td>
                 </tr>
@@ -129,13 +312,13 @@
                     <tr>
                         <td colspan="2" width="100%">
                             <div>
-                                <hr style="margin-left:15px;margin-bottom:-12px"/>
-                            <input id="fromMaterialSlider" class="sliderFrom"  type="range" value="0" min="0" max="1" step="0.01" 
-                                oninput="changeMaterialEmissivityFilter(true,this.value)"/>
-                            <input id="toMaterialSlider" class="sliderTo"    type="range" value="1" min="0" max="1" step="0.01" 
-                                oninput="changeMaterialEmissivityFilter(false,this.value)"/>
+                                <hr style="margin-left:15px;margin-bottom:-12px" />
+                                <input id="fromMaterialSlider" class="sliderFrom" type="range" value="0" min="0" max="1"
+                                    step="0.01" oninput="changeMaterialEmissivityFilter(true,this.value)" />
+                                <input id="toMaterialSlider" class="sliderTo" type="range" value="1" min="0" max="1"
+                                    step="0.01" oninput="changeMaterialEmissivityFilter(false,this.value)" />
                             </div>
-                            
+
                         </td>
                     </tr>
                     <tr>
@@ -143,11 +326,15 @@
                         <td width="50%" style="text-align:right"><span style="color:white">Max</span></td>
                     </tr>
                     <tr>
-                        <td width="50%"><input style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled type="text" id="fromMaterialInput" value="0.00"/></td>
-                        <td width="50%"  style="text-align:right"><input style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled type="text" id="toMaterialInput" value="1.00"/></td>
+                        <td width="50%"><input
+                                style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled
+                                type="text" id="fromMaterialInput" value="0.00" /></td>
+                        <td width="50%" style="text-align:right"><input
+                                style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled
+                                type="text" id="toMaterialInput" value="1.00" /></td>
                     </tr>
                 </table>
-                
+
             </div>
         </div>
         <div id="materialList"></div>
@@ -156,7 +343,7 @@
     <div id="mainEditor">
 
         <div id="cameraTools" class="editorrow">
-            
+
             <div id="cameraList"></div>
             <button id="btnRefreshCameras" onclick="refreshCameras()" class="resizebutton">
                 <div style="line-height: 19px;">
@@ -381,7 +568,7 @@
             <button id="btnCopyEvent" onclick="changeRegionNext(true)" class="resizebutton">
                 <div style="line-height: 19px;">
                     <span class="regioneditortext2">Copy</span>
-                    <span class="regioneditortext2"><br/></span>
+                    <span class="regioneditortext2"><br /></span>
                     <span class="regionditortextsub3">Event</span>
                 </div>
             </button>
@@ -389,7 +576,7 @@
             <button id="btnAddEvent" onclick="changeRegionNext(true)" class="resizebutton">
                 <div style="line-height: 19px;">
                     <span class="regioneditortext2">Add</span>
-                    <span class="regioneditortext2"><br/></span>
+                    <span class="regioneditortext2"><br /></span>
                     <span class="regionditortextsub3">Event</span>
                 </div>
             </button>
@@ -397,7 +584,7 @@
             <button id="btnClearEvent" onclick="changeRegionNext(true)" class="resizebutton">
                 <div style="line-height: 19px;">
                     <span class="regioneditortext2">Clear</span>
-                    <span class="regioneditortext2"><br/></span>
+                    <span class="regioneditortext2"><br /></span>
                     <span class="regionditortextsub3">Event</span>
                 </div>
             </button>
@@ -405,7 +592,7 @@
             <button id="btnDeleteEvent" onclick="changeRegionNext(true)" class="resizebutton">
                 <div style="line-height: 19px;">
                     <span class="regioneditortext2">Delete</span>
-                    <span class="regioneditortext2"><br/></span>
+                    <span class="regioneditortext2"><br /></span>
                     <span class="regionditortextsub3">Event</span>
                 </div>
             </button>
@@ -1006,7 +1193,7 @@
                 </div>
             </div>
             <div id="regionEditorBorder" class="editorcolumn" style="margin-left:-16px;padding:30px;">
-                <canvas  id="regionEditorImage" width="256" height="192" draggable="false"></canvas>
+                <canvas id="regionEditorImage" width="256" height="192" draggable="false"></canvas>
             </div>
         </div>
 
