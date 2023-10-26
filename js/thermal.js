@@ -3287,6 +3287,11 @@ function hideUI() {
 
 }
 
+function setStatusText(text, color, encode) {
+    document.getElementById('statusText').innerHTML = encode ? escapeHTML(text) : text;
+    document.getElementById('statusText').style.color = color;
+}
+
 function showUI() {
     if (cameraEditor.isEditing) {
         document.getElementById('cameraEditTools').style.display = '';
@@ -3374,6 +3379,7 @@ function renameCamera() {
         let elmName = document.getElementById('valCamName');
         elmName.innerHTML = newName;
         elmName.style.color = 'yellow';
+        setStatusText('Editing ' + newName + ' Camera', 'white', true);
     }
 
 }
@@ -3528,6 +3534,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
         cameraTools.style.display = '';
     }
     let sb = '';
+    setStatusText('', 'white', false);
     if (cameraEditor.cameras.length > 0) {
 
 
@@ -3548,10 +3555,11 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
 
                     let elmCamIssues = document.getElementById('valCamIssues');
                     elmCamIssues.innerHTML = "0";
-
+                    setStatusText('Editing ' + camera.name + ' Camera', 'white', true);
                     break;
                 }
                 else {
+                    setStatusText('Viewing ' + camera.name + ' Camera', 'white', true);
                     sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',true)" class="resizebutton2" style="border-color:white">';
                     sb += '<div style="line-height: 14px;">';
                     if (!camera.isOnline) {
