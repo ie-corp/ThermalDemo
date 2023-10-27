@@ -3190,6 +3190,9 @@ function getUrlPrefix() {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         return 'https://raw.githubusercontent.com/ie-corp/ThermalDemo/main';
     }
+    else if(location.href.indexOf('5500') > -1){
+        return '';
+    }
     else {
         return 'http://localhost:81';
     }
@@ -3204,7 +3207,7 @@ function refreshCameras() {
     let strUrl = '/test_api_calls/test_getCams.json';
     let urlPrefix = getUrlPrefix();
     //check if the site is on github pages, if so, we need to prefix the url with the github repo name.
-    let usePost = urlPrefix.indexOf(':81');
+    let usePost = urlPrefix.indexOf(':81') > -1;
     if (usePost) {
         let camPrefix = 'http://localhost:81';
         fetch('http://localhost:81/jsonproxy.ashx', {
