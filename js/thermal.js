@@ -3185,78 +3185,64 @@ function go() {
 
 }
 
-function getUrlPrefix() {
+function getApiSettings() {
     if (location.href.indexOf('github.io') > -1) {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
-        return 'https://raw.githubusercontent.com/ie-corp/ThermalDemo/main';
+        return {"isPost":false, "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main"};
     }
-    else if(location.href.indexOf('5500') > -1){
-        return '';
+    else if (location.href.indexOf('5500') > -1) {
+        return {"isPost":false, "url":"", "rootUrl": ""};//running locally
     }
     else {
-        return 'http://localhost:81';
+        return {"isPost":true, "url":"http://localhost:81/jsonproxy.ashx", "rootUrl": "http://localhost:81"};//running embedded
     }
 }
 
 
-
-
-
-function refreshCameras() {
-    hideEverything();
-    let strUrl = '/test_api_calls/test_getCams.json';
-    let urlPrefix = getUrlPrefix();
-    //check if the site is on github pages, if so, we need to prefix the url with the github repo name.
-    let usePost = urlPrefix.indexOf(':81') > -1;
-    if (usePost) {
-        let camPrefix = 'http://localhost:81';
-        fetch('http://localhost:81/jsonproxy.ashx', {
+function getFetch(scriptName, apiParams) {
+    let apiSettings = getApiSettings();
+    if (apiSettings.isPost) {
+        return fetch(apiSettings.url, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json, text/plain, */*',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ "ScriptName": "rse_thermalcameras_get" })
-        }).then(response => {
-            if (!response.ok) {
-                //console.log('not found');
-                this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
-            }
-            return response.json();
-        })
-            .then(json => {
-
-                let myJson = JSON.parse(json.ScriptReturnValue);
-                console.log(myJson);
-                this.apiGetCamerasReceived(camPrefix, myJson);
-
-            })
-            .catch(function () {
-                //console.error('catch fetch');
-                this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
-            })
+            body: JSON.stringify({ "ScriptName": scriptName })
+        });
     }
     else {
-
-
-        console.log('fetching cameras from: ' + urlPrefix + strUrl);
-        fetch(urlPrefix + strUrl)
-            .then(response => {
-                if (!response.ok) {
-                    //console.log('not found');
-                    this.apiGetCamerasReceived(urlPrefix, { "cameras": [] });
-                }
-                return response.json();
-            })
-            .then(json => {
-
-                this.apiGetCamerasReceived(urlPrefix, json);
-            })
-            .catch(function () {
-                //console.error('catch fetch');
-                this.apiGetCamerasReceived(urlPrefix, { "cameras": [] });
-            })
+        return fetch(apiSettings.url + '/test_api_calls/' + scriptName + '.json');
     }
+}
+
+
+function refreshCameras() {
+    hideEverything();
+    let apiSettings = getApiSettings();
+    let camPrefix = apiSettings.rootUrl;
+    let scriptName = 'rse_thermalcameras_get';
+    getFetch(scriptName, {})
+    .then(response => {
+        if (!response.ok) {
+            console.error('response not ok');
+            this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
+        }
+        return response.json();
+    })
+        .then(json => {
+            //console.log('response ok');
+            let scriptReturnValue = json.ScriptReturnValue;
+            if(typeof scriptReturnValue == 'string'){
+                scriptReturnValue = JSON.parse(scriptReturnValue);
+            }
+            this.apiGetCamerasReceived(camPrefix, scriptReturnValue);
+
+        })
+        .catch(function () {
+            console.error('catch fetch');
+            this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
+        })
 }
 
 function apiGetCamerasReceived(urlPrefix, jsonResult) {
@@ -3315,10 +3301,47 @@ function showUI() {
 function deleteCamera() {
     //todo prompt for confirm or tap again to confirm
 
-    cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = unknownCameraName;
-    cameraEditor.cameras[cameraEditor.selectedCameraIndex].isSpecified = false;
-    changeCamera(cameraEditor.selectedCameraIndex, false);
+    let cameraName = cameraEditor.cameras[cameraEditor.selectedCameraIndex].name;
+    callDeleteCameras([cameraName])
 }
+
+
+function callDeleteCameras(cameraNamesToDelete) {
+    hideEverything();
+    let apiSettings = getApiSettings();
+    let camPrefix = apiSettings.rootUrl;
+    let scriptName = 'rse_thermalcameras_delete';
+    getFetch(scriptName, {"cameraNamesToDelete": cameraNamesToDelete})
+    .then(response => {
+        if (!response.ok) {
+            console.error('response not ok');
+            this.apicamerasDeletedReceived(camPrefix, { "cameras": [] });
+        }
+        return response.json();
+    })
+        .then(json => {
+            //console.log('response ok');
+            let scriptReturnValue = json.ScriptReturnValue;
+            if(typeof scriptReturnValue == 'string'){
+                scriptReturnValue = JSON.parse(scriptReturnValue);
+            }
+            console.log('camera(s) deleted:' + JSON.stringify(cameraNamesToDelete));
+            this.apicamerasDeletedReceived(camPrefix, scriptReturnValue);
+
+        })
+        .catch(function () {
+            console.error('catch fetch');
+            this.apicamerasDeletedReceived(camPrefix, { "cameras": [] });
+        })
+}
+
+function apicamerasDeletedReceived(urlPrefix, jsonResult) {
+    
+    cameraEditor.selectedCameraIndex = -1;
+    cameraEditor.cameras = [];
+    refreshCameras();
+}
+
 
 function cancelCameraEdit() {
     //todo prompt for confirm or tap again to confirm
@@ -3563,6 +3586,10 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     let elmCamIssues = document.getElementById('valCamIssues');
                     elmCamIssues.innerHTML = "0";
                     setStatusText('Editing ' + camera.name + ' Camera', 'white', true);
+
+                    //don't show the delete button if it's an unknown camera
+                    document.getElementById('btnDeleteCamera').style.visibility = camera.isKnown ? 'visible' : 'hidden';
+
                     break;
                 }
                 else {

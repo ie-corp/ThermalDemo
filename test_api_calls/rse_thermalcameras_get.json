@@ -1,0 +1,49 @@
+{
+    "StatusCode": 0,
+    "ScriptReturnValue": {
+        "cameras": [
+            {
+                "usbId": "0",
+                "name": "Left",
+                "url": "/test_images/reference_01.tiff",
+                "isOnline": true,
+                "isKnown": true
+            },
+            {
+                "usbId": null,
+                "name": "Right",
+                "url": "/test_images/reference_02.tiff",
+                "isOnline": false,
+                "isKnown": true
+            },
+            {
+                "usbId": "1",
+                "name": "Top",
+                "url": "/test_images/reference_03.tiff",
+                "isOnline": false,
+                "isKnown": true
+            },
+            {
+                "usbId": "2",
+                "name": "Bottom",
+                "url": "/test_images/reference_04.tiff",
+                "isOnline": false,
+                "isKnown": true
+            },
+            {
+                "usbId": "3",
+                "name": null,
+                "url": "/test_images/reference_05.tiff",
+                "isOnline": true,
+                "isKnown": false
+            },
+            {
+                "usbId": "4",
+                "name": null,
+                "url": "/test_images/reference_06.tiff",
+                "isOnline": true,
+                "isKnown": false
+            }
+        ]
+    }
+}
