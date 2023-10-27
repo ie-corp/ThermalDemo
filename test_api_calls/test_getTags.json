@@ -1,7 +1,0 @@
-{
-    "tags":[
-        {"tag":"Primary/Primary Current/Average", "measurementName":"Amps", "roundingPrecision":0, "numericValue":200, "stringValue":null, "readingText":"200 Amps" },
-        {"tag":"Secondary/Secondary Current/Average", "measurementName":"Amps", "roundingPrecision":0, "numericValue":200, "stringValue":null, "readingText":"200 Amps" }
-
-    ]
-}

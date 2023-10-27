@@ -38,11 +38,11 @@ const unknownCameraName = '-Unknown-';
 
 var escapeElm = null;
 function escapeHTML(html) {
-    if(html == null || html.trim() == ''){
+    if (html == null || html.trim() == '') {
         return '';
     }
 
-    if(escapeElm == null){
+    if (escapeElm == null) {
         escapeElm = document.createElement('textarea');
     }
 
@@ -105,12 +105,12 @@ let storedImageMirrorHorizontally = null;
 var activeFunc = null;
 var waiterTime = 100;
 
-const imageFilters = ['none', 'inferno', 'bluered', 'light','dark'];
+const imageFilters = ['none', 'inferno', 'bluered', 'light', 'dark'];
 let imageFilter = imageFilters[1];
 let imageScale = 1.0;
 
 function changeLayerNext(doNext) {
-    
+
     let index = cameraLayers.indexOf(activeLayer);
     if (doNext) {
         index++;
@@ -128,7 +128,7 @@ function changeLayerNext(doNext) {
     //changing layers clears the history stack;
     hideTips();
     goRegionEditor();
-    
+
 
 
 }
@@ -215,7 +215,7 @@ function selectRegionEditorTool(toolName) {
         recalcEditor();
         return;
     }
-    
+
     let oldActiveTool = activeTool;
     //put some logic here
     activeTool = toolName;
@@ -229,7 +229,7 @@ function redoMetaHistory() {
         return;
     }
     if (metaHistoryIndex < metaHistoryStack.length - 1) {
-       
+
         metaHistoryIndex++;
         let historyEntry = metaHistoryStack[metaHistoryIndex];
         if (historyEntry.materialMap != null) {
@@ -260,7 +260,7 @@ function undoMetaHistory() {
     }
 
     if (metaHistoryIndex >= 1) {
-       
+
         metaHistoryIndex--;
         let historyEntry = metaHistoryStack[metaHistoryIndex];
         if (historyEntry.materialMap != null) {
@@ -284,16 +284,16 @@ function addMetaHistory(historyType, force) {
         setButtons();
         return;
     }
-   
+
     let time = new Date().getTime();
-    let historyEntry = { "historyType": historyType, "time":time, "materialMap": null, "distanceMap": null };
-    if(activeLayer == 'Matl'){
+    let historyEntry = { "historyType": historyType, "time": time, "materialMap": null, "distanceMap": null };
+    if (activeLayer == 'Matl') {
         historyEntry.materialMap = [...materialMap];
     }
-    else if(activeLayer == 'Dist'){
+    else if (activeLayer == 'Dist') {
         historyEntry.distanceMap = [...distanceMap];
     }
-    else{
+    else {
         console.error('invalid layer: ' + activeLayer);
         return;
     }
@@ -311,7 +311,7 @@ function addMetaHistory(historyType, force) {
             setButtons();
             return;
         }
-        
+
 
         if (force) {
             //console.log('force add history entry of ' + historyEntry.historyType)
@@ -367,7 +367,7 @@ function redoRegionEditor() {
         return;
     }
     if (historyIndex < historyStack.length - 1) {
-       
+
         historyIndex++;
         let historyEntry = historyStack[historyIndex];
         //console.log('restoring ' + historyEntry.historyType + ' with index ' + historyEntry.selectedIndex);
@@ -394,7 +394,7 @@ function undoRegionEditor() {
     }
 
     if (historyIndex >= 1) {
-       
+
         let currentHistoryEntry = historyStack[historyIndex];
         //console.log('undoing ' + currentHistoryEntry.historyType + ' with index ' + currentHistoryEntry.selectedIndex);
         historyIndex--;
@@ -418,7 +418,7 @@ function addRegionHistory(historyType, selectedIndex, force) {
         setButtons();
         return;
     }
-   
+
     let historyEntry = { "historyType": historyType, "selectedIndex": selectedIndex, "regionEditor": JSON.stringify(regionEditor) };
     let lastHistoryEntry = null;
     if (historyStack.length > 0) {
@@ -545,7 +545,7 @@ function setButtons() {
     document.getElementById("btnClearDistance").style.display = !cameraEditor.isEditing ? 'none' : '';
 
 
-    
+
 
 
 
@@ -641,7 +641,7 @@ function setButtons() {
 
     document.getElementById("btnChangeRegionName").disabled = !hasActiveItem || !cameraEditor.isEditing;
     document.getElementById("btnChangeColor").disabled = !hasActiveItem || !cameraEditor.isEditing;
-    
+
 
 
 }
@@ -689,7 +689,7 @@ function hideEverything() {
     document.getElementById('dialogMaterials').style.display = 'none';
 }
 
-function cancelEventDialog(){
+function cancelEventDialog() {
     hideEverything();
     document.getElementById('mainEditor').style.display = 'block';
 }
@@ -711,13 +711,13 @@ function pickMaterial() {
     document.getElementById('dialogMaterials').style.display = 'block';
 }
 
-function filterMaterials(minEmissivity, maxEmissivity){
+function filterMaterials(minEmissivity, maxEmissivity) {
     let materialList = document.getElementById('materialList');
     if (knownMaterials != null && knownMaterials.length > 0) {
         let sb = '';
         for (let i = 0; i < knownMaterials.length; i++) {
             let material = knownMaterials[i];
-            if(material.emissivity >= minEmissivity && material.emissivity <= maxEmissivity){
+            if (material.emissivity >= minEmissivity && material.emissivity <= maxEmissivity) {
 
                 sb += '<button class="resizebutton2" onclick="changeMaterial(\'' + material.name + '\',' + material.emissivity + ')">';
                 sb += '<div style="line-height: 17px;">';
@@ -728,7 +728,7 @@ function filterMaterials(minEmissivity, maxEmissivity){
                 sb += '</button>';
             }
         }
-        if(sb.length == 0){
+        if (sb.length == 0) {
             sb = '<div style="color:red">No Materials In Emissivity Range</div>';
         }
         materialList.innerHTML = sb;
@@ -736,9 +736,9 @@ function filterMaterials(minEmissivity, maxEmissivity){
 }
 
 
-function changeMaterialEmissivityFilter(isFrom, value){
-    
-    
+function changeMaterialEmissivityFilter(isFrom, value) {
+
+
     let fromMaterialSlider = document.getElementById('fromMaterialSlider');
     let toMaterialSlider = document.getElementById('toMaterialSlider');
     let fromMaterialInput = document.getElementById('fromMaterialInput');
@@ -747,17 +747,17 @@ function changeMaterialEmissivityFilter(isFrom, value){
     let frmValue = parseFloat(fromMaterialSlider.value.toString());
     let toValue = parseFloat(toMaterialSlider.value.toString());
     //logic.
-    if(isFrom){
+    if (isFrom) {
         frmValue = fltValue;
-        if(frmValue > toValue){
+        if (frmValue > toValue) {
             toValue = frmValue;
-        } 
+        }
     }
-    else{
-        
-        if(frmValue > toValue){
+    else {
+
+        if (frmValue > toValue) {
             frmValue = toValue;
-        } 
+        }
     }
 
     fromMaterialSlider.value = frmValue;
@@ -766,7 +766,7 @@ function changeMaterialEmissivityFilter(isFrom, value){
     toMaterialInput.value = toValue.toFixed(2);
     filterMaterials(frmValue, toValue);
 
-} 
+}
 
 
 function changeMaterial(materialName, emissivity) {
@@ -871,7 +871,7 @@ function recalcEditor() {
 
 
 
-    
+
     document.getElementById("valActiveLayerEdit").innerHTML = activeLayer;
     document.getElementById("valPaintBrushSize").innerHTML = paintBrushSize.toFixed(0);
     document.getElementById("valEraseBrushSize").innerHTML = eraseBrushSize.toFixed(0);
@@ -902,7 +902,7 @@ function recalcEditor() {
     document.getElementById("valueFilter").innerHTML = imageFilter;
     document.getElementById("valueImageMirrorHorizontally").innerHTML = regionEditor.imageMirrorHorizontally ? 'On' : 'Off';
 
-    
+
 
 
     var valImageRotation = document.getElementById("valImageRotation");
@@ -1092,11 +1092,11 @@ function drawRegions() {
     resetSelectedRegionAttributes();
 
     let rotation = regionEditor.imageRotation * Math.PI / 180;
-    
+
     let strFilter = imageFilter == 'none' ? '' : 'url(#' + imageFilter + ')';
     regionEditorImage.style.filter = strFilter;
-    
-    
+
+
     let scale = imageScale;
     //fix this
     if (rotation != 0 || regionEditor.imageMirrorHorizontally) {
@@ -1125,7 +1125,7 @@ function drawRegions() {
     else {
         ctx.drawImage(regionEditorImageRef, 0, 0, canvas.width, canvas.height);
     }
-    
+
     if (activeLayer == 'Matl') {
 
         drawMaterialMap(ctx, scale);
@@ -1329,7 +1329,7 @@ function changeRegionNext(nextRegion) {
     if (regionEditor.regions.length <= 1) {
         return;
     }
-   
+
     let regionIndex = regionEditor.selectedRegionIndex;
     if (nextRegion) {
         regionIndex++;
@@ -1569,7 +1569,7 @@ function changeImageFilterNext(nextFilter) {
         imageFilterIndex = 0;
     }
     imageFilter = imageFilters[imageFilterIndex];
-   
+
 
     recalcEditor();
     //filter is not part of history
@@ -1577,7 +1577,7 @@ function changeImageFilterNext(nextFilter) {
 
 function changeRegionName() {
     if (regionEditor.selectedRegionIndex >= 0) {
-       
+
         var region = regionEditor.regions[regionEditor.selectedRegionIndex];
         var newName = prompt("Please enter a new region name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", region.name);
         if (newName != null && newName.trim() != "") {
@@ -1770,12 +1770,12 @@ function fixRegionOutOfBounds(region) {
         region.x = Math.max(region.x, 0);
         region.y = Math.max(region.y, 0);
         if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
-            region.x = Math.min(region.x, regionEditor.imageNativeWidth-1);
-            region.y = Math.min(region.y, regionEditor.imageNativeHeight-1);
+            region.x = Math.min(region.x, regionEditor.imageNativeWidth - 1);
+            region.y = Math.min(region.y, regionEditor.imageNativeHeight - 1);
         }
         else {
-            region.x = Math.min(region.x, regionEditor.imageNativeHeight-1);
-            region.y = Math.min(region.y, regionEditor.imageNativeWidth-1);
+            region.x = Math.min(region.x, regionEditor.imageNativeHeight - 1);
+            region.y = Math.min(region.y, regionEditor.imageNativeWidth - 1);
         }
     }
     else if (region.type == 'polygon') {
@@ -1969,7 +1969,7 @@ function rotateRegionBy(rotateBy) {
 
 function changeRegionColorNext(goNext) {
     if (regionEditor.selectedRegionIndex >= 0) {
-       
+
         var region = regionEditor.regions[regionEditor.selectedRegionIndex];
         var currentIndex = regionColors.indexOf(region.color);
         if (currentIndex == -1) {
@@ -2363,7 +2363,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
             if (myIndex >= 0 && myIndex < materialMap.length) {
                 let material = materialMap[myIndex];
                 if (material != null) {
-                    
+
                     changeMaterial(material.name, material.emissivity);
                     return;
                 }
@@ -2393,7 +2393,7 @@ function processMaterialMouseEvent(offsetX, offsetY, isMouseMoveEvent) {
 
         }
         recalcEditor();
-        
+
         addMetaHistory('fill material', true);
 
 
@@ -3185,46 +3185,18 @@ function go() {
 
 }
 
-function getUrlPrefix(){
+function getUrlPrefix() {
     if (location.href.indexOf('github.io') > -1) {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         return 'https://raw.githubusercontent.com/ie-corp/ThermalDemo/main';
     }
-    else{
-        return '';
+    else {
+        return 'http://localhost:81';
     }
 }
 
-function refreshTags(callback){
-    let strUrl = '/test_api_calls/test_getTags.json';
-    let urlPrefix = getUrlPrefix();
-    console.log('fetching tags from: ' + urlPrefix + strUrl);
-    fetch(urlPrefix + strUrl)
-        .then(response => {
-            if (!response.ok) {
-                //console.log('not found');
-                this.apiTagsReceived(urlPrefix, { "tags": [] }, callback);
-            }
-            return response.json();
-        })
-        .then(json => {
 
-            this.apiTagsReceived(urlPrefix, json, callback);
-        })
-        .catch(function () {
-            //console.error('catch fetch');
-            this.apiTagsReceived(urlPrefix, { "tags": [] }, callback);
-        })
-}
 
-function apiTagsReceived(urlPrefix, tagsResponse, callback){
-    if(tagsResponse != null && tagsResponse.tags != null){
-     cameraEditor.tags = tagsResponse.tags;
-    }
-    if(callback != null){
-        callback();
-    }
-}
 
 
 function refreshCameras() {
@@ -3232,28 +3204,60 @@ function refreshCameras() {
     let strUrl = '/test_api_calls/test_getCams.json';
     let urlPrefix = getUrlPrefix();
     //check if the site is on github pages, if so, we need to prefix the url with the github repo name.
-    
-    console.log('fetching cameras from: ' + urlPrefix + strUrl);
-    fetch(urlPrefix + strUrl)
-        .then(response => {
+    let usePost = urlPrefix.indexOf(':81');
+    if (usePost) {
+        let camPrefix = 'http://localhost:81';
+        fetch('http://localhost:81/jsonproxy.ashx', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ "ScriptName": "rse_thermalcameras_get" })
+        }).then(response => {
             if (!response.ok) {
                 //console.log('not found');
-                this.apiGetCamerasReceived(urlPrefix, { "cameras": [] });
+                this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
             }
             return response.json();
         })
-        .then(json => {
+            .then(json => {
 
-            this.apiGetCamerasReceived(urlPrefix, json);
-        })
-        .catch(function () {
-            //console.error('catch fetch');
-            this.apiGetCamerasReceived(urlPrefix, { "cameras": [] });
-        })
+                let myJson = JSON.parse(json.ScriptReturnValue);
+                console.log(myJson);
+                this.apiGetCamerasReceived(camPrefix, myJson);
+
+            })
+            .catch(function () {
+                //console.error('catch fetch');
+                this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
+            })
+    }
+    else {
+
+
+        console.log('fetching cameras from: ' + urlPrefix + strUrl);
+        fetch(urlPrefix + strUrl)
+            .then(response => {
+                if (!response.ok) {
+                    //console.log('not found');
+                    this.apiGetCamerasReceived(urlPrefix, { "cameras": [] });
+                }
+                return response.json();
+            })
+            .then(json => {
+
+                this.apiGetCamerasReceived(urlPrefix, json);
+            })
+            .catch(function () {
+                //console.error('catch fetch');
+                this.apiGetCamerasReceived(urlPrefix, { "cameras": [] });
+            })
+    }
 }
 
 function apiGetCamerasReceived(urlPrefix, jsonResult) {
-    
+
     hideEverything();
     document.getElementById('mainEditor').style.display = 'block';
     let cameras = [];
@@ -3267,8 +3271,8 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
                 "isOnline": camera.isOnline,
                 "isKnown": camera.isKnown,
                 "eventLayers": null,
-                "materialMap":null,
-                "distanceMap":null,
+                "materialMap": null,
+                "distanceMap": null,
             };
             cameras.push(newCamera);
         }
@@ -3484,19 +3488,19 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             //tempsCelsius = [];
             historyIndex = -1;
 
-            
+
             if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers != null) {
                 regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers));
-                if(cameraEditor.cameras[cameraEditor.selectedCameraIndex].materialMap != null){
+                if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].materialMap != null) {
                     materialMap = [...cameraEditor.cameras[cameraEditor.selectedCameraIndex].materialMap];
                 }
-                else{
+                else {
                     materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
                 }
-                if(cameraEditor.cameras[cameraEditor.selectedCameraIndex].distanceMap != null){
+                if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].distanceMap != null) {
                     distanceMap = [...cameraEditor.cameras[cameraEditor.selectedCameraIndex].distanceMap];
                 }
-                else{
+                else {
                     distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
                 }
             }
@@ -3504,8 +3508,8 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                 regionEditor = getEmptyRegionEditor();
                 materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
                 distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
-                
-                
+
+
             }
 
         }
@@ -3569,7 +3573,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
                     }
                     sb += '<div class="regioneditortext" style="margin-top:-12px">Tap To Edit</div>';
-                    
+
                     sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">Viewing</div>';
                     let strStyle = '';
                     if (camera.name == unknownCameraName) {
@@ -3615,7 +3619,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
         sb += '</div>';
         sb += '</button>';
     }
-    
+
     cameraList.innerHTML = sb;
     if (cameraEditor.cameras.length > 0) {
         goRegionEditor();
@@ -3787,10 +3791,10 @@ function goRegionEditor() {
     metaHistoryStack = [];
     metaHistoryIndex = -1;
     recalcEditor();
-    if(activeLayer == 'Spots'){
+    if (activeLayer == 'Spots') {
         addRegionHistory('Initial ' + activeLayer + ' State', null, true);
     }
-    else{
+    else {
         addMetaHistory('Initial ' + activeLayer + ' State', true);
     }
     setButtons();
