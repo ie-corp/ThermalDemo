@@ -37,7 +37,7 @@ let selectedDistance = 1.0;
 let fillRange = 1.0;
 const unknownCameraName = '-Unknown-';
 
-var escapeElm = null;
+let escapeElm = null;
 function escapeHTML(html) {
     if (html == null || html.trim() == '') {
         return '';
@@ -65,7 +65,7 @@ The list should contain Black Electrical Tape with an emissivity of 0.95.
 The list should contain a Polished Silver with an emissivity of 0.02.
 Make certain that these items may be found in an electrical cabinet.
 Emissivity values should be rounded to 2 decimal places.
-Give me the results as a javascript array in the following format:var knownMaterials =  [{"name":"material name", "emissivity":.95}]
+Give me the results as a javascript array in the following format:let knownMaterials =  [{"name":"material name", "emissivity":.95}]
 */
 const knownMaterials = [
     { "name": "Black Body", "emissivity": 1.00 },
@@ -103,8 +103,8 @@ let storedImageHeight = null;
 let storedImageMirrorHorizontally = null;
 
 
-var activeFunc = null;
-var waiterTime = 100;
+let activeFunc = null;
+let waiterTime = 100;
 
 const imageFilters = ['none', 'inferno', 'bluered', 'light', 'dark'];
 let imageFilter = imageFilters[1];
@@ -909,7 +909,7 @@ function recalcEditor() {
     }
 
 
-    var valueZoom = document.getElementById("valueZoom");
+    let valueZoom = document.getElementById("valueZoom");
     valueZoom.innerHTML = Math.round(imageScale * 100) + "%";
 
     document.getElementById("valueFilter").innerHTML = imageFilter;
@@ -918,7 +918,7 @@ function recalcEditor() {
 
 
 
-    var valImageRotation = document.getElementById("valImageRotation");
+    let valImageRotation = document.getElementById("valImageRotation");
     valImageRotation.innerHTML = regionEditor.imageRotation + "&deg;";
     drawRegions();
     setButtons();
@@ -972,7 +972,7 @@ function rotateFillPoint(imageRotation, imageNativeWidth, imageNativeHeight, ima
 
 function rotate90(w, h, x, y) {
     // Create a new object to store the new coordinate
-    var newPoint = {};
+    let newPoint = {};
 
     // To rotate the point 90 degrees clockwise, swap the x and y values and subtract the x value from the height
     newPoint.x = h - y;
@@ -998,7 +998,7 @@ function rotateImage() {
         //rotate all regions by 90 degrees. move x and y accordingly
         for (let i = 0; i < regionEditor.regions.length; i++) {
             let region = regionEditor.regions[i];
-            var pts = [region.x, region.y];
+            let pts = [region.x, region.y];
             if (originalRotation == 0 || originalRotation == 180) {
                 if (region.type == 'point') {
                     //console.log('point');
@@ -1093,15 +1093,15 @@ function drawRegions() {
     waitingRedraw = false;
     lastRedrawDate = new Date();
 
-    var regionEditorImage = document.getElementById("regionEditorImage");
-    var regionEditorImageRef = document.getElementById("regionEditorImageRef");
+    let regionEditorImage = document.getElementById("regionEditorImage");
+    let regionEditorImageRef = document.getElementById("regionEditorImageRef");
 
-    var canvas = document.createElement("canvas");
+    let canvas = document.createElement("canvas");
     canvas.width = regionEditor.imageWidth;
     canvas.height = regionEditor.imageHeight;
 
 
-    var ctx = canvas.getContext("2d");
+    let ctx = canvas.getContext("2d");
     resetSelectedRegionAttributes();
 
     let rotation = regionEditor.imageRotation * Math.PI / 180;
@@ -1151,7 +1151,7 @@ function drawRegions() {
         drawRegionMap(ctx, scale);
     }
 
-    var ctxMain = regionEditorImage.getContext("2d");
+    let ctxMain = regionEditorImage.getContext("2d");
 
     regionEditorImage.width = canvas.width;
     regionEditorImage.height = canvas.height;
@@ -1178,17 +1178,17 @@ function getColorRampValueRGBA(min, max, num, alpha, rgbColors) {
     }
 
     // Calculate the relative position of the number in the range [0, 1]
-    var position = (num - min) / (max - min);
+    let position = (num - min) / (max - min);
 
     // Find the index of the lower color in the array
-    var index = Math.floor(position * (rgbColors.length - 1));
+    let index = Math.floor(position * (rgbColors.length - 1));
 
     // Find the fraction of the position between the lower and upper colors
-    var fraction = position * (rgbColors.length - 1) - index;
+    let fraction = position * (rgbColors.length - 1) - index;
 
     // Get the lower and upper colors as RGB arrays
-    var lower = rgbColors[index];
-    var upper = rgbColors[index + 1];
+    let lower = rgbColors[index];
+    let upper = rgbColors[index + 1];
     if (upper == null) {
         upper = rgbColors[index];
     }
@@ -1303,8 +1303,8 @@ function drawMaterialMap(ctx, scale) {
 }
 
 function drawRegionMap(ctx, scale) {
-    for (var i = 0; i < regionEditor.regions.length; i++) {
-        var region = regionEditor.regions[i];
+    for (let i = 0; i < regionEditor.regions.length; i++) {
+        let region = regionEditor.regions[i];
         let isSelected = false;
         let drawControls = false;
         if (activeLayer == 'Spots') {
@@ -1902,7 +1902,7 @@ function moveRegionBy(x, y) {
         return;
     }
     if (regionEditor.selectedRegionIndex >= 0) {
-        var region = regionEditor.regions[regionEditor.selectedRegionIndex];
+        let region = regionEditor.regions[regionEditor.selectedRegionIndex];
         region.x += x;
         region.y += y;
 
@@ -1936,7 +1936,7 @@ function resizeRegionBy(w, h) {
         return;
     }
     if (regionEditor.selectedRegionIndex >= 0) {
-        var region = regionEditor.regions[regionEditor.selectedRegionIndex];
+        let region = regionEditor.regions[regionEditor.selectedRegionIndex];
         if (region.type == 'point') {
             clearFunc();
             return;
@@ -1968,7 +1968,7 @@ function rotateRegionBy(rotateBy) {
         return;
     }
     if (regionEditor.selectedRegionIndex >= 0) {
-        var region = regionEditor.regions[regionEditor.selectedRegionIndex];
+        let region = regionEditor.regions[regionEditor.selectedRegionIndex];
         if (region.type == 'point') {
             clearFunc();
             return;
@@ -1989,8 +1989,8 @@ function rotateRegionBy(rotateBy) {
 function changeRegionColorNext(goNext) {
     if (regionEditor.selectedRegionIndex >= 0) {
 
-        var region = regionEditor.regions[regionEditor.selectedRegionIndex];
-        var currentIndex = regionColors.indexOf(region.color);
+        let region = regionEditor.regions[regionEditor.selectedRegionIndex];
+        let currentIndex = regionColors.indexOf(region.color);
         if (currentIndex == -1) {
             currentIndex = 0;
         }
@@ -2016,8 +2016,8 @@ function changeRegionColorNext(goNext) {
 
 
 function getPointFromIndex(index, width, height) {
-    var calcY = index % height;
-    var calcX = Math.floor(index / height);
+    let calcY = index % height;
+    let calcX = Math.floor(index / height);
     return [calcX, calcY];
 }
 
@@ -2571,7 +2571,7 @@ function getFillIndexesToChange(mapTemperatures, map2, width, height, startX, st
         let distance = Math.sqrt(Math.pow(currentTemperature - startTemperature, 2));
 
         /*
-        var distance = Math.sqrt(
+        let distance = Math.sqrt(
             Math.pow(currentColor[0] - startColor[0], 2) +
             Math.pow(currentColor[1] - startColor[1], 2) +
             Math.pow(currentColor[2] - startColor[2], 2)
@@ -3623,11 +3623,11 @@ function refreshImage() {
 function imgLoaded(e) {
     //changeCamera
     //37510 User Comment
-    var ifds = UTIF.decode(e.target.response);
+    let ifds = UTIF.decode(e.target.response);
     //console.log(JSON.stringify(ifds));
     //return;
     UTIF.decodeImage(e.target.response, ifds[0])
-    var rgba = UTIF.toRGBA8(ifds[0]);  // Uint8Array with RGBA pixels
+    let rgba = UTIF.toRGBA8(ifds[0]);  // Uint8Array with RGBA pixels
     //console.log(ifds[0].width, ifds[0].height);
     let tags = ifds[0];//, ifds[0]);
     let exifIFD = tags.exifIFD;
