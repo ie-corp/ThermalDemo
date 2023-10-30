@@ -7,42 +7,48 @@
                 "name": "Left",
                 "url": "/test_images/reference_01.tiff",
                 "isOnline": true,
-                "isKnown": true
+                "isKnown": true,
+                "canEdit":true
             },
             {
                 "usbId": null,
                 "name": "Right",
                 "url": "/test_images/reference_02.tiff",
                 "isOnline": false,
-                "isKnown": true
+                "isKnown": true,
+                "canEdit":false
             },
             {
                 "usbId": "1",
                 "name": "Top",
                 "url": "/test_images/reference_03.tiff",
                 "isOnline": false,
-                "isKnown": true
+                "isKnown": true,
+                "canEdit":true
             },
             {
                 "usbId": "2",
                 "name": "Bottom",
                 "url": "/test_images/reference_04.tiff",
                 "isOnline": false,
-                "isKnown": true
+                "isKnown": true,
+                "canEdit":true
             },
             {
                 "usbId": "3",
                 "name": null,
                 "url": "/test_images/reference_05.tiff",
                 "isOnline": true,
-                "isKnown": false
+                "isKnown": false,
+                "canEdit":true
             },
             {
                 "usbId": "4",
                 "name": null,
                 "url": "/test_images/reference_06.tiff",
                 "isOnline": true,
-                "isKnown": false
+                "isKnown": false,
+                "canEdit":true
             }
         ]
     }

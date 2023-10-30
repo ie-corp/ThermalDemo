@@ -3266,6 +3266,7 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
                 "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                 "isOnline": camera.isOnline,
                 "isKnown": camera.isKnown,
+                "canEdit": camera.canEdit,
                 "eventLayers": null,
                 "materialMap": null,
                 "distanceMap": null,
@@ -3722,7 +3723,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                 }
                 else {
                     setStatusText('Viewing ' + camera.name + ' Camera', 'white', true);
-                    sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',true)" class="resizebutton2" style="border-color:white">';
+                    sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',' + (camera.canEdit? 'true':'false') + ')" class="resizebutton2" style="border-color:white">';
                     sb += '<div style="line-height: 14px;">';
                     if (!camera.isOnline) {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>';
@@ -3730,7 +3731,12 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     else {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
                     }
-                    sb += '<div class="regioneditortext" style="margin-top:-12px">Tap To Edit</div>';
+                    if(camera.canEdit){
+                        sb += '<div class="regioneditortext" style="margin-top:-12px">Tap To Edit</div>';
+                    }
+                    else{
+                        sb += '<div class="regioneditortext" style="margin-top:-12px">Read Only</div>';
+                    }
 
                     sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">Viewing</div>';
                     let strStyle = '';
