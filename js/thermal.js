@@ -3771,16 +3771,16 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
                     }
                     if(camera.canEdit){
-                        sb += '<div class="regioneditortext" style="margin-top:-12px;color:orange">Tap To Edit</div>';
+                        sb += '<div class="regioneditortext" style="margin-top:-10px;color:orange">Tap To Edit</div>';
                     }
                     else{
                         sb += '<div class="regioneditortext" style="margin-top:-12px;color:red">Read Only</div>';
                     }
 
                     sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">Viewing</div>';
-                    let strStyle = '';
+                    let strStyle = ' style="margin-top:-2px;"';
                     if (camera.name == unknownCameraName) {
-                        strStyle = ' style="color:red"';
+                        strStyle += 'color:red;';
                     }
                     sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + escapeHTML(camera.name) + '</div>';
                     sb += '</div>';
@@ -3791,7 +3791,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             else if (!editing) {
                 sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',false)" class="resizebutton2">';
 
-                sb += '<div style="line-height: 20px;">';
+                sb += '<div style="line-height: 26px;">';
                 if (!camera.isOnline) {
                     sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:-4px" class="regionditortextsub3">Offline</div>';
                 }
