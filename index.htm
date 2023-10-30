@@ -54,6 +54,64 @@
             </feComponentTransfer>
         </filter>
     </svg>
+    <div id="dialogAlert" style="display:none">
+        <table width="100%">
+            <tr>
+                <td width="50%"><span id="dialogAlertTitle" style="font-size:28px;color:white">Alert</span></td>
+                <td width="50%" style="text-align:right">
+                    <button id="btnDialogAlertClose" onclick="closeAlertDialog()" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">OK</span>
+                        </div>
+                    </button>
+                </td>
+            </tr>
+        </table>
+        <div id="dialogAlertBody" style="color:white;font-size:24px"></div>
+    </div>
+    <div id="dialogPrompt" style="display:none">
+        <table width="100%">
+            <tr>
+                <td width="50%"><span id="dialogPromptTitle" style="font-size:28px;color:white">Prompt</span></td>
+                <td width="50%" style="text-align:right">
+                    <button id="btnDialogPromptCloseYes" onclick="closePromptDialog(true)" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">OK</span>
+                        </div>
+                    </button>
+
+                    <button id="btnDialogPromptCloseNo" onclick="closePromptDialog(false)" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Cancel</span>
+                        </div>
+                    </button>
+                </td>
+            </tr>
+        </table>
+        <div id="dialogPromptBody" style="color:white;font-size:24px"></div>
+        <input id="dialogPromptValue" value=""/>
+    </div>
+    <div id="dialogConfirm" style="display:none">
+        <table width="100%">
+            <tr>
+                <td width="50%"><span id="dialogConfirmTitle" style="font-size:28px;color:white">Confirm</span></td>
+                <td width="50%" style="text-align:right">
+                    <button id="btnDialogConfirmCloseYes" onclick="closeConfirmDialog(true)" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">Yes</span>
+                        </div>
+                    </button>
+
+                    <button id="btnDialogConfirmCloseNo" onclick="closeConfirmDialog(false)" class="resizebutton">
+                        <div style="line-height: 4px;">
+                            <span class="regioneditortext">No</span>
+                        </div>
+                    </button>
+                </td>
+            </tr>
+        </table>
+        <div id="dialogConfirmBody" style="color:white;font-size:24px"></div>
+    </div>
     <div id="dialogDistance" style="display:none"></div>
     <div id="dialogMaterials" style="display:none">
         <table width="100%">

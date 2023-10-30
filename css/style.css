@@ -134,7 +134,8 @@ background-color:grey;
       white-space: nowrap;
       user-select: none; 
       font-size: 13px;
-     line-height: 30px;       
+     line-height: 30px; 
+     color:white;      
     }
 
     .regioneditortext2

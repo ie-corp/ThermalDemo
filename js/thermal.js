@@ -1575,21 +1575,27 @@ function changeImageFilterNext(nextFilter) {
     //filter is not part of history
 }
 
-function changeRegionName() {
+function changeRegionName(){
+    if (regionEditor.selectedRegionIndex >= 0) {
+        let region = regionEditor.regions[regionEditor.selectedRegionIndex];
+        showPromptDialog(changeRegionNameCallback, "Spot Name", "Please enter a new spot name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", region.name);
+    }
+}
+
+function changeRegionNameCallback(newName) {
     if (regionEditor.selectedRegionIndex >= 0) {
 
-        var region = regionEditor.regions[regionEditor.selectedRegionIndex];
-        var newName = prompt("Please enter a new region name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", region.name);
+        let region = regionEditor.regions[regionEditor.selectedRegionIndex];
         if (newName != null && newName.trim() != "") {
             newName = newName.trim();
             if (newName.length > regionEditor.maxNameLength) {
-                console.error('name too long, max ' + regionEditor.maxNameLength + ' characters');
+                showAlertDialog(null,'Rename Spot','name too long, max ' + regionEditor.maxNameLength + ' characters');
                 return;
             }
             for (let i = 0; i < newName.length; i++) {
                 let c = newName.charAt(i);
                 if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == '_')) {
-                    console.error('Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
+                    showAlertDialog(null,'Rename Spot','Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
                     return;
                 }
             }
@@ -3256,6 +3262,7 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
             let newCamera = {
                 "usbId": camera.usbId,
                 "name": ((camera.name ?? unknownCameraName).trim()),
+                "existingName": (camera.isKnown ? camera.name : null),
                 "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                 "isOnline": camera.isOnline,
                 "isKnown": camera.isKnown,
@@ -3271,6 +3278,10 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
 }
 
 function hideUI() {
+    hideTips();
+    document.getElementById('dialogAlert').style.display = 'none';
+    document.getElementById('dialogConfirm').style.display = 'none';
+    document.getElementById('dialogPrompt').style.display = 'none';
     document.getElementById('cameraTools').style.display = 'none';
     document.getElementById('cameraEditTools').style.display = 'none';
     document.getElementById('rowSpotTools').style.display = 'none';
@@ -3292,17 +3303,24 @@ function showUI() {
     else {
         document.getElementById('cameraTools').style.display = '';
     }
+    
+    document.getElementById("rowSpotTools").style.display = (activeLayer != 'Spots' ? 'none' : '');
+    document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
+    document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
     document.getElementById('touchTools').style.display = '';
-
-
-
 }
 
-function deleteCamera() {
-    //todo prompt for confirm or tap again to confirm
+function deleteCamera(){
+    let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+    let cameraName = camera.existingName;
+    showConfirmDialog(deleteCameraCallback,"Delete Camera","Are you sure you want to delete the camera?");
+}
 
-    let cameraName = cameraEditor.cameras[cameraEditor.selectedCameraIndex].name;
-    callDeleteCameras([cameraName])
+function deleteCameraCallback() {
+    
+    let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+    let cameraName = camera.existingName;
+    callDeleteCameras([cameraName]);
 }
 
 
@@ -3315,7 +3333,7 @@ function callDeleteCameras(cameraNamesToDelete) {
     .then(response => {
         if (!response.ok) {
             console.error('response not ok');
-            this.apicamerasDeletedReceived(camPrefix, { "cameras": [] });
+            this.apicamerasDeletedReceived();
         }
         return response.json();
     })
@@ -3326,16 +3344,16 @@ function callDeleteCameras(cameraNamesToDelete) {
                 scriptReturnValue = JSON.parse(scriptReturnValue);
             }
             console.log('camera(s) deleted:' + JSON.stringify(cameraNamesToDelete));
-            this.apicamerasDeletedReceived(camPrefix, scriptReturnValue);
+            this.apicamerasDeletedReceived();
 
         })
         .catch(function () {
             console.error('catch fetch');
-            this.apicamerasDeletedReceived(camPrefix, { "cameras": [] });
+            this.apicamerasDeletedReceived();
         })
 }
 
-function apicamerasDeletedReceived(urlPrefix, jsonResult) {
+function apicamerasDeletedReceived() {
     
     cameraEditor.selectedCameraIndex = -1;
     cameraEditor.cameras = [];
@@ -3349,35 +3367,143 @@ function cancelCameraEdit() {
     changeCamera(cameraEditor.selectedCameraIndex, false);
 }
 
+let alertCallback = null;
+function showAlertDialog(callback,messageTitle,messageBody){
+    alertCallback = callback;
+    hideUI();
+    document.getElementById('dialogAlertTitle').innerHTML = escapeHTML(messageTitle);
+    document.getElementById('dialogAlertBody').innerHTML = escapeHTML(messageBody);
+    document.getElementById('dialogAlert').style.display = '';
+}
+
+function closeAlertDialog(){
+    hideUI();
+    showUI();
+    if(alertCallback != null){
+        alertCallback();
+    }
+}
+
+let promptCallback = null;
+function showPromptDialog(callback,promptTitle,promptBody,promptValue){
+    promptCallback = callback;
+    hideUI();
+    document.getElementById('dialogPromptTitle').innerHTML = escapeHTML(promptTitle);
+    document.getElementById('dialogPromptBody').innerHTML = escapeHTML(promptBody);
+    document.getElementById('dialogPromptValue').value = promptValue
+    document.getElementById('dialogPrompt').style.display = '';
+}
+
+function closePromptDialog(isYes){
+    hideUI();
+    showUI();
+    if(isYes && promptCallback != null){
+        let value = document.getElementById('dialogPromptValue').value;
+        promptCallback(value);
+    }
+}
+
+let confirmCallback = null;
+function showConfirmDialog(callback,confirmTitle,confirmBody){
+    confirmCallback = callback;
+    hideUI();
+    document.getElementById('dialogConfirmTitle').innerHTML = escapeHTML(confirmTitle);
+    document.getElementById('dialogConfirmBody').innerHTML = escapeHTML(confirmBody);
+    document.getElementById('dialogConfirm').style.display = '';
+}
+
+function closeConfirmDialog(isYes){
+    hideUI();
+    showUI();
+    if(isYes && confirmCallback != null){
+        confirmCallback();
+    }
+}
+
 
 
 function saveCamera() {
-    let cameraIndex = cameraEditor.selectedCameraIndex;
-    //todo get staged name
+    
     if (stagedUpdateCameraName != null) {
         cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = stagedUpdateCameraName;
         stagedUpdateCameraName = null;
     }
     else {
         if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == unknownCameraName || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
-            alert('Please rename the camera before saving it.');
+            showAlertDialog(null,'Rename Camera','Please rename the camera before saving it.');
             return;
         }
     }
-    cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers = JSON.parse(JSON.stringify(regionEditor));
-    cameraEditor.cameras[cameraEditor.selectedCameraIndex].materialMap = [...materialMap];
-    cameraEditor.cameras[cameraEditor.selectedCameraIndex].distanceMap = [...distanceMap];
-    changeCamera(cameraIndex, false);
+    callSaveCameras(cameraEditor.cameras[cameraEditor.selectedCameraIndex]);
 }
 
-let stagedUpdateCameraName = null;
-function renameCamera() {
+
+function callSaveCameras(camera) {
+    hideEverything();
+    let apiSettings = getApiSettings();
+    let camPrefix = apiSettings.rootUrl;
+    let scriptName = 'rse_thermalcameras_save';
+    let myParms = {"cameras":[{
+        distanceMap: distanceMap,
+        materialMap: materialMap,
+        imageRotation: regionEditor.imageRotation,
+        imageMirrorHorizontally: regionEditor.imageMirrorHorizontally,
+        spots: regionEditor.regions,
+        existingName: camera.existingName,
+        name: camera.name,
+        usbId: camera.usbId,
+        }
+    ]};
+
+    getFetch(scriptName, myParms)
+    .then(response => {
+        if (!response.ok) {
+            console.error('response not ok');
+            this.apicamerasSaveReceived();
+        }
+        return response.json();
+    })
+        .then(json => {
+            //console.log('response ok');
+            let scriptReturnValue = json.ScriptReturnValue;
+            if(typeof scriptReturnValue == 'string'){
+                scriptReturnValue = JSON.parse(scriptReturnValue);
+            }
+            console.log('camera(s) saved');
+            this.apicamerasSaveReceived();
+
+        })
+        .catch(function () {
+            console.error('catch fetch');
+            this.apicamerasSaveReceived();
+        })
+}
+
+function apicamerasSaveReceived() {
+    
+    cameraEditor.selectedCameraIndex = -1;
+    cameraEditor.cameras = [];
+    refreshCameras();
+}
+
+function renameCamera(){
     let cameraIndex = cameraEditor.selectedCameraIndex;
     let oldCamName = cameraEditor.cameras[cameraEditor.selectedCameraIndex].name;
     if (oldCamName == null || oldCamName.indexOf("-") > -1) {
         oldCamName = "";
     }
-    let newName = prompt("Please enter a new camera name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", oldCamName);
+    let showName = oldCamName;
+    showPromptDialog(renameCameraCallback,"Camera Name","Please enter a new camera name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", showName);
+    
+}
+
+let stagedUpdateCameraName = null;
+function renameCameraCallback(newName) {
+    let cameraIndex = cameraEditor.selectedCameraIndex;
+    let oldCamName = cameraEditor.cameras[cameraEditor.selectedCameraIndex].name;
+    if (oldCamName == null || oldCamName.indexOf("-") > -1) {
+        oldCamName = "";
+    }
     if (newName != null && newName.trim() != "") {
         newName = newName.trim();
         if (oldCamName == newName) {
@@ -3385,23 +3511,25 @@ function renameCamera() {
         }
 
         if (newName.length > regionEditor.maxNameLength) {
-            alert('name too long, max ' + regionEditor.maxNameLength + ' characters');
+            showAlertDialog(null,'Rename Camera','name too long, max ' + regionEditor.maxNameLength + ' characters');
             return;
         }
         for (let i = 0; i < newName.length; i++) {
             let c = newName.charAt(i);
             if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == '_')) {
-                alert('Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
+                
+                showAlertDialog(null,'Rename Camera','Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
                 return;
             }
         }
         //is the name already in use?
+        
         for (let i = 0; i < cameraEditor.cameras.length; i++) {
             if (i == cameraIndex) {
                 continue;
             }
-            if ((cameraEditor.cameras[i].name + "").toLocaleLowerCase() == newName) {
-                alert('The camera name is already in use');
+            if ((cameraEditor.cameras[i].existingName + "").toLowerCase() == newName.toLowerCase()) {
+                showAlertDialog(null,'Rename Camera','The camera name is already in use');
                 return;
             }
         }
