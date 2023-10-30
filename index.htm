@@ -320,24 +320,24 @@
         <div id="rowSpotTools" class="editorrow">
 
             <button disabled class="resizebutton" style="background-color: black;">
-                <div style="line-height: 17px;">
-                    <span class="regioneditortext2">Img Hi</span>
-                    <span id="valImageHighTempC" class="regionditortextsub3">--&deg;C</span>
-                    <span id="valImageHighTempF" class="regionditortextsub3">--&deg;F</span>
+                <div style="line-height: 14px;">
+                    <div class="regioneditortext2"  style="margin-bottom:6px" >Img Hi</div>
+                    <div id="valImageHighTempC" class="regionditortextsub3"  style="margin-bottom:6px" >--&deg;C</div>
+                    <div id="valImageHighTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
             </button>
 
             <button disabled class="resizebutton" style="background-color: black;">
-                <div style="line-height: 17px;">
-                    <span class="regioneditortext2">Img Lo</span>
-                    <span id="valImageLowTempC" class="regionditortextsub3">--&deg;C</span>
-                    <span id="valImageLowTempF" class="regionditortextsub3">--&deg;F</span>
+                <div style="line-height: 14px;">
+                    <div class="regioneditortext2"  style="margin-bottom:6px" >Img Lo</div>
+                    <div id="valImageLowTempC" class="regionditortextsub3"  style="margin-bottom:6px" >--&deg;C</div>
+                    <div id="valImageLowTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
             </button>
 
 
             <button id="btnChangeRegion" onclick="changeRegionNext(true)" class="resizebutton">
-                <div style="line-height: 20px;">
+                <div style="line-height: 28px;">
                     <div class="regioneditortext">Spots</div>
 
                     <div id="valRegionIndex" class="regionditortextsub3">0 of 0</div>
@@ -345,18 +345,18 @@
             </button>
 
             <button id="btnChangeRegionName" onclick="changeRegionName()" class="resizebutton2">
-                <div style="line-height: 20px;">
+                <div style="line-height: 28px;">
                     <div class="regioneditortext">Name</div>
                     <div id="valRegionName" class="regionditortextsub3">--</div>
                 </div>
             </button>
 
             <button id="btnChangeColor" onclick="changeRegionColorNext(true)" class="resizebutton">
-                <div style="line-height: 10px;">
-                    <span style="margin-left: -5px;line-height: 20px;" class="regioneditortext">Color</span>
-                    <div id="valRegionColorDemo" style="background-color: red; font-size:4px; line-height: 8px;"
+                <div style="line-height: 28px;">
+                    <div class="regioneditortext">Color</div>
+                    <div id="valRegionColorDemo" style="margin-top:-2px;background-color: red; font-size:8px; line-height: 8px;"
                         class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                    <div id="valRegionColor" style="line-height:16px" class="regionditortextsub3">Red</div>
+                    <div id="valRegionColor"  class="regionditortextsub3" style="margin-top:-6px">Red</div>
                 </div>
             </button>
 
@@ -364,10 +364,10 @@
 
 
             <button disabled class="resizebutton" style="background-color: black;">
-                <div style="line-height: 17px;">
-                    <span class="regioneditortext2">Spot Hi</span>
-                    <span id="valRegionHighTempC" class="regionditortextsub3">--&deg;C</span>
-                    <span id="valRegionHighTempF" class="regionditortextsub3">--&deg;F</span>
+                <div style="line-height: 14px;">
+                    <div class="regioneditortext2" style="margin-bottom:6px" >Spot Hi</div>
+                    <div id="valRegionHighTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
+                    <div id="valRegionHighTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
             </button>
 
@@ -376,10 +376,10 @@
 
 
             <button disabled class="resizebutton" style="background-color: black;">
-                <div style="line-height: 17px;">
-                    <span class="regioneditortext2">Spot Lo</span>
-                    <span id="valRegionLowTempC" class="regionditortextsub3">--&deg;C</span>
-                    <span id="valRegionLowTempF" class="regionditortextsub3">--&deg;F</span>
+                <div style="line-height: 14px;">
+                    <div class="regioneditortext2" style="margin-bottom:6px">Spot Lo</div>
+                    <div id="valRegionLowTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
+                    <div id="valRegionLowTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
             </button>
 
@@ -746,7 +746,7 @@
 
                     <button id="btnRegionToolFill" onclick="selectRegionEditorTool('fill')" class="resizebutton">
                         <div style="line-height: 4px;">
-                            <span class="regioneditortext">Fill</span>
+                            <div class="regioneditortext">Fill</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" clip-rule="evenodd"
@@ -760,17 +760,17 @@
                     </button>
 
                     <button id="btnChangeFillRangeInfo" disabled class="resizebutton"
-                        style="margin-left:18px;background-color: black;">
-                        <div style="line-height: 17px;">
-                            <span class="regioneditortext2">Range</span>
-                            <span id="valFillRange" class="regionditortextsub2">--</span>
+                        style="margin-left:16px;background-color: black;">
+                        <div style="line-height: 28px;">
+                            <div class="regioneditortext2">Range</div>
+                            <div id="valFillRange" class="regionditortextsub2">--</div>
                         </div>
                     </button>
 
-                    <button id="btnChangeFillRangeLess" style="margin-left:18px;"
+                    <button id="btnChangeFillRangeLess" style="margin-left:16px;"
                         onmousedown="repeatFunc(changeFillRangeBy.bind(null,-.1))" onmouseup="clearFunc()"
                         class="resizebutton">-</button>
-                    <button id="btnChangeFillRangeMore" style="margin-left:18px;"
+                    <button id="btnChangeFillRangeMore" style="margin-left:16px;"
                         onmousedown="repeatFunc(changeFillRangeBy.bind(null,.1))" onmouseup="clearFunc()"
                         class="resizebutton">+</button>
 
@@ -778,7 +778,7 @@
 
                     <button id="btnRegionToolChange" onclick="selectRegionEditorTool('change')" class="resizebutton">
                         <div style="line-height: 4px;">
-                            <span class="regioneditortext">Change</span>
+                            <div class="regioneditortext">Change</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -793,7 +793,7 @@
 
                     <button id="btnRegionToolPaint" onclick="selectRegionEditorTool('paint')" class="resizebutton">
                         <div id="shapePaintRound" style="line-height: 4px;">
-                            <span class="regioneditortext">Paint</span>
+                            <div class="regioneditortext">Paint</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <circle cx="12" cy="12" r="10" fill="currentColor" />
@@ -804,7 +804,7 @@
                             </svg>
                         </div>
                         <div id="shapePaintSquare" style="line-height: 4px;display:none">
-                            <span class="regioneditortext">Paint</span>
+                            <div class="regioneditortext">Paint</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <rect x="2" y="2" width="20" height="20" fill="currentColor" />
@@ -817,23 +817,23 @@
                     </button>
 
                     <button id="btnChangePaintSizeInfo" disabled class="resizebutton"
-                        style="margin-left:18px;background-color: black;">
-                        <div style="line-height: 17px;">
-                            <span class="regioneditortext2">Size</span>
-                            <span id="valPaintBrushSize" class="regionditortextsub2">--</span>
+                        style="margin-left:16px;background-color: black;">
+                        <div style="line-height: 28px;">
+                            <div class="regioneditortext2">Size</div>
+                            <div id="valPaintBrushSize" class="regionditortextsub2">--</div>
                         </div>
                     </button>
 
-                    <button id="btnChangePaintSizeLess" style="margin-left:18px;"
+                    <button id="btnChangePaintSizeLess" style="margin-left:16px;"
                         onmousedown="repeatFunc(changeBrushSizeBy.bind(null,true,-1))" onmouseup="clearFunc()"
                         class="resizebutton">-</button>
-                    <button id="btnChangePaintSizeMore" style="margin-left:18px;"
+                    <button id="btnChangePaintSizeMore" style="margin-left:16px;"
                         onmousedown="repeatFunc(changeBrushSizeBy.bind(null,true,1))" onmouseup="clearFunc()"
                         class="resizebutton">+</button>
 
                     <button id="btnRegionToolErase" onclick="selectRegionEditorTool('erase')" class="resizebutton">
                         <div id="shapeEraseRound" style="line-height: 4px;">
-                            <span class="regioneditortext">Erase</span>
+                            <div class="regioneditortext">Erase</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <defs>
@@ -852,7 +852,7 @@
                             </svg>
                         </div>
                         <div id="shapeEraseSquare" style="line-height: 4px;display:none">
-                            <span class="regioneditortext">Erase</span>
+                            <div class="regioneditortext">Erase</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <defs>
@@ -874,17 +874,17 @@
 
 
                     <button id="btnChangeEraseSizeInfo" disabled class="resizebutton"
-                        style="margin-left:18px;background-color: black;">
-                        <div style="line-height: 17px;">
-                            <span class="regioneditortext2">Size</span>
-                            <span id="valEraseBrushSize" class="regionditortextsub2">--</span>
+                        style="margin-left:16px;background-color: black;">
+                        <div style="line-height: 28px;">
+                            <div class="regioneditortext2">Size</div>
+                            <div id="valEraseBrushSize" class="regionditortextsub2">--</div>
                         </div>
                     </button>
 
-                    <button id="btnChangeEraseSizeLess" style="margin-left:18px;"
+                    <button id="btnChangeEraseSizeLess" style="margin-left:16px;"
                         onmousedown="repeatFunc(changeBrushSizeBy.bind(null,false,-1))" onmouseup="clearFunc()"
                         class="resizebutton">-</button>
-                    <button id="btnChangeEraseSizeMore" style="margin-left:18px;"
+                    <button id="btnChangeEraseSizeMore" style="margin-left:16px;"
                         onmousedown="repeatFunc(changeBrushSizeBy.bind(null,false,1))" onmouseup="clearFunc()"
                         class="resizebutton">+</button>
 

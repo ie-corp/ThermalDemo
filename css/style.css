@@ -1,11 +1,13 @@
 body{
   background-color: #282828;
   color:white;
+  font-family: Tahoma, Verdana, Geneva,  sans-serif;
 }
 
 .thermalDialog{
   background-color: #282828;
   color:white;
+  user-select: none;
   
 }
 
@@ -15,6 +17,7 @@ body{
   margin:80px;
   padding:40px;
   border-radius: 25px;
+  box-shadow: 5px 10px rgba(0, 0, 0, 0.4);
 }
 
 .thermalDialogTitle{
@@ -48,6 +51,8 @@ body{
   }
 
 .resizebutton{
+  border-radius: 8px;
+  border: 2px solid rgb(32,32,32);
     padding:0px;
     margin-bottom:4px;
     margin-right:4px;
@@ -57,7 +62,6 @@ body{
     height: 60px;
     color:white;
     background-color:#353A3F;
-    font-family: 'Courier New', Courier, monospace;
     font-size: 20px;
     font-weight: bold;
     display: inline-block;
@@ -71,6 +75,8 @@ body{
 }
 
 .resizebutton2{
+  border-radius: 8px;
+  border: 2px solid rgb(32,32,32);
   padding:0px;
   margin-bottom:4px;
   margin-right:4px;
@@ -80,7 +86,6 @@ body{
   height: 60px;
   color:white;
   background-color:#353A3F;
-  font-family: 'Courier New', Courier, monospace;
   font-size: 20px;
   font-weight: bold;
   display: inline-block;
@@ -90,6 +95,8 @@ body{
 }
 
 .resizebutton3{
+  border-radius: 8px;
+  border: 2px solid rgb(32,32,32);
   padding:0px;
   margin-bottom:4px;
   margin-right:4px;
@@ -99,7 +106,6 @@ body{
   height: 60px;
   color:white;
   background-color:#353A3F;
-  font-family: 'Courier New', Courier, monospace;
   font-size: 20px;
   font-weight: bold;
   display: inline-block;
@@ -120,8 +126,6 @@ background-color:grey;
       height: 60px;
       color:white;
       background-color: #000000;
-      font-family: 'Courier New', Courier, monospace;
-    
       font-weight: bold;
       display: inline-block;
       text-align: center;
@@ -143,7 +147,6 @@ background-color:grey;
       height: 60px;
       color:white;
       background-color: #000000;
-      font-family: 'Courier New', Courier, monospace;
     
       font-weight: bold;
       display: inline-block;
@@ -213,6 +216,8 @@ background-color:grey;
 
 
 .regionbutton{
+  border-radius: 8px;
+  border: 2px solid rgb(32,32,32);
   padding:0px;
   user-select: none;
   margin-bottom:4px; 
@@ -221,7 +226,6 @@ background-color:grey;
     height: 60px;
     background-color:#007CF9;
     color:white;
-    font-family: 'Courier New', Courier, monospace;
     font-size: 18px;
     font-weight: bold;
 }
@@ -306,7 +310,6 @@ background-color:grey;
 
   #tooltip {
     user-select: none; 
-    font-family: 'Courier New', Courier, monospace;
     font-weight: bold;
     position: absolute;
     top: -30px;

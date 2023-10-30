@@ -10,6 +10,7 @@ let cameraEditor = {
     "tags": [],
 };
 
+let hasEdited = false;
 let regionEditor = null;//the active region.
 
 const regionColors = ["Salmon", "Crimson", "Red", "DarkRed", "Pink", "DeepPink", "Coral", "Tomato", "Orange", "Gold", "Yellow", "Khaki", "Thistle", "Plum", "Violet", "Magenta", "Purple", "Indigo", "Lime", "SeaGreen", "Green", "Olive", "Teal", "Cyan", "SkyBlue", "Blue", "Navy", "Tan", "Brown", "Maroon"];
@@ -124,6 +125,7 @@ function changeLayerNext(doNext) {
     else if (index >= cameraLayers.length) {
         index = 0;
     }
+
     setActiveLayer(cameraLayers[index]);
     //changing layers clears the history stack;
     hideTips();
@@ -137,6 +139,12 @@ function setActiveLayer(layer) {
     if (cameraLayers.indexOf(layer) == -1) {
         console.error('invalid layer: ' + layer);
         return;
+    }
+    if (activeLayer == 'inferno') {
+        imageFilter = 'none';
+    }
+    else{
+        imageFilter = 'none';
     }
     activeLayer = layer;
     activeTool = 'look';
@@ -284,7 +292,7 @@ function addMetaHistory(historyType, force) {
         setButtons();
         return;
     }
-
+   
     let time = new Date().getTime();
     let historyEntry = { "historyType": historyType, "time": time, "materialMap": null, "distanceMap": null };
     if (activeLayer == 'Matl') {
@@ -300,6 +308,7 @@ function addMetaHistory(historyType, force) {
 
     let lastHistoryEntry = null;
     if (metaHistoryStack.length > 0) {
+        hasEdited = true;
         //console.log('evaluating new history entry of ' + historyEntry.historyType);
         if (metaHistoryIndex < 0 || metaHistoryIndex > metaHistoryStack.length) {
             //console.log('adjusting out of bounds history index to last entry');
@@ -418,10 +427,11 @@ function addRegionHistory(historyType, selectedIndex, force) {
         setButtons();
         return;
     }
-
+    
     let historyEntry = { "historyType": historyType, "selectedIndex": selectedIndex, "regionEditor": JSON.stringify(regionEditor) };
     let lastHistoryEntry = null;
     if (historyStack.length > 0) {
+        hasEdited = true;
         if (historyIndex < 0 || historyIndex > historyStack.length) {
             //console.log('adjusting out of bounds history index to last entry');
             historyIndex = historyStack.length - 1;
@@ -535,6 +545,10 @@ function setButtons() {
     document.getElementById("btnRenameCamera").disabled = (!cameraEditor.isEditing || camera == null || !camera.canRenameCamera);
     document.getElementById("btnRotateImage").disabled = (!cameraEditor.isEditing || camera == null || !camera.canEditRotation);
     document.getElementById("btnMirrorImageHorizontally").disabled = (!cameraEditor.isEditing || camera == null || !camera.canEditMirror);
+    
+    document.getElementById('btnSaveCamera').disabled = (!hasEdited || !cameraEditor.isEditing || camera == null || !camera.canEdit);
+    document.getElementById('btnSaveCamera').style.backgroundColor = (!hasEdited || !cameraEditor.isEditing || camera == null || !camera.canEdit)? 'gray' : 'green';
+    
     document.getElementById('btnDeleteCamera').disabled = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown);
     document.getElementById('btnDeleteCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown) ? 'gray' : 'red';
 
@@ -3375,7 +3389,12 @@ function apicamerasDeletedReceived() {
 
 
 function cancelCameraEdit() {
-    showConfirmDialog(cancelCameraCallback,"Discard Changes?","Are you sure you want to discard your changes for the camera?");
+    if(!hasEdited){//only confirm if there have been changes made.
+        refreshCameras();
+    }
+    else{
+        showConfirmDialog(cancelCameraCallback,"Discard Changes?","Are you sure you want to discard your changes for the camera?");
+    }
 }
 
 
@@ -3550,10 +3569,14 @@ function renameCameraCallback(newName) {
                 return;
             }
         }
+        hasEdited = true;
         stagedUpdateCameraName = newName;
+        setButtons();
+        
         let elmName = document.getElementById('valCamName');
         elmName.innerHTML = newName;
         elmName.style.color = 'yellow';
+
         setStatusText('Editing ' + newName + ' Camera', 'white', true);
     }
 
@@ -3562,6 +3585,7 @@ function renameCameraCallback(newName) {
 
 
 function changeCamera(cameraIndex, editing) {
+    hasEdited = false;
     activeLayer = 'Spots';
     activeTool = 'look';
     //activeLayer = 'Spots';
@@ -3597,7 +3621,7 @@ function refreshImage() {
 }
 
 function imgLoaded(e) {
-    changeCamera
+    //changeCamera
     //37510 User Comment
     var ifds = UTIF.decode(e.target.response);
     //console.log(JSON.stringify(ifds));
