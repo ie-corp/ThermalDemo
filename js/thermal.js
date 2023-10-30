@@ -478,22 +478,19 @@ function addRegionHistory(historyType, selectedIndex, force) {
 
 function setButtons() {
 
-
+    let camera = null;
+    if(cameraEditor.cameras != null && cameraEditor.selectedCameraIndex > -1 && cameraEditor.selectedCameraIndex < cameraEditor.cameras.length){
+        camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+    } 
 
     document.getElementById("btnUndoRegionEdit").disabled = historyStack.length <= 1 || historyIndex <= 0;
     document.getElementById("btnUndoRegionEdit").style.display = cameraEditor.isEditing ? '' : 'none';
     document.getElementById("btnRedoRegionEdit").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
     document.getElementById("btnRedoRegionEdit").style.display = cameraEditor.isEditing ? '' : 'none';
 
-    document.getElementById("btnUndoMaterialEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex <= 0;
-    document.getElementById("btnUndoMaterialEdit").style.display = cameraEditor.isEditing ? '' : 'none';
-    document.getElementById("btnRedoMaterialEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex >= metaHistoryStack.length - 1;
-    document.getElementById("btnRedoMaterialEdit").style.display = cameraEditor.isEditing ? '' : 'none';
+   
 
-    document.getElementById("btnUndoDistanceEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex <= 0;
-    document.getElementById("btnUndoDistanceEdit").style.display = cameraEditor.isEditing ? '' : 'none';
-    document.getElementById("btnRedoDistanceEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex >= metaHistoryStack.length - 1;
-    document.getElementById("btnRedoDistanceEdit").style.display = cameraEditor.isEditing ? '' : 'none';
+    
 
 
 
@@ -515,7 +512,7 @@ function setButtons() {
     document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
     document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
 
-    document.getElementById("btnChangeMaterial").disabled = !cameraEditor.isEditing;
+    
     if (cameraEditor.isEditing) {
         if (selectedMaterial != null && selectedMaterial.name != null && selectedMaterial.emissivity != null) {
             document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
@@ -535,22 +532,37 @@ function setButtons() {
         document.getElementById('valDistanceInches').innerHTML = '';
     }
 
+    document.getElementById("btnRenameCamera").disabled = (!cameraEditor.isEditing || camera == null || !camera.canRenameCamera);
+    document.getElementById("btnRotateImage").disabled = (!cameraEditor.isEditing || camera == null || !camera.canEditRotation);
+    document.getElementById("btnMirrorImageHorizontally").disabled = (!cameraEditor.isEditing || camera == null || !camera.canEditMirror);
+    document.getElementById('btnDeleteCamera').disabled = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown);
+    document.getElementById('btnDeleteCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown) ? 'gray' : 'red';
 
-    document.getElementById("btnClearMaterial").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
+    document.getElementById("btnChangeMaterial").style.display = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) ? '' : 'none';
+    document.getElementById("btnSetDefaultMaterial").style.display = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) ? '' : 'none';
+    document.getElementById("btnSampleMaterial").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
+    document.getElementById("btnSampleMaterial").style.display = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) ? '' : 'none';
+    document.getElementById("btnClearMaterial").style.display = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) ? '' : 'none';
+    document.getElementById("btnUndoMaterialEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex <= 0;
+    document.getElementById("btnUndoMaterialEdit").style.display = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) ? '' : 'none';
+    document.getElementById("btnRedoMaterialEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex >= metaHistoryStack.length - 1;
+    document.getElementById("btnRedoMaterialEdit").style.display = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) ? '' : 'none';
+
+    document.getElementById("btnDistance").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
+    document.getElementById("btnChangeDistanceLess").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
+    document.getElementById("btnChangeDistanceMore").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
+    document.getElementById("btnClearDistance").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
+    document.getElementById("btnSetDefaultDistance").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
+    document.getElementById("btnSampleDistance").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
+    document.getElementById("btnSampleDistance").style.display =  (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
+    document.getElementById("btnUndoDistanceEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex <= 0;
+    document.getElementById("btnUndoDistanceEdit").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
+    document.getElementById("btnRedoDistanceEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex >= metaHistoryStack.length - 1;
+    document.getElementById("btnRedoDistanceEdit").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
 
 
-    document.getElementById("btnDistance").disabled = !cameraEditor.isEditing;
-    document.getElementById("btnChangeDistanceLess").style.display = !cameraEditor.isEditing ? 'none' : '';
-    document.getElementById("btnChangeDistanceMore").style.display = !cameraEditor.isEditing ? 'none' : '';
-    document.getElementById("btnClearDistance").style.display = !cameraEditor.isEditing ? 'none' : '';
-
-
-
-
-
-
-    document.getElementById("btnPolygonAdd").style.display = ((activeLayer != 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnPointAdd").style.display = ((activeLayer != 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnPolygonAdd").style.display = (activeLayer == 'Spots' && cameraEditor.isEditing && camera != null && camera.canAddPolygonSpot && camera.canMoveSpots) ? '' : 'none';
+    document.getElementById("btnPointAdd").style.display = (activeLayer == 'Spots' && cameraEditor.isEditing && camera != null && camera.canAddPointSpot && camera.canMoveSpots) ? '' : 'none';
 
 
     document.getElementById("btnRegionToolLook").disabled = false;
@@ -560,39 +572,29 @@ function setButtons() {
     document.getElementById("btnRegionToolSelect").disabled = regionEditor.regions.length <= 1;
     document.getElementById("btnRegionToolSelect").style.color = (activeTool == 'select' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolMove").style.display = ((activeLayer != 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
+    document.getElementById("btnRegionToolMove").style.display = (activeLayer == 'Spots' && cameraEditor.isEditing && camera != null && camera.canMoveSpots ? '' : 'none');
     document.getElementById("btnRegionToolMove").disabled = !hasActiveItem;
     document.getElementById("btnRegionToolMove").style.color = (activeTool == 'move' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointAdd").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
+    document.getElementById("btnRegionToolPointAdd").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing && camera != null && camera.canMoveSpots) ? '' : 'none';
     document.getElementById("btnRegionToolPointAdd").disabled = !polygonSelected;
     document.getElementById("btnRegionToolPointAdd").style.color = (activeTool == 'pointadd' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointMove").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
+    document.getElementById("btnRegionToolPointMove").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing && camera != null && camera.canMoveSpots) ? '' : 'none';
     document.getElementById("btnRegionToolPointMove").disabled = !polygonSelected;
     document.getElementById("btnRegionToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing) ? '' : 'none';
+    document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing  && camera != null && camera.canMoveSpots) ? '' : 'none';
     document.getElementById("btnRegionToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
     document.getElementById("btnRegionToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnSetDefaultMaterial").disabled = !cameraEditor.isEditing || selectedMaterial == null;
-    document.getElementById("btnSetDefaultMaterial").style.display = cameraEditor.isEditing ? '' : 'none';
+    
 
-    document.getElementById("btnSampleMaterial").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
-    document.getElementById("btnSampleMaterial").disabled = !cameraEditor.isEditing;
-    document.getElementById("btnSampleMaterial").style.display = cameraEditor.isEditing ? '' : 'none';
-
-    document.getElementById("btnSetDefaultDistance").disabled = !cameraEditor.isEditing;
-    document.getElementById("btnSetDefaultDistance").style.display = cameraEditor.isEditing ? '' : 'none';
-
-    document.getElementById("btnSampleDistance").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
-    document.getElementById("btnSampleDistance").disabled = !cameraEditor.isEditing;
-    document.getElementById("btnSampleDistance").style.display = cameraEditor.isEditing ? '' : 'none';
+   
 
     let fillSelected = activeLayer != 'Spots' && cameraEditor.isEditing && (activeTool.indexOf('fill') > -1);
-    document.getElementById("btnRegionToolFill").style.display = ((activeLayer == 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolFill").disabled = activeLayer == 'Spots';
+    let showMaterialOrDistanceEditTools = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) || (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer)
+    document.getElementById("btnRegionToolFill").style.display = (showMaterialOrDistanceEditTools ? '' : 'none');
     document.getElementById("btnRegionToolFill").style.color = (fillSelected ? activeToolColor : inactiveToolColor);
 
 
@@ -603,12 +605,10 @@ function setButtons() {
     document.getElementById("btnChangeFillRangeMore").disabled = !fillSelected;
 
 
-    document.getElementById("btnRegionToolChange").style.display = ((activeLayer == 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolChange").disabled = activeLayer == 'Spots';
+    document.getElementById("btnRegionToolChange").style.display = (showMaterialOrDistanceEditTools ? '' : 'none');
     document.getElementById("btnRegionToolChange").style.color = (activeTool == 'change' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPaint").style.display = ((activeLayer == 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolPaint").disabled = activeLayer == 'Spots';
+    document.getElementById("btnRegionToolPaint").style.display =(showMaterialOrDistanceEditTools ? '' : 'none');
     document.getElementById("btnRegionToolPaint").style.color = (activeTool.indexOf('paint') > -1 ? activeToolColor : inactiveToolColor);
 
     let paintSelected = activeLayer != 'Spots' && (activeTool.indexOf('paint') > -1);
@@ -619,8 +619,7 @@ function setButtons() {
     document.getElementById("btnChangePaintSizeMore").disabled = !paintSelected;
 
 
-    document.getElementById("btnRegionToolErase").style.display = ((activeLayer == 'Spots' || !cameraEditor.isEditing) ? 'none' : '');
-    document.getElementById("btnRegionToolErase").disabled = activeLayer == 'Spots';
+    document.getElementById("btnRegionToolErase").style.display = (showMaterialOrDistanceEditTools ? '' : 'none');
     document.getElementById("btnRegionToolErase").style.color = (activeTool.indexOf('erase') > -1 ? activeToolColor : inactiveToolColor);
 
 
@@ -633,14 +632,14 @@ function setButtons() {
 
 
 
-    document.getElementById("btnDeleteRegion").disabled = !hasActiveItem;
+    document.getElementById("btnDeleteRegion").disabled = !hasActiveItem || camera == null || !camera.canDeleteSpots;
     document.getElementById("btnDeleteRegion").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
     document.getElementById("btnChangeRegion").disabled = !hasActiveItem;
 
 
 
-    document.getElementById("btnChangeRegionName").disabled = !hasActiveItem || !cameraEditor.isEditing;
-    document.getElementById("btnChangeColor").disabled = !hasActiveItem || !cameraEditor.isEditing;
+    document.getElementById("btnChangeRegionName").disabled = !hasActiveItem || !cameraEditor.isEditing || camera == null || !camera.canRenameSpots;
+    document.getElementById("btnChangeColor").disabled = !hasActiveItem || !cameraEditor.isEditing || camera == null || !camera.canChangeSpotColor;
 
 
 
@@ -3270,6 +3269,19 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
                 "eventLayers": null,
                 "materialMap": null,
                 "distanceMap": null,
+                "canEdit":camera.canEdit,
+                "canDeleteCamera":camera.canDeleteCamera,
+                "canRenameCamera":camera.canRenameCamera,
+                "canEditRotation":camera.canEditRotation,
+                "canEditMirror":camera.canEditMirror,
+                "canDeleteSpots":camera.canDeleteSpots,
+                "canAddPointSpot":camera.canAddPointSpot,
+                "canAddPolygonSpot":camera.canAddPolygonSpot,
+                "canMoveSpots":camera.canMoveSpots,
+                "canRenameSpots":camera.canRenameSpots,
+                "canChangeSpotColor":camera.canChangeSpotColor,
+                "canEditDistanceLayer":camera.canEditDistanceLayer,
+                "canEditMaterialLayer":camera.canEditMaterialLayer
             };
             cameras.push(newCamera);
         }
@@ -3314,7 +3326,7 @@ function showUI() {
 function deleteCamera(){
     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
     let cameraName = camera.existingName;
-    showConfirmDialog(deleteCameraCallback,"Delete Camera","Are you sure you want to delete the camera?");
+    showConfirmDialog(deleteCameraCallback,"Delete Camera?","Are you sure you want to delete the camera?");
 }
 
 function deleteCameraCallback() {
@@ -3363,9 +3375,13 @@ function apicamerasDeletedReceived() {
 
 
 function cancelCameraEdit() {
-    //todo prompt for confirm or tap again to confirm
+    showConfirmDialog(cancelCameraCallback,"Discard Changes?","Are you sure you want to discard your changes for the camera?");
+}
 
-    changeCamera(cameraEditor.selectedCameraIndex, false);
+
+
+function cancelCameraCallback() {
+    refreshCameras();
 }
 
 let alertCallback = null;
@@ -3716,8 +3732,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     elmCamIssues.innerHTML = "0";
                     setStatusText('Editing ' + camera.name + ' Camera', 'white', true);
 
-                    //don't show the delete button if it's an unknown camera
-                    document.getElementById('btnDeleteCamera').style.visibility = camera.isKnown ? 'visible' : 'hidden';
+                    
 
                     break;
                 }
@@ -3732,10 +3747,10 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
                     }
                     if(camera.canEdit){
-                        sb += '<div class="regioneditortext" style="margin-top:-12px">Tap To Edit</div>';
+                        sb += '<div class="regioneditortext" style="margin-top:-12px;color:orange">Tap To Edit</div>';
                     }
                     else{
-                        sb += '<div class="regioneditortext" style="margin-top:-12px">Read Only</div>';
+                        sb += '<div class="regioneditortext" style="margin-top:-12px;color:red">Read Only</div>';
                     }
 
                     sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">Viewing</div>';
@@ -3982,8 +3997,23 @@ function zoomRegionEditor(scale) {
 
 function addRegion(regionType) {
 
+    let camera = null;
+    if(cameraEditor.selectedCameraIndex != -1 && cameraEditor.selectedCameraIndex < cameraEditor.cameras.length){
+        camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+    }
+    else{
+        return;
+    }
     if (regionTypes.indexOf(regionType) == -1) {
         console.error('unsupported region type: ' + regionType);
+        return;
+    }
+    else if(regionType == 'point' && (!camera.canAddPointSpot || !camera.canMoveSpots)){
+        console.error('not authorized to add point spots or move them');
+        return;
+    }
+    else if(regionType == 'polygon' && (!camera.canAddPolygonSpot || !camera.canMoveSpots)){
+        console.error('not authorized to add polygon spots or move them');
         return;
     }
 
@@ -4076,7 +4106,7 @@ function addRegion(regionType) {
     fixRegionOutOfBounds(region);
     regionEditor.regions.push(region);
     regionEditor.selectedRegionIndex = regionEditor.regions.length - 1;
-    activeTool = 'move';//this makes the most sense to me.
+    activeTool = 'move';//when they add, immediately select the move tool
     recalcEditor();
     addRegionHistory('new ' + regionType, regionEditor.selectedRegionIndex, true);
 }

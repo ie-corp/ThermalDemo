@@ -54,63 +54,73 @@
             </feComponentTransfer>
         </filter>
     </svg>
-    <div id="dialogAlert" style="display:none">
-        <table width="100%">
-            <tr>
-                <td width="50%"><span id="dialogAlertTitle" style="font-size:28px;color:white">Alert</span></td>
-                <td width="50%" style="text-align:right">
-                    <button id="btnDialogAlertClose" onclick="closeAlertDialog()" class="resizebutton">
-                        <div style="line-height: 4px;">
-                            <span class="regioneditortext">OK</span>
-                        </div>
-                    </button>
-                </td>
-            </tr>
-        </table>
-        <div id="dialogAlertBody" style="color:white;font-size:24px"></div>
+    <div class="thermalDialog" id="dialogAlert" style="display:none">
+        <div class="thermalDialogContent">
+            <table width="100%">
+                <tr>
+                    <td width="50%"><span id="dialogAlertTitle" class="thermalDialogTitle">Alert</span></td>
+                    <td width="50%" style="text-align:right">
+                        <button id="btnDialogAlertClose" onclick="closeAlertDialog()" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">OK</span>
+                            </div>
+                        </button>
+                    </td>
+                </tr>
+            </table>
+            <hr class="thermalDialogRule"/>
+            <div id="dialogAlertBody" class="thermalDialogBody"></div>
+        </div>
     </div>
-    <div id="dialogPrompt" style="display:none">
-        <table width="100%">
-            <tr>
-                <td width="50%"><span id="dialogPromptTitle" style="font-size:28px;color:white">Prompt</span></td>
-                <td width="50%" style="text-align:right">
-                    <button id="btnDialogPromptCloseYes" onclick="closePromptDialog(true)" class="resizebutton">
-                        <div style="line-height: 4px;">
-                            <span class="regioneditortext">OK</span>
-                        </div>
-                    </button>
+    <div class="thermalDialog" id="dialogPrompt" style="display:none">
+        <div class="thermalDialogContent">
+            <table width="100%">
+                <tr>
+                    <td width="50%"><span id="dialogPromptTitle"  class="thermalDialogTitle">Prompt</span></td>
+                    <td width="50%" style="text-align:right">
+                        <button id="btnDialogPromptCloseYes" onclick="closePromptDialog(true)" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">OK</span>
+                            </div>
+                        </button>
 
-                    <button id="btnDialogPromptCloseNo" onclick="closePromptDialog(false)" class="resizebutton">
-                        <div style="line-height: 4px;">
-                            <span class="regioneditortext">Cancel</span>
-                        </div>
-                    </button>
-                </td>
-            </tr>
-        </table>
-        <div id="dialogPromptBody" style="color:white;font-size:24px"></div>
-        <input id="dialogPromptValue" value=""/>
+                        <button id="btnDialogPromptCloseNo" onclick="closePromptDialog(false)" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">Cancel</span>
+                            </div>
+                        </button>
+                    </td>
+                </tr>
+            </table>
+            <hr class="thermalDialogRule"/>
+            <input id="dialogPromptValue" style="font-size:28px" value="" />
+            <div id="dialogPromptBody" class="thermalDialogBody"></div>
+           
+        </div>
     </div>
-    <div id="dialogConfirm" style="display:none">
-        <table width="100%">
-            <tr>
-                <td width="50%"><span id="dialogConfirmTitle" style="font-size:28px;color:white">Confirm</span></td>
-                <td width="50%" style="text-align:right">
-                    <button id="btnDialogConfirmCloseYes" onclick="closeConfirmDialog(true)" class="resizebutton">
-                        <div style="line-height: 4px;">
-                            <span class="regioneditortext">Yes</span>
-                        </div>
-                    </button>
+    <div class="thermalDialog" id="dialogConfirm" style="display:none">
+        <div class="thermalDialogContent">
+            <table width="100%">
+                <tr>
+                    <td width="50%"><span id="dialogConfirmTitle"  class="thermalDialogTitle">Confirm</span></td>
+                    <td width="50%" style="text-align:right">
+                        <button id="btnDialogConfirmCloseYes" onclick="closeConfirmDialog(true)" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">Yes</span>
+                            </div>
+                        </button>
 
-                    <button id="btnDialogConfirmCloseNo" onclick="closeConfirmDialog(false)" class="resizebutton">
-                        <div style="line-height: 4px;">
-                            <span class="regioneditortext">No</span>
-                        </div>
-                    </button>
-                </td>
-            </tr>
-        </table>
-        <div id="dialogConfirmBody" style="color:white;font-size:24px"></div>
+                        <button id="btnDialogConfirmCloseNo" onclick="closeConfirmDialog(false)" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">No</span>
+                            </div>
+                        </button>
+                    </td>
+                </tr>
+            </table>
+            <hr class="thermalDialogRule"/>
+            <div id="dialogConfirmBody" class="thermalDialogBody"></div>
+        </div>
     </div>
     <div id="dialogDistance" style="display:none"></div>
     <div id="dialogMaterials" style="display:none">
@@ -188,7 +198,7 @@
 
                     <div id="valCamStatus" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>
 
-                    <div class="regioneditortext" style="margin-top:-10px">Editing</div>
+                    <div class="regioneditortext" style="margin-top:-10px;color:orange">Editing</div>
                     <div class="regionditortextsub3" style="margin-top:-10px">Camera</div>
 
                     <div id="valCamName" class="regionditortextsub3">Name</div>
@@ -209,7 +219,7 @@
                 </div>
             </button>
 
-            
+
 
             <button id="btnRotateImage" onclick="rotateImage()" class="resizebutton">
                 <div style="line-height: 4px;">
@@ -306,7 +316,7 @@
 
         </div>
 
-        
+
         <div id="rowSpotTools" class="editorrow">
 
             <button disabled class="resizebutton" style="background-color: black;">
@@ -327,10 +337,10 @@
 
 
             <button id="btnChangeRegion" onclick="changeRegionNext(true)" class="resizebutton">
-                <div style="line-height: 19px;">
-                    <span class="regioneditortext2">Spots</span>
-                    <span class="regioneditortext2">&nbsp;</span>
-                    <span id="valRegionIndex" class="regionditortextsub3">0 of 0</span>
+                <div style="line-height: 20px;">
+                    <div class="regioneditortext">Spots</div>
+
+                    <div id="valRegionIndex" class="regionditortextsub3">0 of 0</div>
                 </div>
             </button>
 
@@ -350,7 +360,7 @@
                 </div>
             </button>
 
-           
+
 
 
             <button disabled class="resizebutton" style="background-color: black;">
@@ -361,9 +371,9 @@
                 </div>
             </button>
 
-           
 
-           
+
+
 
             <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 17px;">
@@ -374,7 +384,7 @@
             </button>
 
 
-           
+
 
             <div style="width:8px;">
             </div>
@@ -886,7 +896,7 @@
             </div>
         </div>
 
-        
+
         <div id="tiptarget">
 
         </div>

@@ -1,5 +1,37 @@
 body{
   background-color: #282828;
+  color:white;
+}
+
+.thermalDialog{
+  background-color: #282828;
+  color:white;
+  
+}
+
+.thermalDialogContent{
+  background-color: white;
+  color:black;
+  margin:80px;
+  padding:40px;
+  border-radius: 25px;
+}
+
+.thermalDialogTitle{
+  font-size:28px;
+}
+
+.thermalDialogRule{
+  display: block;
+  height: 1px;
+  border: 0;
+  border-top: 1px solid #ccc;
+  margin: 1em 0;
+  padding: 0;
+}
+
+.thermalDialogBody{
+  font-size:24px;
 }
 
 .editorrow {

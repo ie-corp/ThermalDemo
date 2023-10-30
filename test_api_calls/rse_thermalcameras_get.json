@@ -8,15 +8,39 @@
                 "url": "/test_images/reference_01.tiff",
                 "isOnline": true,
                 "isKnown": true,
-                "canEdit":true
+                "canEdit":false,
+                "canDeleteCamera":false,
+                "canRenameCamera":false,
+                "canEditRotation": false,
+                "canEditMirror": false,
+                "canDeleteSpots":false,
+                "canAddPointSpot": false,
+                "canAddPolygonSpot":false,
+                "canMoveSpots": false,
+                "canRenameSpots":false,
+                "canChangeSpotColor":false,
+                "canEditDistanceLayer":false,
+                "canEditMaterialLayer":false
             },
             {
                 "usbId": null,
                 "name": "Right",
                 "url": "/test_images/reference_02.tiff",
-                "isOnline": false,
+                "isOnline": true,
                 "isKnown": true,
-                "canEdit":false
+                "canEdit":true,
+                "canRenameCamera":true,
+                "canDeleteCamera":true,
+                "canEditRotation": true,
+                "canEditMirror": true,
+                "canDeleteSpots":true,
+                "canAddPointSpot": true,
+                "canAddPolygonSpot":true,
+                "canMoveSpots": true,
+                "canRenameSpots":true,
+                "canChangeSpotColor":true,
+                "canEditDistanceLayer":true,
+                "canEditMaterialLayer":true
             },
             {
                 "usbId": "1",
@@ -24,7 +48,19 @@
                 "url": "/test_images/reference_03.tiff",
                 "isOnline": false,
                 "isKnown": true,
-                "canEdit":true
+                "canEdit":true,
+                "canRenameCamera":true,
+                "canDeleteCamera":true,
+                "canEditRotation": true,
+                "canEditMirror": true,
+                "canDeleteSpots":true,
+                "canAddPointSpot": true,
+                "canAddPolygonSpot":true,
+                "canMoveSpots": true,
+                "canRenameSpots":true,
+                "canChangeSpotColor":true,
+                "canEditDistanceLayer":true,
+                "canEditMaterialLayer":true
             },
             {
                 "usbId": "2",
@@ -32,7 +68,19 @@
                 "url": "/test_images/reference_04.tiff",
                 "isOnline": false,
                 "isKnown": true,
-                "canEdit":true
+                "canEdit":true,
+                "canRenameCamera":true,
+                "canDeleteCamera":true,
+                "canEditRotation": true,
+                "canEditMirror": true,
+                "canDeleteSpots":true,
+                "canAddPointSpot": true,
+                "canAddPolygonSpot":true,
+                "canMoveSpots": true,
+                "canRenameSpots":true,
+                "canChangeSpotColor":true,
+                "canEditDistanceLayer":true,
+                "canEditMaterialLayer":true
             },
             {
                 "usbId": "3",
@@ -40,7 +88,19 @@
                 "url": "/test_images/reference_05.tiff",
                 "isOnline": true,
                 "isKnown": false,
-                "canEdit":true
+                "canEdit":true,
+                "canRenameCamera":true,
+                "canDeleteCamera":true,
+                "canEditRotation": true,
+                "canEditMirror": true,
+                "canDeleteSpots":true,
+                "canAddPointSpot": true,
+                "canAddPolygonSpot":true,
+                "canMoveSpots": true,
+                "canRenameSpots":true,
+                "canChangeSpotColor":true,
+                "canEditDistanceLayer":true,
+                "canEditMaterialLayer":true
             },
             {
                 "usbId": "4",
@@ -48,7 +108,19 @@
                 "url": "/test_images/reference_06.tiff",
                 "isOnline": true,
                 "isKnown": false,
-                "canEdit":true
+                "canEdit":true,
+                "canRenameCamera":true,
+                "canDeleteCamera":true,
+                "canEditRotation": true,
+                "canEditMirror": true,
+                "canDeleteSpots":true,
+                "canAddPointSpot": true,
+                "canAddPolygonSpot":true,
+                "canMoveSpots": true,
+                "canRenameSpots":true,
+                "canChangeSpotColor":true,
+                "canEditDistanceLayer":true,
+                "canEditMaterialLayer":true
             }
         ]
     }
