@@ -3177,6 +3177,7 @@ function isTouchEventWithElement(element, e) {
 }
 
 function getEmptyRegionEditor() {
+    console.log('returning empty region editor');
     return {
 
         "imageRotation": 0,
@@ -3209,7 +3210,7 @@ function getApiSettings() {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         return {"isPost":false, "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main"};
     }
-    else if (location.href.indexOf('5500') > -1) {
+    else if (false && location.href.indexOf('5500') > -1) {
         return {"isPost":false, "url":"", "rootUrl": ""};//running locally
     }
     else {
@@ -3220,6 +3221,10 @@ function getApiSettings() {
 
 function getFetch(scriptName, apiParams) {
     let apiSettings = getApiSettings();
+    let myParms = null;
+    if(apiParams != null && Object.keys(apiParams).length > 0){
+        myParms = JSON.stringify(apiParams);
+    }
     if (apiSettings.isPost) {
         return fetch(apiSettings.url, {
             method: 'POST',
@@ -3227,7 +3232,7 @@ function getFetch(scriptName, apiParams) {
                 'Accept': 'application/json, text/plain, */*',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ "ScriptName": scriptName })
+            body: JSON.stringify({"Ticket":null, "ScriptName": scriptName, "Parameters":myParms })
         });
     }
     else {
@@ -3280,7 +3285,6 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
                 "isOnline": camera.isOnline,
                 "isKnown": camera.isKnown,
                 "canEdit": camera.canEdit,
-                "eventLayers": null,
                 "materialMap": null,
                 "distanceMap": null,
                 "canEdit":camera.canEdit,
@@ -3477,19 +3481,26 @@ function saveCamera() {
 function callSaveCameras(camera) {
     hideEverything();
     let apiSettings = getApiSettings();
-    let camPrefix = apiSettings.rootUrl;
     let scriptName = 'rse_thermalcameras_save';
-    let myParms = {"cameras":[{
-        distanceMap: distanceMap,
-        materialMap: materialMap,
-        imageRotation: regionEditor.imageRotation,
-        imageMirrorHorizontally: regionEditor.imageMirrorHorizontally,
-        spots: regionEditor.regions,
+    let myParms = {"saveInfo":{
         existingName: camera.existingName,
-        name: camera.name,
         usbId: camera.usbId,
+            configuration:{
+                "temperaturesInCelsius":tempsCelsius,
+                "dateCaptured":null,
+                "rawThermalData":null,
+                "imageDescription":null,
+                "name":camera.name,
+                "materialMap": materialMap,
+                "distanceMap": distanceMap,
+                "regions": regionEditor.regions,
+                "imageNativeWidth": regionEditor.imageNativeWidth,
+                "imageNativeHeight": regionEditor.imageNativeHeight,
+                "imageRotation": regionEditor.imageRotation,
+                "imageMirrorHorizontally": regionEditor.imageMirrorHorizontally,
+            }
         }
-    ]};
+    };
 
     getFetch(scriptName, myParms)
     .then(response => {
@@ -3598,7 +3609,7 @@ function changeCamera(cameraIndex, editing) {
         cameraEditor.selectedCameraIndex = Math.max(0, Math.min(cameraIndex, cameraEditor.cameras.length - 1));
         let src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
         let xhr = new XMLHttpRequest();
-        xhr.open("GET", src);
+        xhr.open("GET", src + "?t=" + new Date().getTime());//nocache please
         xhr.responseType = "arraybuffer";
         xhr.onload = imgLoaded;
         xhr.send();
@@ -3636,8 +3647,7 @@ function imgLoaded(e) {
     //console.log(userComment);
     let thermalData = JSON.parse(userComment);
     //console.log(userComment);
-    let dateCaptured = thermalData.DateCaptured;
-    let temperaturesInCelsius = thermalData.TemperaturesInCelsius;
+    
     //let imageDescription = thermalData.ImageDescription;
     //console.log('TemperaturesInCelsius:' + temperaturesInCelsius.length);
 
@@ -3655,11 +3665,40 @@ function imgLoaded(e) {
     image.src = canvas.toDataURL();
 
 
-    tempsCelsius = thermalData.TemperaturesInCelsius;
+    tempsCelsius = thermalData.temperaturesInCelsius;
     if (!cameraEditor.isEditing) {
-        //Todo these needs to be assigned what they are in the config.
-        distanceMap = new Array(49152);
-        materialMap = new Array(49152);
+        console.log('not editing: Getting Region Editor from image');
+        regionEditor = getEmptyRegionEditor();
+        console.log('not editing: Assigning Region Editor from image');
+        regionEditor.imageRotation = thermalData.imageRotation;
+        regionEditor.imageMirrorHorizontally = thermalData.imageMirrorHorizontally;
+        regionEditor.imageNativeWidth = canvas.width;
+        regionEditor.imageNativeHeight = canvas.height;
+        regionEditor.regions = thermalData.regions == null ? [] : thermalData.regions;
+
+        if(regionEditor.regions.length > 0){
+            regionEditor.selectedRegionIndex = 0;
+        }
+        else{
+            console.log('No Existing Spots Found');
+        }
+        if(thermalData.distanceMap != null){
+            distanceMap = [...thermalData.distanceMap];
+        }
+        else{
+            distanceMap = new Array(49152);
+        }
+
+        if(thermalData.materialMap != null){
+            materialMap = [...thermalData.materialMap];
+        }
+        else{
+            materialMap = new Array(49152);
+        }
+        imageScale = 3.0;
+        imageFilter = 'inferno';
+        activeLayer = 'Spots';
+        activeTool = 'look';
     }
     clearStoredImageData();
 
@@ -3684,40 +3723,19 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             historyIndex = -1;
 
 
-            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers != null) {
-                regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers));
-                if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].materialMap != null) {
-                    materialMap = [...cameraEditor.cameras[cameraEditor.selectedCameraIndex].materialMap];
-                }
-                else {
-                    materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
-                }
-                if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].distanceMap != null) {
-                    distanceMap = [...cameraEditor.cameras[cameraEditor.selectedCameraIndex].distanceMap];
-                }
-                else {
-                    distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
-                }
-            }
-            else {
-                regionEditor = getEmptyRegionEditor();
-                materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
-                distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
-
-
-            }
+            
 
         }
         else {
-            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers != null) {
-                regionEditor = JSON.parse(JSON.stringify(cameraEditor.cameras[cameraEditor.selectedCameraIndex].eventlayers));
-            }
-            else {
-                regionEditor = getEmptyRegionEditor();
-                materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
-                distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
-                imageScale = 3.0;
-            }
+           
+            console.log('getting region editor because region editor is null');
+            regionEditor = getEmptyRegionEditor();
+            materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
+            distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
+            imageScale = 3.0;
+            imageFilter = 'inferno';
+            imageRotation = 0;
+            
         }
     }
 
