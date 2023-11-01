@@ -250,45 +250,6 @@ background-color:grey;
   background-color:grey;
 }
 
-.arrowmove {
-  user-select: none; 
-    border: solid white;
-    border-width: 0 3px 3px 0;
-    display: inline-block;
-    padding: 3px;
-  }
-  
-  .arrowright {
-    transform: rotate(-45deg);
-  }
-  
-  .arrowleft {
-    transform: rotate(135deg);
-  }
-  
-  .arrowup {
-    transform: rotate(-135deg);
-  }
-
-  .arrowupleft {
-    transform: rotate(180deg);
-  }
-
-  .arrowupright {
-    transform: rotate(270deg);
-  }
-  
-  .arrowdown {
-    transform: rotate(45deg);
-  }
-
-  .arrowdownleft {
-    transform: rotate(90deg);
-  }
-
-  .arrowdownright {
-    transform: rotate(0deg);
-  }
 
 
 
