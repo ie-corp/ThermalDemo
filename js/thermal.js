@@ -1,5 +1,6 @@
 let materialMap = [];
 let distanceMap = [];
+let rawTiffImageData = null;//this is what we need to send on the save service call.
 //let eventMap = [];
 let selectedEventIndex = -1;
 
@@ -3480,11 +3481,12 @@ function saveCamera() {
 
 function callSaveCameras(camera) {
     hideEverything();
-    let apiSettings = getApiSettings();
+   
     let scriptName = 'rse_thermalcameras_save';
     let myParms = {"saveInfo":{
         existingName: camera.existingName,
         usbId: camera.usbId,
+        image: rawTiffImageData,
             configuration:{
                 "temperaturesInCelsius":tempsCelsius,
                 "dateCaptured":null,
@@ -3625,7 +3627,7 @@ function changeCamera(cameraIndex, editing) {
 function refreshImage() {
     let src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
     let xhr = new XMLHttpRequest();
-    xhr.open("GET", src);
+    xhr.open("GET", src+ "?t=" + new Date().getTime());//nocache please
     xhr.responseType = "arraybuffer";
     xhr.onload = imgLoaded;
     xhr.send();
@@ -3634,13 +3636,25 @@ function refreshImage() {
 function imgLoaded(e) {
     //changeCamera
     //37510 User Comment
+    let response = e.target.response;
+    console.log('image response:' + JSON.stringify(response));
     let ifds = UTIF.decode(e.target.response);
-    //console.log(JSON.stringify(ifds));
-    //return;
-    UTIF.decodeImage(e.target.response, ifds[0])
-    let rgba = UTIF.toRGBA8(ifds[0]);  // Uint8Array with RGBA pixels
-    //console.log(ifds[0].width, ifds[0].height);
-    let tags = ifds[0];//, ifds[0]);
+    
+    //console.log('image ifds.length:' + ifds.length);
+    let ifd = ifds[0];
+    //console.log('image ifd:' + JSON.stringify(ifd));
+    UTIF.decodeImage(e.target.response, ifd);//this adds width, height, and data to the ifd object.
+    console.log(ifd.data);//data is an unint array looks like this [80,80,0]
+
+
+    rawTiffImageData = [...ifd.data];
+    console.log('idf.data.length' + rawTiffImageData.length);
+    
+    let rgba = UTIF.toRGBA8(ifd);  // Uint8Array with RGBA pixels
+    
+    console.log('rgba.length' + rgba.length);
+    //console.log(JSON.stringify(rgba));//data looks like this {"0":80,"1":90...."147390":15}
+    let tags = ifd;
     let exifIFD = tags.exifIFD;
     let userCommentTagID = "t37510";
     let userComment = exifIFD[userCommentTagID];
@@ -3654,9 +3668,9 @@ function imgLoaded(e) {
 
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext("2d");
-    canvas.width = ifds[0].width;
-    canvas.height = ifds[0].height;
-    let imageData = ctx.createImageData(ifds[0].width, ifds[0].height);
+    canvas.width = ifd.width;
+    canvas.height = ifd.height;
+    let imageData = ctx.createImageData(ifd.width, ifd.height);
     imageData.data.set(rgba);
     ctx.putImageData(imageData, 0, 0);
     //document.getElementById("holder").appendChild(canvas);
