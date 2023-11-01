@@ -54,6 +54,11 @@
             </feComponentTransfer>
         </filter>
     </svg>
+    <div id="busyLayer" style="visibility: hidden;">
+        <div class="center">
+            <span id="busySpinner" class="loader"></span>
+          </div>
+    </div>
     <div class="thermalDialog" id="dialogAlert" style="display:none">
         <div class="thermalDialogContent">
             <table width="100%">
@@ -193,7 +198,7 @@
                 </div>
             </button>
 
-            <button disabled id="btnCam" class="resizebutton2" style="background-color:black">
+            <button disabled id="btnCam" class="resizebutton2" style="background-color:black;border-color:white">
                 <div style="line-height: 14px;">
 
                     <div id="valCamStatus" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>
@@ -306,10 +311,9 @@
             </div>
 
             <button id="btnRefreshImage" onclick="refreshImage()" class="resizebutton">
-                <div style="line-height: 19px;">
-                    <span class="regioneditortext2">Refresh</span>
-                    <span class="regioneditortext2">Image</span>
-                    <span class="regioneditortext2">Capture</span>
+                <div style="line-height: 24px;">
+                    <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Refresh</div>
+                    <div class="regioneditortext2">Image</div>
                 </div>
             </button>
 

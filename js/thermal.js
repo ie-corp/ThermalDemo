@@ -3242,8 +3242,19 @@ function getFetch(scriptName, apiParams) {
 }
 
 
+function showBusy(showSpinner){
+    document.getElementById('busyLayer').style.visibility = '';
+    document.getElementById('busySpinner').style.visibility = showSpinner ? '' : 'hidden';
+}
+
+function hideBusy(){
+    document.getElementById('busyLayer').style.visibility = 'hidden';
+    document.getElementById('busySpinner').style.visibility = 'hidden';
+}
+
 function refreshCameras() {
-    hideEverything();
+    showBusy(true);
+    
     let apiSettings = getApiSettings();
     let camPrefix = apiSettings.rootUrl;
     let scriptName = 'rse_thermalcameras_get';
@@ -3273,6 +3284,7 @@ function refreshCameras() {
 function apiGetCamerasReceived(urlPrefix, jsonResult) {
 
     hideEverything();
+    hideBusy();
     document.getElementById('mainEditor').style.display = 'block';
     let cameras = [];
     if (jsonResult != null && jsonResult.cameras != null) {
@@ -3361,6 +3373,7 @@ function callDeleteCameras(cameraNamesToDelete) {
     let apiSettings = getApiSettings();
     let camPrefix = apiSettings.rootUrl;
     let scriptName = 'rse_thermalcameras_delete';
+    showBusy(true);
     getFetch(scriptName, {"cameraNamesToDelete": cameraNamesToDelete})
     .then(response => {
         if (!response.ok) {
@@ -3386,7 +3399,7 @@ function callDeleteCameras(cameraNamesToDelete) {
 }
 
 function apicamerasDeletedReceived() {
-    
+    hideBusy();
     cameraEditor.selectedCameraIndex = -1;
     cameraEditor.cameras = [];
     refreshCameras();
@@ -3503,7 +3516,7 @@ function callSaveCameras(camera) {
             }
         }
     };
-
+    showBusy(true);
     getFetch(scriptName, myParms)
     .then(response => {
         if (!response.ok) {
@@ -3529,7 +3542,7 @@ function callSaveCameras(camera) {
 }
 
 function apicamerasSaveReceived() {
-    
+    hideBusy();
     cameraEditor.selectedCameraIndex = -1;
     cameraEditor.cameras = [];
     refreshCameras();
@@ -3608,12 +3621,27 @@ function changeCamera(cameraIndex, editing) {
     hideUI();
     hideTips();
     if (cameraEditor.cameras.length > 0) {
+        showBusy(true);
         cameraEditor.selectedCameraIndex = Math.max(0, Math.min(cameraIndex, cameraEditor.cameras.length - 1));
         let src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
+        
         let xhr = new XMLHttpRequest();
         xhr.open("GET", src + "?t=" + new Date().getTime());//nocache please
         xhr.responseType = "arraybuffer";
-        xhr.onload = imgLoaded;
+        xhr.onload = function(e) {
+            if(xhr.status === 200 || xhr.status == 0) {
+                imgLoaded(e);
+            }
+            else{
+                hideBusy();
+                showAlertDialog(null,'Camera Error','There was an error loading the camera image.');
+            }
+            
+        };
+        xhr.onerror = function () {
+            hideBusy();
+            showAlertDialog(null,'Camera Error','There was an error loading the camera image.');
+        };
         xhr.send();
     }
     else {
@@ -3625,47 +3653,40 @@ function changeCamera(cameraIndex, editing) {
 }
 
 function refreshImage() {
+    showBusy(true);
     let src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
     let xhr = new XMLHttpRequest();
     xhr.open("GET", src+ "?t=" + new Date().getTime());//nocache please
     xhr.responseType = "arraybuffer";
-    xhr.onload = imgLoaded;
+    xhr.onload = function(e) {
+        if(xhr.status === 200 || xhr.status == 0) {
+            imgLoaded(e);
+        }
+        else{
+            hideBusy();
+            showAlertDialog(null,'Camera Error','There was an error loading the camera image.');
+        }
+        
+    };
+    xhr.onerror = function () {
+        hideBusy();
+        showAlertDialog(null,'Camera Error','There was an error loading the camera image.');
+    };
     xhr.send();
 }
 
 function imgLoaded(e) {
-    //changeCamera
-    //37510 User Comment
-    let response = e.target.response;
-    console.log('image response:' + JSON.stringify(response));
+    
     let ifds = UTIF.decode(e.target.response);
-    
-    //console.log('image ifds.length:' + ifds.length);
     let ifd = ifds[0];
-    //console.log('image ifd:' + JSON.stringify(ifd));
     UTIF.decodeImage(e.target.response, ifd);//this adds width, height, and data to the ifd object.
-    console.log(ifd.data);//data is an unint array looks like this [80,80,0]
-
-
     rawTiffImageData = [...ifd.data];
-    console.log('idf.data.length' + rawTiffImageData.length);
-    
     let rgba = UTIF.toRGBA8(ifd);  // Uint8Array with RGBA pixels
-    
-    console.log('rgba.length' + rgba.length);
-    //console.log(JSON.stringify(rgba));//data looks like this {"0":80,"1":90...."147390":15}
     let tags = ifd;
     let exifIFD = tags.exifIFD;
     let userCommentTagID = "t37510";
     let userComment = exifIFD[userCommentTagID];
-    //console.log(userComment);
     let thermalData = JSON.parse(userComment);
-    //console.log(userComment);
-    
-    //let imageDescription = thermalData.ImageDescription;
-    //console.log('TemperaturesInCelsius:' + temperaturesInCelsius.length);
-
-
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext("2d");
     canvas.width = ifd.width;
@@ -3673,22 +3694,16 @@ function imgLoaded(e) {
     let imageData = ctx.createImageData(ifd.width, ifd.height);
     imageData.data.set(rgba);
     ctx.putImageData(imageData, 0, 0);
-    //document.getElementById("holder").appendChild(canvas);
-
     let image = document.getElementById('regionEditorImageRef');
     image.src = canvas.toDataURL();
-
-
     tempsCelsius = thermalData.temperaturesInCelsius;
     if (!cameraEditor.isEditing) {
-        console.log('not editing: Getting Region Editor from image');
         regionEditor = getEmptyRegionEditor();
-        console.log('not editing: Assigning Region Editor from image');
-        regionEditor.imageRotation = thermalData.imageRotation;
-        regionEditor.imageMirrorHorizontally = thermalData.imageMirrorHorizontally;
+        regionEditor.imageRotation = thermalData.imageRotation ?? 0;
+        regionEditor.imageMirrorHorizontally = thermalData.imageMirrorHorizontall ?? false;
         regionEditor.imageNativeWidth = canvas.width;
         regionEditor.imageNativeHeight = canvas.height;
-        regionEditor.regions = thermalData.regions == null ? [] : thermalData.regions;
+        regionEditor.regions = thermalData.regions ?? [];
 
         if(regionEditor.regions.length > 0){
             regionEditor.selectedRegionIndex = 0;
@@ -3700,14 +3715,14 @@ function imgLoaded(e) {
             distanceMap = [...thermalData.distanceMap];
         }
         else{
-            distanceMap = new Array(49152);
+            distanceMap = new Array(canvas.width * canvas.height);
         }
 
         if(thermalData.materialMap != null){
             materialMap = [...thermalData.materialMap];
         }
         else{
-            materialMap = new Array(49152);
+            materialMap = new Array(canvas.width * canvas.height);
         }
         imageScale = 3.0;
         imageFilter = 'inferno';
@@ -3715,7 +3730,7 @@ function imgLoaded(e) {
         activeTool = 'look';
     }
     clearStoredImageData();
-
+    hideBusy();
 
 }
 
@@ -3729,19 +3744,10 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
         cameraEditor.selectedCameraIndex = cameraIndex;
         if (regionEditor != null) {
 
-            if (historyStack != null && historyStack.length > 1) {
-                //todo save changes?
-            }
             historyStack = [];
-            //tempsCelsius = [];
             historyIndex = -1;
-
-
-            
-
         }
         else {
-           
             console.log('getting region editor because region editor is null');
             regionEditor = getEmptyRegionEditor();
             materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
