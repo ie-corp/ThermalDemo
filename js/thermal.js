@@ -144,7 +144,7 @@ function setActiveLayer(layer) {
     if (activeLayer == 'inferno') {
         imageFilter = 'none';
     }
-    else{
+    else {
         imageFilter = 'none';
     }
     activeLayer = layer;
@@ -293,7 +293,7 @@ function addMetaHistory(historyType, force) {
         setButtons();
         return;
     }
-   
+
     let time = new Date().getTime();
     let historyEntry = { "historyType": historyType, "time": time, "materialMap": null, "distanceMap": null };
     if (activeLayer == 'Matl') {
@@ -428,7 +428,7 @@ function addRegionHistory(historyType, selectedIndex, force) {
         setButtons();
         return;
     }
-    
+
     let historyEntry = { "historyType": historyType, "selectedIndex": selectedIndex, "regionEditor": JSON.stringify(regionEditor) };
     let lastHistoryEntry = null;
     if (historyStack.length > 0) {
@@ -490,18 +490,18 @@ function addRegionHistory(historyType, selectedIndex, force) {
 function setButtons() {
 
     let camera = null;
-    if(cameraEditor.cameras != null && cameraEditor.selectedCameraIndex > -1 && cameraEditor.selectedCameraIndex < cameraEditor.cameras.length){
+    if (cameraEditor.cameras != null && cameraEditor.selectedCameraIndex > -1 && cameraEditor.selectedCameraIndex < cameraEditor.cameras.length) {
         camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-    } 
+    }
 
     document.getElementById("btnUndoRegionEdit").disabled = historyStack.length <= 1 || historyIndex <= 0;
     document.getElementById("btnUndoRegionEdit").style.display = cameraEditor.isEditing ? '' : 'none';
     document.getElementById("btnRedoRegionEdit").disabled = historyStack.length <= 1 || historyIndex >= historyStack.length - 1;
     document.getElementById("btnRedoRegionEdit").style.display = cameraEditor.isEditing ? '' : 'none';
 
-   
 
-    
+
+
 
 
 
@@ -523,7 +523,7 @@ function setButtons() {
     document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
     document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
 
-    
+
     if (cameraEditor.isEditing) {
         if (selectedMaterial != null && selectedMaterial.name != null && selectedMaterial.emissivity != null) {
             document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
@@ -546,12 +546,15 @@ function setButtons() {
     document.getElementById("btnRenameCamera").disabled = (!cameraEditor.isEditing || camera == null || !camera.canRenameCamera);
     document.getElementById("btnRotateImage").disabled = (!cameraEditor.isEditing || camera == null || !camera.canEditRotation);
     document.getElementById("btnMirrorImageHorizontally").disabled = (!cameraEditor.isEditing || camera == null || !camera.canEditMirror);
-    
+
     document.getElementById('btnSaveCamera').disabled = (!hasEdited || !cameraEditor.isEditing || camera == null || !camera.canEdit);
-    document.getElementById('btnSaveCamera').style.backgroundColor = (!hasEdited || !cameraEditor.isEditing || camera == null || !camera.canEdit)? 'gray' : 'green';
-    
+    document.getElementById('btnSaveCamera').style.backgroundColor = (!hasEdited || !cameraEditor.isEditing || camera == null || !camera.canEdit) ? 'gray' : 'green';
+
     document.getElementById('btnDeleteCamera').disabled = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown);
     document.getElementById('btnDeleteCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown) ? 'gray' : 'red';
+
+    document.getElementById('btnRefreshLiveImage').disabled = (!cameraEditor.isEditing || camera == null || camera.usbId == null || camera.usbId == '');
+
 
     document.getElementById("btnChangeMaterial").style.display = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) ? '' : 'none';
     document.getElementById("btnSetDefaultMaterial").style.display = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) ? '' : 'none';
@@ -569,7 +572,7 @@ function setButtons() {
     document.getElementById("btnClearDistance").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
     document.getElementById("btnSetDefaultDistance").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
     document.getElementById("btnSampleDistance").style.color = (activeTool == 'sample' ? activeToolColor : inactiveToolColor);
-    document.getElementById("btnSampleDistance").style.display =  (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
+    document.getElementById("btnSampleDistance").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
     document.getElementById("btnUndoDistanceEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex <= 0;
     document.getElementById("btnUndoDistanceEdit").style.display = (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer) ? '' : 'none';
     document.getElementById("btnRedoDistanceEdit").disabled = metaHistoryStack.length <= 1 || metaHistoryIndex >= metaHistoryStack.length - 1;
@@ -599,13 +602,13 @@ function setButtons() {
     document.getElementById("btnRegionToolPointMove").disabled = !polygonSelected;
     document.getElementById("btnRegionToolPointMove").style.color = (activeTool == 'pointmove' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing  && camera != null && camera.canMoveSpots) ? '' : 'none';
+    document.getElementById("btnRegionToolPointDelete").style.display = (activeLayer == 'Spots' && polygonSelected && cameraEditor.isEditing && camera != null && camera.canMoveSpots) ? '' : 'none';
     document.getElementById("btnRegionToolPointDelete").disabled = !polygonSelected || (region != null && region.points.length <= 3);
     document.getElementById("btnRegionToolPointDelete").style.color = (activeTool == 'pointdelete' ? activeToolColor : inactiveToolColor);
 
-    
 
-   
+
+
 
     let fillSelected = activeLayer != 'Spots' && cameraEditor.isEditing && (activeTool.indexOf('fill') > -1);
     let showMaterialOrDistanceEditTools = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) || (activeLayer == 'Dist' && cameraEditor.isEditing && camera != null && camera.canEditDistanceLayer)
@@ -623,7 +626,7 @@ function setButtons() {
     document.getElementById("btnRegionToolChange").style.display = (showMaterialOrDistanceEditTools ? '' : 'none');
     document.getElementById("btnRegionToolChange").style.color = (activeTool == 'change' ? activeToolColor : inactiveToolColor);
 
-    document.getElementById("btnRegionToolPaint").style.display =(showMaterialOrDistanceEditTools ? '' : 'none');
+    document.getElementById("btnRegionToolPaint").style.display = (showMaterialOrDistanceEditTools ? '' : 'none');
     document.getElementById("btnRegionToolPaint").style.color = (activeTool.indexOf('paint') > -1 ? activeToolColor : inactiveToolColor);
 
     let paintSelected = activeLayer != 'Spots' && (activeTool.indexOf('paint') > -1);
@@ -1589,7 +1592,7 @@ function changeImageFilterNext(nextFilter) {
     //filter is not part of history
 }
 
-function changeRegionName(){
+function changeRegionName() {
     if (regionEditor.selectedRegionIndex >= 0) {
         let region = regionEditor.regions[regionEditor.selectedRegionIndex];
         showPromptDialog(changeRegionNameCallback, "Spot Name", "Please enter a new spot name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", region.name);
@@ -1603,13 +1606,13 @@ function changeRegionNameCallback(newName) {
         if (newName != null && newName.trim() != "") {
             newName = newName.trim();
             if (newName.length > regionEditor.maxNameLength) {
-                showAlertDialog(null,'Rename Spot','name too long, max ' + regionEditor.maxNameLength + ' characters');
+                showAlertDialog(null, 'Rename Spot', 'name too long, max ' + regionEditor.maxNameLength + ' characters');
                 return;
             }
             for (let i = 0; i < newName.length; i++) {
                 let c = newName.charAt(i);
                 if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == '_')) {
-                    showAlertDialog(null,'Rename Spot','Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
+                    showAlertDialog(null, 'Rename Spot', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
                     return;
                 }
             }
@@ -3209,13 +3212,13 @@ function go() {
 function getApiSettings() {
     if (location.href.indexOf('github.io') > -1) {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
-        return {"isPost":false, "url":"https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main"};
+        return { "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
     }
-    else if (location.href.indexOf('5500') > -1) {
-        return {"isPost":false, "url":"", "rootUrl": ""};//running locally
+    else if (false && location.href.indexOf('5500') > -1) {
+        return { "isPost": false, "url": "", "rootUrl": "" };//running locally
     }
     else {
-        return {"isPost":true, "url":"http://localhost:81/jsonproxy.ashx", "rootUrl": "http://localhost:81"};//running embedded
+        return { "isPost": true, "url": "http://localhost:81/jsonproxy.ashx", "rootUrl": "http://localhost:81" };//running embedded
     }
 }
 
@@ -3223,7 +3226,7 @@ function getApiSettings() {
 function getFetch(scriptName, apiParams) {
     let apiSettings = getApiSettings();
     let myParms = null;
-    if(apiParams != null && Object.keys(apiParams).length > 0){
+    if (apiParams != null && Object.keys(apiParams).length > 0) {
         myParms = JSON.stringify(apiParams);
     }
     if (apiSettings.isPost) {
@@ -3233,7 +3236,7 @@ function getFetch(scriptName, apiParams) {
                 'Accept': 'application/json, text/plain, */*',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({"Ticket":null, "ScriptName": scriptName, "Parameters":myParms })
+            body: JSON.stringify({ "Ticket": null, "ScriptName": scriptName, "Parameters": myParms })
         });
     }
     else {
@@ -3242,34 +3245,34 @@ function getFetch(scriptName, apiParams) {
 }
 
 
-function showBusy(showSpinner){
+function showBusy(showSpinner) {
     document.getElementById('busyLayer').style.visibility = '';
     document.getElementById('busySpinner').style.visibility = showSpinner ? '' : 'hidden';
 }
 
-function hideBusy(){
+function hideBusy() {
     document.getElementById('busyLayer').style.visibility = 'hidden';
     document.getElementById('busySpinner').style.visibility = 'hidden';
 }
 
 function refreshCameras() {
     showBusy(true);
-    
+
     let apiSettings = getApiSettings();
     let camPrefix = apiSettings.rootUrl;
     let scriptName = 'rse_thermalcameras_get';
     getFetch(scriptName, {})
-    .then(response => {
-        if (!response.ok) {
-            console.error('response not ok');
-            this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
-        }
-        return response.json();
-    })
+        .then(response => {
+            if (!response.ok) {
+                console.error('response not ok');
+                this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
+            }
+            return response.json();
+        })
         .then(json => {
             //console.log('response ok');
             let scriptReturnValue = json.ScriptReturnValue;
-            if(typeof scriptReturnValue == 'string'){
+            if (typeof scriptReturnValue == 'string') {
                 scriptReturnValue = JSON.parse(scriptReturnValue);
             }
             this.apiGetCamerasReceived(camPrefix, scriptReturnValue);
@@ -3290,6 +3293,7 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
     if (jsonResult != null && jsonResult.cameras != null) {
         for (let i = 0; i < jsonResult.cameras.length; i++) {
             let camera = jsonResult.cameras[i];
+            console.log("Camera " + i + " usbId" + camera.usbId)
             let newCamera = {
                 "usbId": camera.usbId,
                 "name": ((camera.name ?? unknownCameraName).trim()),
@@ -3300,19 +3304,19 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
                 "canEdit": camera.canEdit,
                 "materialMap": null,
                 "distanceMap": null,
-                "canEdit":camera.canEdit,
-                "canDeleteCamera":camera.canDeleteCamera,
-                "canRenameCamera":camera.canRenameCamera,
-                "canEditRotation":camera.canEditRotation,
-                "canEditMirror":camera.canEditMirror,
-                "canDeleteSpots":camera.canDeleteSpots,
-                "canAddPointSpot":camera.canAddPointSpot,
-                "canAddPolygonSpot":camera.canAddPolygonSpot,
-                "canMoveSpots":camera.canMoveSpots,
-                "canRenameSpots":camera.canRenameSpots,
-                "canChangeSpotColor":camera.canChangeSpotColor,
-                "canEditDistanceLayer":camera.canEditDistanceLayer,
-                "canEditMaterialLayer":camera.canEditMaterialLayer
+                "canEdit": camera.canEdit,
+                "canDeleteCamera": camera.canDeleteCamera,
+                "canRenameCamera": camera.canRenameCamera,
+                "canEditRotation": camera.canEditRotation,
+                "canEditMirror": camera.canEditMirror,
+                "canDeleteSpots": camera.canDeleteSpots,
+                "canAddPointSpot": camera.canAddPointSpot,
+                "canAddPolygonSpot": camera.canAddPolygonSpot,
+                "canMoveSpots": camera.canMoveSpots,
+                "canRenameSpots": camera.canRenameSpots,
+                "canChangeSpotColor": camera.canChangeSpotColor,
+                "canEditDistanceLayer": camera.canEditDistanceLayer,
+                "canEditMaterialLayer": camera.canEditMaterialLayer
             };
             cameras.push(newCamera);
         }
@@ -3347,21 +3351,21 @@ function showUI() {
     else {
         document.getElementById('cameraTools').style.display = '';
     }
-    
+
     document.getElementById("rowSpotTools").style.display = (activeLayer != 'Spots' ? 'none' : '');
     document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
     document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
     document.getElementById('touchTools').style.display = '';
 }
 
-function deleteCamera(){
+function deleteCamera() {
     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
     let cameraName = camera.existingName;
-    showConfirmDialog(deleteCameraCallback,"Delete Camera?","Are you sure you want to delete the camera?");
+    showConfirmDialog(deleteCameraCallback, "Delete Camera?", "Are you sure you want to delete the camera?");
 }
 
 function deleteCameraCallback() {
-    
+
     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
     let cameraName = camera.existingName;
     callDeleteCameras([cameraName]);
@@ -3374,18 +3378,18 @@ function callDeleteCameras(cameraNamesToDelete) {
     let camPrefix = apiSettings.rootUrl;
     let scriptName = 'rse_thermalcameras_delete';
     showBusy(true);
-    getFetch(scriptName, {"cameraNamesToDelete": cameraNamesToDelete})
-    .then(response => {
-        if (!response.ok) {
-            console.error('response not ok');
-            this.apicamerasDeletedReceived();
-        }
-        return response.json();
-    })
+    getFetch(scriptName, { "cameraNamesToDelete": cameraNamesToDelete })
+        .then(response => {
+            if (!response.ok) {
+                console.error('response not ok');
+                this.apicamerasDeletedReceived();
+            }
+            return response.json();
+        })
         .then(json => {
             //console.log('response ok');
             let scriptReturnValue = json.ScriptReturnValue;
-            if(typeof scriptReturnValue == 'string'){
+            if (typeof scriptReturnValue == 'string') {
                 scriptReturnValue = JSON.parse(scriptReturnValue);
             }
             console.log('camera(s) deleted:' + JSON.stringify(cameraNamesToDelete));
@@ -3407,11 +3411,11 @@ function apicamerasDeletedReceived() {
 
 
 function cancelCameraEdit() {
-    if(!hasEdited){//only confirm if there have been changes made.
+    if (!hasEdited) {//only confirm if there have been changes made.
         refreshCameras();
     }
-    else{
-        showConfirmDialog(cancelCameraCallback,"Discard Changes?","Are you sure you want to discard your changes for the camera?");
+    else {
+        showConfirmDialog(cancelCameraCallback, "Discard Changes?", "Are you sure you want to discard your changes for the camera?");
     }
 }
 
@@ -3422,7 +3426,7 @@ function cancelCameraCallback() {
 }
 
 let alertCallback = null;
-function showAlertDialog(callback,messageTitle,messageBody){
+function showAlertDialog(callback, messageTitle, messageBody) {
     alertCallback = callback;
     hideUI();
     document.getElementById('dialogAlertTitle').innerHTML = escapeHTML(messageTitle);
@@ -3430,16 +3434,16 @@ function showAlertDialog(callback,messageTitle,messageBody){
     document.getElementById('dialogAlert').style.display = '';
 }
 
-function closeAlertDialog(){
+function closeAlertDialog() {
     hideUI();
     showUI();
-    if(alertCallback != null){
+    if (alertCallback != null) {
         alertCallback();
     }
 }
 
 let promptCallback = null;
-function showPromptDialog(callback,promptTitle,promptBody,promptValue){
+function showPromptDialog(callback, promptTitle, promptBody, promptValue) {
     promptCallback = callback;
     hideUI();
     document.getElementById('dialogPromptTitle').innerHTML = escapeHTML(promptTitle);
@@ -3448,17 +3452,17 @@ function showPromptDialog(callback,promptTitle,promptBody,promptValue){
     document.getElementById('dialogPrompt').style.display = '';
 }
 
-function closePromptDialog(isYes){
+function closePromptDialog(isYes) {
     hideUI();
     showUI();
-    if(isYes && promptCallback != null){
+    if (isYes && promptCallback != null) {
         let value = document.getElementById('dialogPromptValue').value;
         promptCallback(value);
     }
 }
 
 let confirmCallback = null;
-function showConfirmDialog(callback,confirmTitle,confirmBody){
+function showConfirmDialog(callback, confirmTitle, confirmBody) {
     confirmCallback = callback;
     hideUI();
     document.getElementById('dialogConfirmTitle').innerHTML = escapeHTML(confirmTitle);
@@ -3466,10 +3470,10 @@ function showConfirmDialog(callback,confirmTitle,confirmBody){
     document.getElementById('dialogConfirm').style.display = '';
 }
 
-function closeConfirmDialog(isYes){
+function closeConfirmDialog(isYes) {
     hideUI();
     showUI();
-    if(isYes && confirmCallback != null){
+    if (isYes && confirmCallback != null) {
         confirmCallback();
     }
 }
@@ -3477,14 +3481,14 @@ function closeConfirmDialog(isYes){
 
 
 function saveCamera() {
-    
+
     if (stagedUpdateCameraName != null) {
         cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = stagedUpdateCameraName;
         stagedUpdateCameraName = null;
     }
     else {
         if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == unknownCameraName || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
-            showAlertDialog(null,'Rename Camera','Please rename the camera before saving it.');
+            showAlertDialog(null, 'Rename Camera', 'Please rename the camera before saving it.');
             return;
         }
     }
@@ -3494,18 +3498,19 @@ function saveCamera() {
 
 function callSaveCameras(camera) {
     hideEverything();
-   
+
     let scriptName = 'rse_thermalcameras_save';
-    let myParms = {"saveInfo":{
-        existingName: camera.existingName,
-        usbId: camera.usbId,
-        image: rawTiffImageData,
-            configuration:{
-                "temperaturesInCelsius":tempsCelsius,
-                "dateCaptured":null,
-                "rawThermalData":null,
-                "imageDescription":null,
-                "name":camera.name,
+    let myParms = {
+        "saveInfo": {
+            existingName: camera.existingName,
+            usbId: camera.usbId,
+            image: rawTiffImageData,
+            configuration: {
+                "temperaturesInCelsius": tempsCelsius,
+                "dateCaptured": null,
+                "rawThermalData": null,
+                "imageDescription": null,
+                "name": camera.name,
                 "materialMap": materialMap,
                 "distanceMap": distanceMap,
                 "regions": regionEditor.regions,
@@ -3518,17 +3523,17 @@ function callSaveCameras(camera) {
     };
     showBusy(true);
     getFetch(scriptName, myParms)
-    .then(response => {
-        if (!response.ok) {
-            console.error('response not ok');
-            this.apicamerasSaveReceived();
-        }
-        return response.json();
-    })
+        .then(response => {
+            if (!response.ok) {
+                console.error('response not ok');
+                this.apicamerasSaveReceived();
+            }
+            return response.json();
+        })
         .then(json => {
             //console.log('response ok');
             let scriptReturnValue = json.ScriptReturnValue;
-            if(typeof scriptReturnValue == 'string'){
+            if (typeof scriptReturnValue == 'string') {
                 scriptReturnValue = JSON.parse(scriptReturnValue);
             }
             console.log('camera(s) saved');
@@ -3548,15 +3553,15 @@ function apicamerasSaveReceived() {
     refreshCameras();
 }
 
-function renameCamera(){
+function renameCamera() {
     let cameraIndex = cameraEditor.selectedCameraIndex;
     let oldCamName = cameraEditor.cameras[cameraEditor.selectedCameraIndex].name;
     if (oldCamName == null || oldCamName.indexOf("-") > -1) {
         oldCamName = "";
     }
     let showName = oldCamName;
-    showPromptDialog(renameCameraCallback,"Camera Name","Please enter a new camera name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", showName);
-    
+    showPromptDialog(renameCameraCallback, "Camera Name", "Please enter a new camera name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", showName);
+
 }
 
 let stagedUpdateCameraName = null;
@@ -3573,32 +3578,32 @@ function renameCameraCallback(newName) {
         }
 
         if (newName.length > regionEditor.maxNameLength) {
-            showAlertDialog(null,'Rename Camera','name too long, max ' + regionEditor.maxNameLength + ' characters');
+            showAlertDialog(null, 'Rename Camera', 'name too long, max ' + regionEditor.maxNameLength + ' characters');
             return;
         }
         for (let i = 0; i < newName.length; i++) {
             let c = newName.charAt(i);
             if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == '_')) {
-                
-                showAlertDialog(null,'Rename Camera','Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
+
+                showAlertDialog(null, 'Rename Camera', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
                 return;
             }
         }
         //is the name already in use?
-        
+
         for (let i = 0; i < cameraEditor.cameras.length; i++) {
             if (i == cameraIndex) {
                 continue;
             }
             if ((cameraEditor.cameras[i].existingName + "").toLowerCase() == newName.toLowerCase()) {
-                showAlertDialog(null,'Rename Camera','The camera name is already in use');
+                showAlertDialog(null, 'Rename Camera', 'The camera name is already in use');
                 return;
             }
         }
         hasEdited = true;
         stagedUpdateCameraName = newName;
         setButtons();
-        
+
         let elmName = document.getElementById('valCamName');
         elmName.innerHTML = newName;
         elmName.style.color = 'yellow';
@@ -3608,6 +3613,109 @@ function renameCameraCallback(newName) {
 
 }
 
+function getLiveCameraImage(usbId) {
+
+    showBusy(true);
+    let scriptName = 'rse_thermalcameraslive_get';
+    getFetch(scriptName, { "usbId": usbId })
+        .then(response => {
+            if (!response.ok) {
+                console.error('response not ok');
+                this.apiLiveCameraReceived({ "liveCamera": null });
+            }
+            return response.json();
+        })
+        .then(json => {
+            //console.log('response ok');
+            let scriptReturnValue = json.ScriptReturnValue;
+            if (typeof scriptReturnValue == 'string') {
+                scriptReturnValue = JSON.parse(scriptReturnValue);
+            }
+            
+            this.apiLiveCameraReceived(scriptReturnValue);
+
+        })
+        .catch(function () {
+            console.error('catch fetch');
+            this.apiLiveCameraReceived({ "liveCamera": null });
+        })
+
+}
+
+function apiLiveCameraReceived(jsonResult) {
+    hideBusy();
+    if (jsonResult == null || jsonResult.liveCamera == null) {
+        showAlertDialog(null, 'Camera Error', 'There was an error locating the live camera image.');
+        return;
+    }
+    let liveCamera = jsonResult.liveCamera;
+    /*
+        string usbId
+        byte[] pictureData
+        int nativeHeight
+        int nativeWidth
+        decimal[] temperaturesInCelsius
+        DateTime timeStamp
+    */
+    
+    rawTiffImageData = [...liveCamera.pictureData];
+   
+    let canvas = document.createElement("canvas");
+    let ctx = canvas.getContext("2d");
+    canvas.width = liveCamera.nativeWidth;
+    canvas.height = liveCamera.nativeHeight
+    console.log('canvas width: ' + canvas.width + ', height: ' + canvas.height);
+    let imageData = ctx.createImageData(canvas.width, canvas.height);
+    console.log(liveCamera.pictureData);
+    imageData.data.set(liveCamera.pictureData);
+    
+    ctx.putImageData(imageData, 0, 0);
+    
+    let image = document.getElementById('regionEditorImageRef');
+    
+    image.src = canvas.toDataURL();
+    
+    tempsCelsius = liveCamera.temperaturesInCelsius;
+    
+    if (!cameraEditor.isEditing) {
+        console.log('user is not editing, showing usb live image');
+        regionEditor = getEmptyRegionEditor();
+        regionEditor.imageNativeWidth = canvas.width;
+        regionEditor.imageNativeHeight = canvas.height;
+        distanceMap = new Array(canvas.width * canvas.height);
+        materialMap = new Array(canvas.width * canvas.height);
+        imageScale = 3.0;
+        imageFilter = 'inferno';
+        activeLayer = 'Spots';
+        activeTool = 'look';
+    }
+    
+    clearStoredImageData();
+    hideBusy();
+
+}
+
+function getSavedCameraImage(src) {
+    showBusy(true);
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", src + "?t=" + new Date().getTime());//nocache please
+    xhr.responseType = "arraybuffer";
+    xhr.onload = function (e) {
+        if (xhr.status === 200 || xhr.status == 0) {
+            imgLoaded(e);
+        }
+        else {
+            hideBusy();
+            showAlertDialog(null, 'Camera Error', 'There was an error loading the camera image.');
+        }
+
+    };
+    xhr.onerror = function () {
+        hideBusy();
+        showAlertDialog(null, 'Camera Error', 'There was an error loading the camera image.');
+    };
+    xhr.send();
+}
 
 
 function changeCamera(cameraIndex, editing) {
@@ -3621,28 +3729,18 @@ function changeCamera(cameraIndex, editing) {
     hideUI();
     hideTips();
     if (cameraEditor.cameras.length > 0) {
-        showBusy(true);
+
         cameraEditor.selectedCameraIndex = Math.max(0, Math.min(cameraIndex, cameraEditor.cameras.length - 1));
-        let src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
-        
-        let xhr = new XMLHttpRequest();
-        xhr.open("GET", src + "?t=" + new Date().getTime());//nocache please
-        xhr.responseType = "arraybuffer";
-        xhr.onload = function(e) {
-            if(xhr.status === 200 || xhr.status == 0) {
-                imgLoaded(e);
-            }
-            else{
-                hideBusy();
-                showAlertDialog(null,'Camera Error','There was an error loading the camera image.');
-            }
-            
-        };
-        xhr.onerror = function () {
-            hideBusy();
-            showAlertDialog(null,'Camera Error','There was an error loading the camera image.');
-        };
-        xhr.send();
+        let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+        let usbId = camera.usbId;
+        let src = camera.url;
+        if (usbId != null && usbId != "") {
+            getLiveCameraImage(usbId);
+        }
+        else {
+            console.log('no usbId, getting saved image');
+            getSavedCameraImage(src);
+        }
     }
     else {
         //they need to see no cameras and a refresh button.
@@ -3652,33 +3750,19 @@ function changeCamera(cameraIndex, editing) {
     }
 }
 
-function refreshImage() {
-    showBusy(true);
-    let src = cameraEditor.cameras[cameraEditor.selectedCameraIndex].url;
-    let xhr = new XMLHttpRequest();
-    xhr.open("GET", src+ "?t=" + new Date().getTime());//nocache please
-    xhr.responseType = "arraybuffer";
-    xhr.onload = function(e) {
-        if(xhr.status === 200 || xhr.status == 0) {
-            imgLoaded(e);
-        }
-        else{
-            hideBusy();
-            showAlertDialog(null,'Camera Error','There was an error loading the camera image.');
-        }
-        
-    };
-    xhr.onerror = function () {
-        hideBusy();
-        showAlertDialog(null,'Camera Error','There was an error loading the camera image.');
-    };
-    xhr.send();
+function refreshLiveImage() {
+    let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+    let usbId = camera.usbId;
+    if (usbId != null && usbId != "") {
+        getLiveCameraImage(usbId);
+    }
 }
 
 function imgLoaded(e) {
-    
+
     let ifds = UTIF.decode(e.target.response);
     let ifd = ifds[0];
+    console.log(ifd);
     UTIF.decodeImage(e.target.response, ifd);//this adds width, height, and data to the ifd object.
     rawTiffImageData = [...ifd.data];
     let rgba = UTIF.toRGBA8(ifd);  // Uint8Array with RGBA pixels
@@ -3691,7 +3775,9 @@ function imgLoaded(e) {
     let ctx = canvas.getContext("2d");
     canvas.width = ifd.width;
     canvas.height = ifd.height;
-    let imageData = ctx.createImageData(ifd.width, ifd.height);
+    let imageData = ctx.createImageData(canvas.width, canvas.height);       
+    console.log(ifd.data);
+    console.log(rgba);
     imageData.data.set(rgba);
     ctx.putImageData(imageData, 0, 0);
     let image = document.getElementById('regionEditorImageRef');
@@ -3705,23 +3791,23 @@ function imgLoaded(e) {
         regionEditor.imageNativeHeight = canvas.height;
         regionEditor.regions = thermalData.regions ?? [];
 
-        if(regionEditor.regions.length > 0){
+        if (regionEditor.regions.length > 0) {
             regionEditor.selectedRegionIndex = 0;
         }
-        else{
+        else {
             console.log('No Existing Spots Found');
         }
-        if(thermalData.distanceMap != null){
+        if (thermalData.distanceMap != null) {
             distanceMap = [...thermalData.distanceMap];
         }
-        else{
+        else {
             distanceMap = new Array(canvas.width * canvas.height);
         }
 
-        if(thermalData.materialMap != null){
+        if (thermalData.materialMap != null) {
             materialMap = [...thermalData.materialMap];
         }
-        else{
+        else {
             materialMap = new Array(canvas.width * canvas.height);
         }
         imageScale = 3.0;
@@ -3755,7 +3841,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             imageScale = 3.0;
             imageFilter = 'inferno';
             imageRotation = 0;
-            
+
         }
     }
 
@@ -3794,13 +3880,13 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     elmCamIssues.innerHTML = "0";
                     setStatusText('Editing ' + camera.name + ' Camera', 'white', true);
 
-                    
+
 
                     break;
                 }
                 else {
                     setStatusText('Viewing ' + camera.name + ' Camera', 'white', true);
-                    sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',' + (camera.canEdit? 'true':'false') + ')" class="resizebutton2" style="border-color:white">';
+                    sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',' + (camera.canEdit ? 'true' : 'false') + ')" class="resizebutton2" style="border-color:white">';
                     sb += '<div style="line-height: 14px;">';
                     if (!camera.isOnline) {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>';
@@ -3808,10 +3894,10 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     else {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
                     }
-                    if(camera.canEdit){
+                    if (camera.canEdit) {
                         sb += '<div class="regioneditortext" style="margin-top:-10px;color:orange">Tap To Edit</div>';
                     }
-                    else{
+                    else {
                         sb += '<div class="regioneditortext" style="margin-top:-12px;color:red">Read Only</div>';
                     }
 
@@ -4060,21 +4146,21 @@ function zoomRegionEditor(scale) {
 function addRegion(regionType) {
 
     let camera = null;
-    if(cameraEditor.selectedCameraIndex != -1 && cameraEditor.selectedCameraIndex < cameraEditor.cameras.length){
+    if (cameraEditor.selectedCameraIndex != -1 && cameraEditor.selectedCameraIndex < cameraEditor.cameras.length) {
         camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
     }
-    else{
+    else {
         return;
     }
     if (regionTypes.indexOf(regionType) == -1) {
         console.error('unsupported region type: ' + regionType);
         return;
     }
-    else if(regionType == 'point' && (!camera.canAddPointSpot || !camera.canMoveSpots)){
+    else if (regionType == 'point' && (!camera.canAddPointSpot || !camera.canMoveSpots)) {
         console.error('not authorized to add point spots or move them');
         return;
     }
-    else if(regionType == 'polygon' && (!camera.canAddPolygonSpot || !camera.canMoveSpots)){
+    else if (regionType == 'polygon' && (!camera.canAddPolygonSpot || !camera.canMoveSpots)) {
         console.error('not authorized to add polygon spots or move them');
         return;
     }
