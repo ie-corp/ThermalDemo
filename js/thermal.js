@@ -3689,7 +3689,7 @@ function apiLiveCameraReceived(jsonResult) {
     
     tempsCelsius = liveCamera.temperaturesInCelsius;
     
-    if (!cameraEditor.isEditing) {
+    if (regionEditor == null) {
         
         regionEditor = getEmptyRegionEditor();
         regionEditor.imageNativeWidth = canvas.width;
@@ -3707,7 +3707,7 @@ function apiLiveCameraReceived(jsonResult) {
 
 }
 
-function getSavedCameraImage(src) {
+function getSavedCameraImage(src, usbId) {
     showBusy(true);
     let xhr = new XMLHttpRequest();
     xhr.open("GET", src + "?t=" + new Date().getTime());//nocache please
@@ -3715,6 +3715,9 @@ function getSavedCameraImage(src) {
     xhr.onload = function (e) {
         if (xhr.status === 200 || xhr.status == 0) {
             imgLoaded(e);
+            if(usbId != null && usbId != ""){
+                getLiveCameraImage(usbId);
+            }
         }
         else {
             hideBusy();
@@ -3731,6 +3734,7 @@ function getSavedCameraImage(src) {
 
 
 function changeCamera(cameraIndex, editing) {
+    regionEditor = null;
     hasEdited = false;
     activeLayer = 'Spots';
     activeTool = 'look';
@@ -3746,12 +3750,15 @@ function changeCamera(cameraIndex, editing) {
         let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
         let usbId = camera.usbId;
         let src = camera.url;
-        if (usbId != null && usbId != "") {
+        if (src != null && src != "") {
+            getSavedCameraImage(src,usbId);
+            
+        }
+        else if(usbId != null && usbId != ''){
             getLiveCameraImage(usbId);
         }
-        else {
-            
-            getSavedCameraImage(src);
+        else{
+            showAlertDialog(null, 'Camera Error', 'There is no image for this camera available.');
         }
     }
     else {
