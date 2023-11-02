@@ -3278,8 +3278,8 @@ function refreshCameras() {
             this.apiGetCamerasReceived(camPrefix, scriptReturnValue);
 
         })
-        .catch(function () {
-            console.error('catch fetch');
+        .catch(error=> {
+            console.error('catch fetch refreshCameras',error);
             this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
         })
 }
@@ -3293,7 +3293,7 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
     if (jsonResult != null && jsonResult.cameras != null) {
         for (let i = 0; i < jsonResult.cameras.length; i++) {
             let camera = jsonResult.cameras[i];
-            console.log("Camera " + i + " usbId" + camera.usbId)
+            
             let newCamera = {
                 "usbId": camera.usbId,
                 "name": ((camera.name ?? unknownCameraName).trim()),
@@ -3396,8 +3396,8 @@ function callDeleteCameras(cameraNamesToDelete) {
             this.apicamerasDeletedReceived();
 
         })
-        .catch(function () {
-            console.error('catch fetch');
+        .catch(error=> {
+            console.error('catch fetch deleteCamera',error);
             this.apicamerasDeletedReceived();
         })
 }
@@ -3540,8 +3540,8 @@ function callSaveCameras(camera) {
             this.apicamerasSaveReceived();
 
         })
-        .catch(function () {
-            console.error('catch fetch');
+        .catch(error=> {
+            console.error('catch fetch saveCamera',error);
             this.apicamerasSaveReceived();
         })
 }
@@ -3635,11 +3635,19 @@ function getLiveCameraImage(usbId) {
             this.apiLiveCameraReceived(scriptReturnValue);
 
         })
-        .catch(function () {
-            console.error('catch fetch');
+        .catch(error=> {
+            console.error('catch fetch getLiveImage',error);
             this.apiLiveCameraReceived({ "liveCamera": null });
         })
 
+}
+
+//function base64ToArrayBuffer(base64) {
+//    return Uint8Array.from(atob(base64), c => c.charCodeAt(0))
+//}
+
+function base64ToArray(base64) {
+    return Array.from(atob(base64), c => c.charCodeAt(0)); 
 }
 
 function apiLiveCameraReceived(jsonResult) {
@@ -3658,16 +3666,20 @@ function apiLiveCameraReceived(jsonResult) {
         DateTime timeStamp
     */
     
-    rawTiffImageData = [...liveCamera.pictureData];
+    
+    //brgImageData is a byte[] that get converted to a base64 string by the c# Serializer
+    rawTiffImageData = base64ToArray(liveCamera.bgrImageData);
+    
    
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext("2d");
     canvas.width = liveCamera.nativeWidth;
     canvas.height = liveCamera.nativeHeight
-    console.log('canvas width: ' + canvas.width + ', height: ' + canvas.height);
+    
     let imageData = ctx.createImageData(canvas.width, canvas.height);
-    console.log(liveCamera.pictureData);
-    imageData.data.set(liveCamera.pictureData);
+    
+    //rgbaImageData is a byte[] that get converted to a base64 string by the c# Serializer
+    imageData.data.set(base64ToArray(liveCamera.rgbaImageData));
     
     ctx.putImageData(imageData, 0, 0);
     
@@ -3678,7 +3690,7 @@ function apiLiveCameraReceived(jsonResult) {
     tempsCelsius = liveCamera.temperaturesInCelsius;
     
     if (!cameraEditor.isEditing) {
-        console.log('user is not editing, showing usb live image');
+        
         regionEditor = getEmptyRegionEditor();
         regionEditor.imageNativeWidth = canvas.width;
         regionEditor.imageNativeHeight = canvas.height;
@@ -3738,7 +3750,7 @@ function changeCamera(cameraIndex, editing) {
             getLiveCameraImage(usbId);
         }
         else {
-            console.log('no usbId, getting saved image');
+            
             getSavedCameraImage(src);
         }
     }
@@ -3762,7 +3774,6 @@ function imgLoaded(e) {
 
     let ifds = UTIF.decode(e.target.response);
     let ifd = ifds[0];
-    console.log(ifd);
     UTIF.decodeImage(e.target.response, ifd);//this adds width, height, and data to the ifd object.
     rawTiffImageData = [...ifd.data];
     let rgba = UTIF.toRGBA8(ifd);  // Uint8Array with RGBA pixels
@@ -3776,8 +3787,6 @@ function imgLoaded(e) {
     canvas.width = ifd.width;
     canvas.height = ifd.height;
     let imageData = ctx.createImageData(canvas.width, canvas.height);       
-    console.log(ifd.data);
-    console.log(rgba);
     imageData.data.set(rgba);
     ctx.putImageData(imageData, 0, 0);
     let image = document.getElementById('regionEditorImageRef');
