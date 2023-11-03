@@ -975,53 +975,39 @@ function rotateFillPoint(imageRotation, imageNativeWidth, imageNativeHeight, ima
 
 
 function rotate90(w, h, x, y) {
-    // Create a new object to store the new coordinate
-    let newPoint = {};
-
-    // To rotate the point 90 degrees clockwise, swap the x and y values and subtract the x value from the height
-    newPoint.x = h - y;
-    newPoint.y = x;
-
-    // To rotate the point 90 degrees counterclockwise, swap the x and y values and subtract the y value from the width
-    // newPoint.x = y;
-    // newPoint.y = w - x;
-
-    // Return the new coordinate object
-    return [newPoint.x, newPoint.y];
+    return [(h - y - 1), x];
 }
 
-
-function rotateImage() {
-    hideTips();
-    let originalRotation = regionEditor.imageRotation;
-    regionEditor.imageRotation += 90;
-    if (regionEditor.imageRotation >= 360) {
-        regionEditor.imageRotation = 0;
-    }
-    if (regionEditor.regions.length > 0) {
+function rotateRegions90(regions,originalRotation, imageNativeWidth, imageNativeHeight){
+    if (regions.length > 0) {
         //rotate all regions by 90 degrees. move x and y accordingly
-        for (let i = 0; i < regionEditor.regions.length; i++) {
-            let region = regionEditor.regions[i];
+        let destRotation = originalRotation + 90;
+        if (destRotation > 270) {
+            destRotation = 0;
+        }
+        for (let i = 0; i < regions.length; i++) {
+            let region = regions[i];
             let pts = [region.x, region.y];
             if (originalRotation == 0 || originalRotation == 180) {
                 if (region.type == 'point') {
-                    //console.log('point');
-                    pts = rotate90(regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, region.x, region.y);
+                    
+                    pts = rotate90(imageNativeWidth, imageNativeHeight, region.x, region.y);
+                   
                 }
                 else if (region.type == 'polygon') {
 
                     for (let index = 0; index < region.points.length; index++) {
                         let point = region.points[index];
-                        pts = rotate90(regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, point.x, point.y);
+                        pts = rotate90(imageNativeWidth, imageNativeHeight, point.x, point.y);
                         point.x = pts[0];
                         point.y = pts[1];
                     }
                     region.x = region.points[0].x;
                     region.y = region.points[0].y;
-                    fixRegionOutOfBounds(region);//recalcs width and height.
+                    fixRegionOutOfBounds(region,destRotation);//recalcs width and height.
                 }
                 else {
-                    pts = rotate90(regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, region.x, region.y);
+                    pts = rotate90(imageNativeWidth, imageNativeHeight, region.x, region.y);
                     let nX = pts[0];//85  //80
                     let nY = pts[1];//64  //84
                     //console.log('rotating: ' + region.x + ',' + region.y + ' to ' + nX + ',' + nY);
@@ -1036,22 +1022,24 @@ function rotateImage() {
             }
             else {
                 if (region.type == 'point') {
-                    pts = rotate90(regionEditor.imageNativeHeight, regionEditor.imageNativeWidth, region.x, region.y);
+                    
+                    pts = rotate90(imageNativeHeight, imageNativeWidth, region.x, region.y);
+                    
                 }
                 else if (region.type == 'polygon') {
 
                     for (let index = 0; index < region.points.length; index++) {
                         let point = region.points[index];
-                        pts = rotate90(regionEditor.imageNativeHeight, regionEditor.imageNativeWidth, point.x, point.y);
+                        pts = rotate90(imageNativeHeight, imageNativeWidth, point.x, point.y);
                         point.x = pts[0];
                         point.y = pts[1];
                     }
                     region.x = region.points[0].x;
                     region.y = region.points[0].y;
-                    fixRegionOutOfBounds(region);//recalcs width and height.
+                    fixRegionOutOfBounds(region,destRotation);//recalcs width and height.
                 }
                 else {
-                    pts = rotate90(regionEditor.imageNativeHeight, regionEditor.imageNativeWidth, region.x, region.y);
+                    pts = rotate90(imageNativeHeight, imageNativeWidth, region.x, region.y);
                     let nX = pts[0];//85  //80
                     let nY = pts[1];//64  //84
                     //console.log('rotating: ' + region.x + ',' + region.y + ' to ' + nX + ',' + nY);
@@ -1066,16 +1054,29 @@ function rotateImage() {
             }
             let originalWidth = region.width;
             let originalHeight = region.height;
-            let newX = pts[0];
-            let newY = pts[1];
-
-            region.x = newX;
-            region.y = newY;
+            if(region.type == 'point'){
+                let newX = pts[0];
+                let newY = pts[1];
+    
+                region.x = newX;
+                region.y = newY;
+            }
+           
             region.width = originalHeight;
             region.height = originalWidth;
 
         }
     }
+}
+
+function rotateImage() {
+    hideTips();
+    let originalRotation = regionEditor.imageRotation;
+    regionEditor.imageRotation += 90;
+    if (regionEditor.imageRotation >= 360) {
+        regionEditor.imageRotation = 0;
+    }
+    rotateRegions90(regionEditor.regions, originalRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
     recalcEditor();
     addRegionHistory('rotate image', null, false);//I don't think this needs a undo.
 }
@@ -1449,6 +1450,7 @@ function getTempsFromPointsOnCanvas(points) {
         }
         else {
             console.error("temp index out of bounds:" + index + "Length is: " + tempsCelsius.length + " point: " + point.x + "," + point.y + "");
+            console.error('regionEditor.imageNativeWidth' + regionEditor.imageNativeWidth + ' regionEditor.imageNativeHeight' + regionEditor.imageNativeHeight);
         }
 
     }
@@ -1465,7 +1467,7 @@ function getTempsFromPointsOnCanvas(points) {
 
 
 function getRegionTemps(region) {
-
+    //console.log('getting region temps')
     let points = getRegionPointsOnCanvas(region, false);//This will return only points that are in bounds!
     return getTempsFromPointsOnCanvas(points);
 
@@ -1518,40 +1520,45 @@ function deleteRegionEditor() {
     }
 }
 
-function changeImageMirror() {
-    regionEditor.imageMirrorHorizontally = !regionEditor.imageMirrorHorizontally;
-    if (regionEditor.regions != null && regionEditor.regions.length > 0) {
-        for (let i = 0; i < regionEditor.regions.length; i++) {
-            let region = regionEditor.regions[i];
-            if (region.type == 'point') {
-                if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
-                    region.x = regionEditor.imageNativeWidth - region.x;
-                }
-                else {
-                    region.y = regionEditor.imageNativeWidth - region.y//mirror is always on horizontal axis
-                }
-
-            }
-            else if (region.type == 'polygon') {
-                for (let j = 0; j < region.points.length; j++) {
-                    let point = region.points[j];
-                    if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
-                        point.x = regionEditor.imageNativeWidth - point.x;
-                    }
-                    else {
-                        point.y = regionEditor.imageNativeWidth - point.y;//mirror is always on horizontal axis
-
-                    }
-                }
-                region.x = region.points[0].x;
-                region.y = region.points[0].y;
-                fixRegionOutOfBounds(region);//recalcs width and height.
+function mirrorRegions(regions){
+    if(regions == null || regions.length == 0){
+        return;
+    }
+    for (let i = 0; i < regions.length; i++) {
+        let region = regions[i];
+        if (region.type == 'point') {
+            if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+                region.x = regionEditor.imageNativeWidth - region.x;
             }
             else {
-                console.error('cannot mirror, unknown region type: ' + region.type);
+                region.y = regionEditor.imageNativeWidth - region.y//mirror is always on horizontal axis
             }
+
+        }
+        else if (region.type == 'polygon') {
+            for (let j = 0; j < region.points.length; j++) {
+                let point = region.points[j];
+                if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+                    point.x = regionEditor.imageNativeWidth - point.x;
+                }
+                else {
+                    point.y = regionEditor.imageNativeWidth - point.y;//mirror is always on horizontal axis
+
+                }
+            }
+            region.x = region.points[0].x;
+            region.y = region.points[0].y;
+            fixRegionOutOfBounds(region, regionEditor.imageRotation);//recalcs width and height.
+        }
+        else {
+            console.error('cannot mirror, unknown region type: ' + region.type);
         }
     }
+}
+
+function changeImageMirror() {
+    regionEditor.imageMirrorHorizontally = !regionEditor.imageMirrorHorizontally;
+    mirrorRegions(regionEditor.regions);
     hideTips();
     addRegionHistory('image mirror horizontally', null, false);
     recalcEditor();
@@ -1788,11 +1795,11 @@ function getPolygonBounds(points) {
     return bounds;
 }
 
-function fixRegionOutOfBounds(region) {
+function fixRegionOutOfBounds(region,imageRotation) {
     if (region.type == 'point') {
         region.x = Math.max(region.x, 0);
         region.y = Math.max(region.y, 0);
-        if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+        if (imageRotation == 0 || imageRotation == 180) {
             region.x = Math.min(region.x, regionEditor.imageNativeWidth - 1);
             region.y = Math.min(region.y, regionEditor.imageNativeHeight - 1);
         }
@@ -1804,6 +1811,7 @@ function fixRegionOutOfBounds(region) {
     else if (region.type == 'polygon') {
         //we need to adjust x and  y.
         let bounds = getPolygonBounds(region.points);
+        
         region.angle = 0;//cannot rotate polygon.
         region.width = bounds.width;
         region.height = bounds.height;
@@ -1813,20 +1821,20 @@ function fixRegionOutOfBounds(region) {
         if (bounds.minX < 0) {
             moveX = 0 - bounds.minX;
         }
-        else if ((regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) && bounds.maxX > regionEditor.imageNativeWidth) {
-            moveX = regionEditor.imageNativeWidth - bounds.maxX;
+        else if ((imageRotation == 0 || imageRotation == 180) && bounds.maxX >= regionEditor.imageNativeWidth) {
+            moveX = regionEditor.imageNativeWidth - bounds.maxX - 1;
         }
-        else if ((regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270) && bounds.maxX > regionEditor.imageNativeHeight) {
-            moveX = regionEditor.imageNativeHeight - bounds.maxX;
+        else if ((imageRotation == 90 || imageRotation == 270) && bounds.maxX >= regionEditor.imageNativeHeight) {
+            moveX = regionEditor.imageNativeHeight - bounds.maxX - 1;
         }
 
         if (bounds.minY < 0) {
             moveY = 0 - bounds.minY;
         }
-        else if ((regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) && bounds.maxY > regionEditor.imageNativeHeight) {
-            moveY = regionEditor.imageNativeHeight - bounds.maxY;
+        else if ((imageRotation == 0 || imageRotation == 180) && bounds.maxY > regionEditor.imageNativeHeight) {
+            moveY = imageNativeHeight - bounds.maxY;
         }
-        else if ((regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270) && bounds.maxY > regionEditor.imageNativeWidth) {
+        else if ((imageRotation == 90 || imageRotation == 270) && bounds.maxY > regionEditor.imageNativeWidth) {
             moveY = regionEditor.imageNativeWidth - bounds.maxY;
         }
 
@@ -1836,26 +1844,17 @@ function fixRegionOutOfBounds(region) {
                 region.points[index].y += moveY;
             }
             bounds = getPolygonBounds(region.points)
-            region.x = bounds.x;
-            region.y = bounds.y;
+            
         }
+        region.x = bounds.x;
+        region.y = bounds.y;
+        
+        
 
 
     }
     else {
-
-        if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
-            region.x = Math.max(region.x, 0 - region.width / 2);
-            region.y = Math.max(region.y, 0 - region.height / 2);
-            region.x = Math.min(region.x, regionEditor.imageNativeWidth - region.width / 2);
-            region.y = Math.min(region.y, regionEditor.imageNativeHeight - region.height / 2);
-        }
-        else {
-            region.x = Math.max(region.x, 0 - region.height / 2);
-            region.y = Math.max(region.y, 0 - region.width / 2);
-            region.x = Math.min(region.x, regionEditor.imageNativeHeight - region.width / 2);
-            region.y = Math.min(region.y, regionEditor.imageNativeWidth - region.height / 2);
-        }
+        console.error('unknown region type: ' + region.type);
     }
 }
 
@@ -1893,7 +1892,7 @@ function moveRegionAbsolute(x, y) {
             region.y = y;
         }
 
-        fixRegionOutOfBounds(region);
+        fixRegionOutOfBounds(region, regionEditor.imageRotation);
         recalcEditor();
         let strTag = 'dragged';
         addRegionHistory('move ' + region.type + ' ' + strTag, regionEditor.selectedRegionIndex, false);
@@ -1918,7 +1917,7 @@ function moveRegionBy(x, y) {
             region.x = region.points[0].x;
             region.y = region.points[0].y;
         }
-        fixRegionOutOfBounds(region);
+        fixRegionOutOfBounds(region, regionEditor.imageRotation);
         recalcEditor();
         let strTag = '';
         if (x != 0 && y != 0) {
@@ -1951,7 +1950,7 @@ function resizeRegionBy(w, h) {
         region.height = Math.max(region.height, 1);
         region.width = Math.min(region.width, regionEditor.imageNativeWidth);
         region.height = Math.min(region.height, regionEditor.imageNativeHeight);
-        fixRegionOutOfBounds(region);
+        fixRegionOutOfBounds(region, regionEditor.imageRotation);
         recalcEditor();
         let strTag = '';
         if (w != 0 && h != 0) {
@@ -1967,28 +1966,7 @@ function resizeRegionBy(w, h) {
     }
 }
 
-function rotateRegionBy(rotateBy) {
-    if (rotateBy == 0) {
-        return;
-    }
-    if (regionEditor.selectedRegionIndex >= 0) {
-        let region = regionEditor.regions[regionEditor.selectedRegionIndex];
-        if (region.type == 'point') {
-            clearFunc();
-            return;
-        }
-        region.angle += rotateBy;
-        while (region.angle > 360) {
-            region.angle -= 360;
-        }
-        while (region.angle < 0) {
-            region.angle += 360;
-        }
-        fixRegionOutOfBounds(region);
-        recalcEditor();
-        addRegionHistory('rotate ' + region.type, regionEditor.selectedRegionIndex, false);
-    }
-}
+
 
 function changeRegionColorNext(goNext) {
     if (regionEditor.selectedRegionIndex >= 0) {
@@ -2040,6 +2018,7 @@ function getIndexOfMapFromXY(posX, posY, pointRotation, imageMirrorHorizontally)
         indexTempC = (myX * regionEditor.imageNativeHeight) + myY;
     }
     else if (pointRotation == 90) {
+       
         if (imageMirrorHorizontally) {
             myX = regionEditor.imageNativeHeight - myX - 1;
         }
@@ -2733,14 +2712,21 @@ function displayImageTemps() {
     let points = new Array(arraySize);
 
     let index = -1;
-    for (let x = 0; x < regionEditor.imageNativeWidth; x++) {
-        for (let y = 0; y < regionEditor.imageNativeHeight; y++) {
+
+    let myWidth = regionEditor.imageNativeWidth;
+    let myHeight = regionEditor.imageNativeHeight;
+    if(regionEditor.imageRotation == 90 || regionEditor.imageRotation == 270){
+        myWidth = regionEditor.imageNativeHeight;
+        myHeight = regionEditor.imageNativeWidth;
+    }
+
+    for (let x = 0; x < myWidth; x++) {
+        for (let y = 0; y < myHeight; y++) {
             index++;
             points[index] = { "x": x, "y": y };
 
         }
     }
-
 
 
     let regionTemps = getTempsFromPointsOnCanvas(points);
@@ -3181,7 +3167,7 @@ function isTouchEventWithElement(element, e) {
 }
 
 function getEmptyRegionEditor() {
-    console.log('returning empty region editor');
+    
     return {
 
         "imageRotation": 0,
@@ -3481,7 +3467,7 @@ function closeConfirmDialog(isYes) {
 
 
 function saveCamera() {
-
+    
     if (stagedUpdateCameraName != null) {
         cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = stagedUpdateCameraName;
         stagedUpdateCameraName = null;
@@ -3496,10 +3482,42 @@ function saveCamera() {
 }
 
 
+function adjustRegions(sourceRegions, imageMirrorHorizontally, originalRotation, desiredRotation, imageNativeWidth, imageNativeHeight) {
+    if(sourceRegions == null || sourceRegions.length == 0){
+        return [];
+    }
+    let retRegions = JSON.parse(JSON.stringify(sourceRegions));
+    if(!imageMirrorHorizontally && originalRotation == desiredRotation){
+        return retRegions;
+    }
+
+    
+    if(imageMirrorHorizontally){
+        mirrorRegions(retRegions);
+    }
+    
+    let validRotations = [0,90,180,270];
+    if(originalRotation != desiredRotation && validRotations.includes(originalRotation) && validRotations.includes(desiredRotation)){
+        let currentRotation = originalRotation;
+        while(currentRotation != desiredRotation){
+            rotateRegions90(retRegions,currentRotation, imageNativeWidth, imageNativeHeight);
+            currentRotation += 90;
+            if(currentRotation > 270){
+                currentRotation = 0;
+            }
+        }
+    }
+    
+    return retRegions;
+}
+
+
 function callSaveCameras(camera) {
     hideEverything();
 
     let scriptName = 'rse_thermalcameras_save';
+   
+    //the editor rotates the regions. We must unrotate unmirror them. when saving.
     let myParms = {
         "saveInfo": {
             existingName: camera.existingName,
@@ -3513,14 +3531,19 @@ function callSaveCameras(camera) {
                 "name": camera.name,
                 "materialMap": materialMap,
                 "distanceMap": distanceMap,
-                "regions": regionEditor.regions,
+                "regions": adjustRegions(regionEditor.regions, regionEditor.imageMirrorHorizontally,regionEditor.imageRotation, 0, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight),
                 "imageNativeWidth": regionEditor.imageNativeWidth,
                 "imageNativeHeight": regionEditor.imageNativeHeight,
                 "imageRotation": regionEditor.imageRotation,
                 "imageMirrorHorizontally": regionEditor.imageMirrorHorizontally,
             }
+
+            
         }
     };
+    
+    
+
     showBusy(true);
     getFetch(scriptName, myParms)
         .then(response => {
@@ -3799,13 +3822,33 @@ function imgLoaded(e) {
     let image = document.getElementById('regionEditorImageRef');
     image.src = canvas.toDataURL();
     tempsCelsius = thermalData.temperaturesInCelsius;
+    if(tempsCelsius == null){
+        tempsCelsius = new Array(canvas.width * canvas.height);
+    }
+    else if(tempsCelsius.length != canvas.width * canvas.height){
+        console.error('tempsCelsius.length != canvas.width * canvas.height');
+        tempsCelsius = new Array(canvas.width * canvas.height);
+    }
     if (!cameraEditor.isEditing) {
+        imageScale = 3.0;
         regionEditor = getEmptyRegionEditor();
-        regionEditor.imageRotation = thermalData.imageRotation ?? 0;
-        regionEditor.imageMirrorHorizontally = thermalData.imageMirrorHorizontall ?? false;
         regionEditor.imageNativeWidth = canvas.width;
         regionEditor.imageNativeHeight = canvas.height;
+        regionEditor.imageRotation = thermalData.imageRotation ?? 0;
+        //console.log('Saved Image Data: rotation:' + regionEditor.imageRotation + ' width:' + regionEditor.imageNativeWidth + ' height:' + regionEditor.imageNativeHeight);
+        if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+            regionEditor.imageWidth = regionEditor.imageNativeWidth * imageScale;
+            regionEditor.imageHeight = regionEditor.imageNativeHeight * imageScale;
+        }
+        else {
+            regionEditor.imageWidth = regionEditor.imageNativeHeight * imageScale;
+            regionEditor.imageHeight = regionEditor.imageNativeWidth * imageScale;
+        }
+        regionEditor.imageMirrorHorizontally = thermalData.imageMirrorHorizontally ?? false;
         regionEditor.regions = thermalData.regions ?? [];
+        //the editor expect these pre rotated and pre mirrored.
+        
+        regionEditor.regions = adjustRegions(regionEditor.regions, regionEditor.imageMirrorHorizontally, 0, regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
 
         if (regionEditor.regions.length > 0) {
             regionEditor.selectedRegionIndex = 0;
@@ -3826,7 +3869,7 @@ function imgLoaded(e) {
         else {
             materialMap = new Array(canvas.width * canvas.height);
         }
-        imageScale = 3.0;
+        
         imageFilter = 'inferno';
         activeLayer = 'Spots';
         activeTool = 'look';
@@ -4267,7 +4310,7 @@ function addRegion(regionType) {
         "points": regionPoints
     };
 
-    fixRegionOutOfBounds(region);
+    fixRegionOutOfBounds(region, regionEditor.imageRotation);
     regionEditor.regions.push(region);
     regionEditor.selectedRegionIndex = regionEditor.regions.length - 1;
     activeTool = 'move';//when they add, immediately select the move tool

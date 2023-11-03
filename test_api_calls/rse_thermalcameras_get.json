@@ -3,9 +3,9 @@
     "ScriptReturnValue": {
         "cameras": [
             {
-                "usbId": "0",
+                "usbId": null,
                 "name": "Left",
-                "url": "/test_images/reference_01.tiff",
+                "url": "/test_images/empty.tiff",
                 "isOnline": true,
                 "isKnown": true,
                 "canEdit":true,
