@@ -331,6 +331,10 @@ function selectRegionEditorTool(toolName) {
     recalcEditor();
 }
 
+function reviewIssues(){
+    showAlertDialog(null, 'Review Issues', 'There are no issues.');
+}
+
 function redoMetaHistory() {
 
     if (metaHistoryIndex < 0 || metaHistoryStack.length <= 1) {
@@ -616,7 +620,7 @@ function setButtons() {
         canSize = region.type != 'point' && region.type != 'polygon';
         polygonSelected = region.type == 'polygon';
     }
-    const activeToolColor = 'yellow';
+    const activeToolColor = 'orange';
     const inactiveToolColor = 'white';
 
     document.getElementById("rowSpotTools").style.display = (activeLayer != 'Spots' ? 'none' : '');
@@ -2440,6 +2444,7 @@ function setDefaultDistance() {
     if (selectedDistance == null) {
         return;
     }
+    console.log('setting default distance to: ' + selectedDistance + ' for all null values. distanceMap.length: ' + distanceMap.length);
     for (let i = 0; i < distanceMap.length; i++) {
         if (distanceMap[i] == null) {
             distanceMap[i] = selectedDistance;
@@ -3425,7 +3430,7 @@ function getApiSettings() {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         return { "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
     }
-    else if (location.href.indexOf('5500') > -1) {
+    else if (false && location.href.indexOf('5500') > -1) {
         return { "isPost": false, "url": "", "rootUrl": "" };//running locally
     }
     else {
@@ -3854,7 +3859,7 @@ function renameCameraCallback(newName) {
 
         let elmName = document.getElementById('valCamName');
         elmName.innerHTML = newName;
-        elmName.style.color = 'yellow';
+        elmName.style.color = 'orange';
 
         setStatusText('Editing ' + newName + ' Camera', 'white', true);
     }
@@ -4186,11 +4191,11 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     }
 
                     sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">Viewing</div>';
-                    let strStyle = ' style="margin-top:-2px;"';
+                    let strStyle = 'margin-top:-2px;';
                     if (camera.name == unknownCameraName) {
                         strStyle += 'color:red;';
                     }
-                    sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + escapeHTML(camera.name) + '</div>';
+                    sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3" style="' + strStyle + '">' + escapeHTML(camera.name) + '</div>';
                     sb += '</div>';
                     sb += '</button>';
                 }
