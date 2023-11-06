@@ -1,3 +1,7 @@
+const cameraFixedEmissivity = .95;
+const cameraFixedDistanceMeters = .25;
+const cameraFixedAmbientTemperatureInCelsius = 25;
+
 let materialMap = [];
 let distanceMap = [];
 let rawTiffImageData = null;//this is what we need to send on the save service call.
@@ -69,32 +73,128 @@ Emissivity values should be rounded to 2 decimal places.
 Give me the results as a javascript array in the following format:let knownMaterials =  [{"name":"material name", "emissivity":.95}]
 */
 const knownMaterials = [
-    { "name": "Black Body", "emissivity": 1.00 },
-    { "name": "Black ElecTape", "emissivity": 0.95 },
-    { "name": "Polypropylene", "emissivity": 0.97 },
-    { "name": "Polystyrene", "emissivity": 0.95 },
-    { "name": "Rubber, hard glossy", "emissivity": 0.94 },
-    { "name": "Iron, rusted", "emissivity": 0.94 },
-    { "name": "PTFE", "emissivity": 0.92 },
-    { "name": "Polyethylene, black", "emissivity": 0.92 },
-    { "name": "PVC", "emissivity": 0.92 },
-    { "name": "Fibreglass", "emissivity": 0.85 },
-    { "name": "Carbon, not oxidized", "emissivity": 0.88 },
-    { "name": "Carbon filament", "emissivity": 0.86 },
-    { "name": "Copper, oxidized", "emissivity": 0.76 },
-    { "name": "Brass, oxidized", "emissivity": 0.79 },
-    { "name": "Steel, stainless", "emissivity": 0.70 },
-    { "name": "Steel, galvanized", "emissivity": 0.56 },
-    { "name": "Aluminium, anodised", "emissivity": 0.82 },
-    { "name": "Aluminium, oxidized", "emissivity": 0.26 },
-    { "name": "Aluminium, sheet", "emissivity": 0.10 },
-    { "name": "Aluminium, polished", "emissivity": 0.06 },
-    { "name": "Gold, not polished", "emissivity": 0.49 },
-    { "name": "Gold, polished", "emissivity": 0.03 },
-    { "name": "Copper, polished", "emissivity": 0.04 },
-    { "name": "Nickel, polished", "emissivity": 0.09 },
-    { "name": "Silver, polished", "emissivity": 0.02 }
-];
+    {"category": "Ignore", "name": "Out Of Bounds", "emissivity": 0.00},
+    {"category": "Ignore", "name": "Not Interested", "emissivity": 0.00},
+    {"category": "Ignore", "name": "Dead Zone", "emissivity": 0.00},
+    {"category": "Ignore", "name": "Too Far", "emissivity": 0.00},
+    {"category": "Ignore", "name": "Bad Reading", "emissivity": 0.00},
+    {"category": "Ignore", "name": "Dead Pixel", "emissivity": 0.00},
+    {"category": "Ignore", "name": "Mirror", "emissivity": 0.00},
+    {"category": "Ignore", "name": "Reflection", "emissivity": 0.00},
+    {"category": "Ignore", "name": "Glass", "emissivity": 0.00},
+    {"category": "Metal", "name": "Polished Silver", "emissivity": 0.02},
+    {"category": "Tape", "name": "Black Electrical Tape", "emissivity": 0.95},
+    {"category": "Metal", "name": "Aluminum Sheet", "emissivity": 0.09},
+    {"category": "Plastic", "name": "Plastic Housing", "emissivity": 0.93},
+    {"category": "Metal", "name": "Stainless Steel", "emissivity": 0.07},
+    {"category": "Wiring", "name": "Copper Wire", "emissivity": 0.03},
+    {"category": "Metal", "name": "Steel Enclosure", "emissivity": 0.85},
+    {"category": "Plastic", "name": "Wire Insulation", "emissivity": 0.94},
+    {"category": "Connector", "name": "Metal Connector", "emissivity": 0.75},
+    {"category": "Painted Surface", "name": "Painted Steel Surface", "emissivity": 0.85},
+    {"category": "Wiring", "name": "Aluminum Wire", "emissivity": 0.1},
+    {"category": "Metal", "name": "Copper Busbar", "emissivity": 0.04},
+    {"category": "Tape", "name": "Electrical Insulation Tape", "emissivity": 0.93},
+    {"category": "Connector", "name": "Plastic Connector", "emissivity": 0.92},
+    {"category": "Plastic", "name": "Cable Tie", "emissivity": 0.93},
+    {"category": "Metal", "name": "Brass Screw", "emissivity": 0.05},
+    {"category": "Wiring", "name": "Copper Bus Wire", "emissivity": 0.04},
+    {"category": "Wiring", "name": "Aluminum Bus Wire", "emissivity": 0.1},
+    {"category": "Connector", "name": "Modular Connector", "emissivity": 0.85},
+    {"category": "Painted Surface", "name": "Label", "emissivity": 0.88},
+    {"category": "Painted Surface", "name": "Sticker", "emissivity": 0.87},
+    {"category": "Metal", "name": "Steel Screw", "emissivity": 0.85},
+    {"category": "Indicator", "name": "Indicator Light", "emissivity": 0.85},
+    {"category": "Wiring", "name": "Aluminum Cable", "emissivity": 0.12},
+    {"category": "Connector", "name": "Cord Grip", "emissivity": 0.92},
+    {"category": "Plastic", "name": "Nylon Spacer", "emissivity": 0.91},
+    {"category": "Metal", "name": "Copper Foil", "emissivity": 0.03},
+    {"category": "Tape", "name": "White Electrical Tape", "emissivity": 0.93},
+    {"category": "Metal", "name": "Bronze Terminal", "emissivity": 0.05},
+    {"category": "Painted Surface", "name": "Metallic Label", "emissivity": 0.87},
+    {"category": "Wiring", "name": "Silver Wire", "emissivity": 0.02},
+    {"category": "Plastic", "name": "Polycarbonate Sheet", "emissivity": 0.93},
+    {"category": "Connector", "name": "Screw Terminal", "emissivity": 0.87},
+    {"category": "Metal", "name": "Steel Washer", "emissivity": 0.85},
+    {"category": "Wiring", "name": "Aluminum Busbar", "emissivity": 0.12},
+    {"category": "Tape", "name": "Transparent Tape", "emissivity": 0.92},
+    {"category": "Painted Surface", "name": "Colorful Label", "emissivity": 0.88},
+    {"category": "Plastic", "name": "PVC Conduit", "emissivity": 0.91},
+    {"category": "Metal", "name": "Galvanized Steel", "emissivity": 0.6},
+    {"category": "Connector", "name": "Twist-on Wire Connector", "emissivity": 0.93},
+    {"category": "Wiring", "name": "Tinned Copper Wire", "emissivity": 0.04},
+    {"category": "Tape", "name": "Duct Tape", "emissivity": 0.94},
+    {"category": "Metal", "name": "Steel Bracket", "emissivity": 0.85},
+    {"category": "Painted Surface", "name": "Engraved Panel", "emissivity": 0.88},
+    {"category": "Plastic", "name": "ABS Enclosure", "emissivity": 0.92},
+    {"category": "Connector", "name": "Terminal Block", "emissivity": 0.86},
+    {"category": "Metal", "name": "Copper Foil Tape", "emissivity": 0.03},
+    {"category": "Wiring", "name": "Aluminum Conductor", "emissivity": 0.12},
+    {"category": "Tape", "name": "Heat Shrink Tape", "emissivity": 0.93},
+    {"category": "Plastic", "name": "Nylon Cable Clamp", "emissivity": 0.91},
+    {"category": "Connector", "name": "Grounding Lug", "emissivity": 0.95},
+    {"category": "Metal", "name": "Brass Terminal Block", "emissivity": 0.05},
+    {"category": "Painted Surface", "name": "Metallic Panel", "emissivity": 0.87},
+    {"category": "Wiring", "name": "Copper Foil Conductor", "emissivity": 0.03},
+    {"category": "Plastic", "name": "Polypropylene Insulator", "emissivity": 0.92},
+    {"category": "Connector", "name": "Cable Connector", "emissivity": 0.93},
+    {"category": "Metal", "name": "Bronze Grounding Rod", "emissivity": 0.05},
+    {"category": "Tape", "name": "Electrical Shielding Tape", "emissivity": 0.93},
+    {"category": "Wiring", "name": "Aluminum Ground Wire", "emissivity": 0.12},
+    {"category": "Plastic", "name": "ABS Junction Box", "emissivity": 0.92},
+    {"category": "Metal", "name": "Stainless Steel Fastener", "emissivity": 0.07},
+    {"category": "Connector", "name": "Spring Terminal", "emissivity": 0.85},
+    {"category": "Painted Surface", "name": "Laminated Label", "emissivity": 0.88},
+    {"category": "Wiring", "name": "Copper Shielding", "emissivity": 0.03},
+    {"category": "Tape", "name": "Vinyl Electrical Tape", "emissivity": 0.93},
+    {"category": "Metal", "name": "Zinc Coated Steel", "emissivity": 0.6},
+    {"category": "Plastic", "name": "Nylon Cable Tie", "emissivity": 0.91},
+    {"category": "Connector", "name": "Crimp Terminal", "emissivity": 0.85},
+    {"category": "Wiring", "name": "Aluminum Grounding Conductor", "emissivity": 0.12},
+    {"category": "Tape", "name": "Foil Tape", "emissivity": 0.04},
+    {"category": "Metal", "name": "Brass Bolt", "emissivity": 0.05},
+    {"category": "Wiring", "name": "Silver-Coated Copper Wire", "emissivity": 0.02},
+    {"category": "Connector", "name": "Threaded Terminal", "emissivity": 0.05},
+    {"category": "Plastic", "name": "Polyethylene Insulation", "emissivity": 0.94},
+    {"category": "Metal", "name": "Zinc-Plated Screw", "emissivity": 0.6},
+    {"category": "Tape", "name": "Heat Resistant Tape", "emissivity": 0.93},
+    {"category": "Wiring", "name": "Nickel-Coated Copper Wire", "emissivity": 0.03},
+    {"category": "Connector", "name": "Barrel Connector", "emissivity": 0.85},
+    {"category": "Plastic", "name": "Nylon Standoff", "emissivity": 0.91},
+    {"category": "Metal", "name": "Stainless Steel Bracket", "emissivity": 0.07},
+    {"category": "Tape", "name": "High Voltage Tape", "emissivity": 0.93},
+    {"category": "Wiring", "name": "Tinned Copper Busbar", "emissivity": 0.04},
+    {"category": "Connector", "name": "Quick Disconnect Terminal", "emissivity": 0.85},
+    {"category": "Plastic", "name": "Polycarbonate Junction Box", "emissivity": 0.92},
+    {"category": "Metal", "name": "Copper Fastener", "emissivity": 0.03},
+    {"category": "Tape", "name": "Glass Cloth Tape", "emissivity": 0.93},
+    {"category": "Wiring", "name": "Tinned Copper Conductor", "emissivity": 0.04},
+    {"category": "Connector", "name": "Coaxial Connector", "emissivity": 0.87},
+    {"category": "Plastic", "name": "Acrylic Spacer", "emissivity": 0.92},
+    {"category": "Metal", "name": "Steel Panel Mount", "emissivity": 0.85},
+    {"category": "Tape", "name": "Kapton Tape", "emissivity": 0.94},
+    {"category": "Wiring", "name": "Tinned Copper Bus Wire", "emissivity": 0.04},
+    {"category": "Connector", "name": "Solderless Terminal", "emissivity": 0.86},
+    {"category": "Plastic", "name": "PVC Cable Grommet", "emissivity": 0.92},
+    {"category": "Painted Surface", "name": "Enamel-Painted Steel Panel", "emissivity": 0.88},
+    {"category": "Painted Surface", "name": "Epoxy-Coated Metal Enclosure", "emissivity": 0.89},
+    {"category": "Painted Surface", "name": "Powder-Coated Aluminum Frame", "emissivity": 0.86},
+    {"category": "Painted Surface", "name": "Acrylic-Painted Plastic Cover", "emissivity": 0.91},
+    {"category": "Painted Surface", "name": "Oil-Based Painted Bracket", "emissivity": 0.87},
+    {"category": "Painted Surface", "name": "Polyurethane-Coated Label", "emissivity": 0.88},
+    {"category": "Painted Surface", "name": "Enamel-Painted Metal Plate", "emissivity": 0.88},
+    {"category": "Painted Surface", "name": "Laminated Metal Panel", "emissivity": 0.87},
+    {"category": "Painted Surface", "name": "Epoxy-Coated Connector", "emissivity": 0.89},
+    {"category": "Painted Surface", "name": "Powder-Coated Steel Housing", "emissivity": 0.86},
+    {"category": "Painted Surface", "name": "Acrylic-Painted Plastic Spacer", "emissivity": 0.91},
+    {"category": "Painted Surface", "name": "Oil-Based Painted Metal Bracket", "emissivity": 0.87},
+    {"category": "Painted Surface", "name": "Polyurethane-Coated Metal Label", "emissivity": 0.88},
+    {"category": "Painted Surface", "name": "Enamel-Painted Steel Bracket", "emissivity": 0.88},
+    {"category": "Painted Surface", "name": "Laminated Metal Tag", "emissivity": 0.87},
+    {"category": "Indicator", "name": "LED Light", "emissivity": 0.85},
+    {"category": "Metal", "name": "Door Hinge", "emissivity": 0.85},
+    {"category": "Connector", "name": "Terminal Block", "emissivity": 0.86},
+  ];
 let selectedMaterial = knownMaterials[15];
 
 let storedImageData = null;
@@ -527,7 +627,7 @@ function setButtons() {
     if (cameraEditor.isEditing) {
         if (selectedMaterial != null && selectedMaterial.name != null && selectedMaterial.emissivity != null) {
             document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
-            document.getElementById('valMaterialEmissivity').innerHTML = selectedMaterial.emissivity.toFixed(2);
+            document.getElementById('valMaterialEmissivity').innerHTML =  selectedMaterial.emissivity <= 0 ? '0.00 Ignored' : selectedMaterial.emissivity.toFixed(2);
         }
         else {
             document.getElementById('valMaterialName').innerHTML = '--';
@@ -722,34 +822,119 @@ function cancelMaterial() {
 }
 
 function pickMaterial() {
+    selectedMaterialCategory = null;//clear the filter
     hideEverything();
     changeMaterialEmissivityFilter(true, 0);
     changeMaterialEmissivityFilter(false, 1);
     document.getElementById('dialogMaterials').style.display = 'block';
 }
 
+
+let selectedMaterialCategory = null;
+
 function filterMaterials(minEmissivity, maxEmissivity) {
     let materialList = document.getElementById('materialList');
+    let materialCategoryList = document.getElementById('materialCategoryList');
+    let sbm = '';
+    let sbc = '';
+    let cats = [];
+    let catsLower = [];
     if (knownMaterials != null && knownMaterials.length > 0) {
-        let sb = '';
-        for (let i = 0; i < knownMaterials.length; i++) {
-            let material = knownMaterials[i];
-            if (material.emissivity >= minEmissivity && material.emissivity <= maxEmissivity) {
+        let sortedMaterials = [...knownMaterials];
+        sortedMaterials.sort(function (a, b) { 
+           
+            if(a.category > b.category){
+                return 1;
+            }
+            else if(a.category < b.category){
+                return -1;
+            }
+            else{
+                if(a.name > b.name){
+                    return 1;
+                }
+                else if(a.name < b.name){
+                    return -1;
+                }
+                else{
+                    return 0;
+                }
+            }
 
-                sb += '<button class="resizebutton2" onclick="changeMaterial(\'' + material.name + '\',' + material.emissivity + ')">';
-                sb += '<div style="line-height: 17px;">';
-                sb += '<div class="regioneditortext2">Material</div>';
-                sb += '<div class="regionditortextsub4">' + escapeHTML(material.name) + '</div>';
-                sb += '<div class="regionditortextsub3">' + material.emissivity.toFixed(2) + '</div>';
-                sb += '</div>';
-                sb += '</button>';
+        });
+        for (let i = 0; i < sortedMaterials.length; i++) {
+            let material = sortedMaterials[i];
+            
+            if(catsLower.indexOf(material.category.toLowerCase()) == -1){
+                catsLower.push(material.category.toLowerCase());
+                cats.push(material.category);
+            }
+            if (
+                (selectedMaterialCategory == null || selectedMaterialCategory.toLowerCase() == material.category.toLowerCase()) && 
+                ((material.emissivity >= minEmissivity && material.emissivity <= maxEmissivity) || 
+                (selectedMaterialCategory != null && selectedMaterialCategory.toLowerCase() == 'ignore'))) {
+                let strEmissivity = '0.00 Ignored';
+                if(material.emissivity != null && material.emissivity > 0){
+                    strEmissivity = material.emissivity.toFixed(2);
+                }
+
+                sbm += '<button class="resizebutton2" onclick="changeMaterial(\'' + material.name + '\',' + material.emissivity + ')">';
+                sbm += '<div style="line-height: 17px;">';
+                sbm += '<div  class="regioneditortext2">' + escapeHTML(material.category) + '</div>';
+                sbm += '<div style="padding-top:2px" class="regionditortextsub4">' + escapeHTML(material.name) + '</div>';
+                sbm += '<div class="regionditortextsub3">' + strEmissivity + '</div>';
+                sbm += '</div>';
+                sbm += '</button>';
             }
         }
-        if (sb.length == 0) {
-            sb = '<div style="color:red">No Materials In Emissivity Range</div>';
+        if (sbm.length == 0) {
+            if(selectedMaterialCategory == null || selectedMaterialCategory == ''){
+                sbm = '<div style="color:red">No Materials In Emissivity Range</div>';
+                console.log('no materials in emissivity range ' + minEmissivity + ' to ' + maxEmissivity + ' for category ' + selectedMaterialCategory + '');
+            }
+            else{
+                sbm = '<div style="color:red">No Materials in "' + escapeHTML(selectedMaterialCategory) + '" Category For Emissivity Range</div>';
+            }
         }
-        materialList.innerHTML = sb;
+        
     }
+    else{
+        sbm = '<div style="color:red">No Materials Loaded</div>';
+        sbc = '';
+    }
+
+    let allStyle = selectedMaterialCategory == null || selectedMaterialCategory.trim().length == 0 ?  'border-color:white;' : '';
+    sbc += '<button style="'+allStyle+'" class="resizebutton2" onclick="changeMaterialCategory(null)">';
+    sbc += '<div style="line-height: 17px;">';
+    sbc += '<div class="regioneditortext2">All</div>';
+    sbc += '</div>';
+    sbc += '</button>';
+    
+    if(cats.length > 0){
+        let sortedCats = [...cats].sort();
+        for(let i=0;i<sortedCats.length;i++){
+            
+            let categoryName = sortedCats[i];
+            let style = selectedMaterialCategory != null && selectedMaterialCategory.toLowerCase() == categoryName.toLowerCase() ?  'border-color:white;' : '';
+            sbc += '<button style="'+style+'" class="resizebutton2" onclick="changeMaterialCategory(\'' + categoryName + '\')">';
+            sbc += '<div style="line-height: 17px;">';
+            sbc += '<div class="regioneditortext2">' + escapeHTML(categoryName) + '</div>';
+            sbc += '</div>';
+            sbc += '</button>';
+        }
+    }
+
+    materialCategoryList.innerHTML = sbc;
+    materialList.innerHTML = sbm;
+}
+
+
+function changeMaterialCategory(categoryName){
+    selectedMaterialCategory = categoryName;
+    let frmValue = parseFloat(fromMaterialSlider.value.toString());
+    //let toValue = parseFloat(toMaterialSlider.value.toString());
+    changeMaterialEmissivityFilter(true, frmValue);
+
 }
 
 
@@ -807,15 +992,18 @@ function changeMaterial(materialName, emissivity) {
 
     //round emissivity to 2 decimal places
     emissivity = parseFloat(emissivity.toFixed(2));
-    if (emissivity < 0.00 || emissivity > 1.00) {
+    if (emissivity > 1.00) {
         console.error('invalid emissivity');
         return;
+    }
+    if (emissivity <= 0.00) {
+        emissivity = 0.00;
     }
     console.log('old material: ' + selectedMaterial.name + ' with emissivity ' + selectedMaterial.emissivity.toFixed(2) + '');
     selectedMaterial = { "name": materialName, "emissivity": emissivity };
     console.log('changed material to: ' + selectedMaterial.name + ' with emissivity ' + selectedMaterial.emissivity.toFixed(2) + '');
     document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
-    document.getElementById('valMaterialEmissivity').innerHTML = selectedMaterial.emissivity.toFixed(2);
+    document.getElementById('valMaterialEmissivity').innerHTML =  selectedMaterial.emissivity <= 0 ? '0.00 Ignored' : selectedMaterial.emissivity.toFixed(2);
     cancelMaterial();
 }
 
@@ -905,7 +1093,7 @@ function recalcEditor() {
 
     if (selectedMaterial != null) {
         document.getElementById('valMaterialName').innerHTML = selectedMaterial.name;
-        document.getElementById('valMaterialEmissivity').innerHTML = selectedMaterial.emissivity.toFixed(2);
+        document.getElementById('valMaterialEmissivity').innerHTML = selectedMaterial.emissivity <= 0 ? '0.00 Ignored' : selectedMaterial.emissivity.toFixed(2);
     }
     else {
         document.getElementById('valMaterialName').innerHTML = "--";
@@ -1290,6 +1478,7 @@ function drawMaterialMap(ctx, scale) {
         let x = pt[0];
         let y = pt[1];
         ctx.fillStyle = getColorRampValueRGBA(min * 100, max * 100, materialItem.emissivity * 100, .2, colorRamp);
+        
 
         let pts = rotateFillPoint(regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight, regionEditor.imageMirrorHorizontally, x, y)
         x = pts[0];
@@ -1422,14 +1611,14 @@ function getRegionPointsOnCanvas(region, outlineOnly) {
     return points;
 }
 
-function getTempsFromPointsOnCanvas(points) {
+function getCalcTempsFromPointsOnCanvas(points) {
 
-    let lowCelsius = 999999
-    let highCelsius = -999999
-    let lowX = -1;
-    let lowY = -1;
-    let highX = -1;
-    let highY = -1;
+    let lowCelsius = null
+    let highCelsius = null
+    let lowX = null;
+    let lowY = null;
+    let highX = null;
+    let highY = null;
     for (let i = 0; i < points.length; i++) {
         let point = points[i];
 
@@ -1437,15 +1626,38 @@ function getTempsFromPointsOnCanvas(points) {
 
         if (index > -1 && index < tempsCelsius.length) {
             let temp = tempsCelsius[index];
-            if (temp < lowCelsius) {
-                lowCelsius = temp;
-                lowX = point.x;
-                lowY = point.y;
-            }
-            if (temp > highCelsius) {
-                highCelsius = temp;
-                highX = point.x;
-                highY = point.y;
+
+            if(temp != null){
+
+                
+                
+                if (materialMap != null &&  index >= 0 && index < materialMap.length) {
+                    let material = materialMap[index];
+                    if(material != null){
+
+                        let materialEmissivity = null;
+                        if(material.emissivity != null && material.emissivity > 0){
+                            let distanceMeters = cameraFixedDistanceMeters;
+                            if (distanceMap != null && index >= 0 && index < distanceMap.length) {
+                                distanceMeters = distanceMap[index];
+                            }
+                            let ambientTempC = temp;//todo this should be from an outside source.
+                            temp = getAdjustedTempInCelsius(temp, ambientTempC, distanceMeters, materialEmissivity);
+                        }
+                    }
+                }
+
+
+                if (lowCelsius == null || temp < lowCelsius) {
+                    lowCelsius = temp;
+                    lowX = point.x;
+                    lowY = point.y;
+                }
+                if (highCelsius == null || temp > highCelsius) {
+                    highCelsius = temp;
+                    highX = point.x;
+                    highY = point.y;
+                }
             }
         }
         else {
@@ -1469,7 +1681,7 @@ function getTempsFromPointsOnCanvas(points) {
 function getRegionTemps(region) {
     //console.log('getting region temps')
     let points = getRegionPointsOnCanvas(region, false);//This will return only points that are in bounds!
-    return getTempsFromPointsOnCanvas(points);
+    return getCalcTempsFromPointsOnCanvas(points);
 
 }
 
@@ -2729,7 +2941,7 @@ function displayImageTemps() {
     }
 
 
-    let regionTemps = getTempsFromPointsOnCanvas(points);
+    let regionTemps = getCalcTempsFromPointsOnCanvas(points);
 
     document.getElementById("valImageHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
     document.getElementById("valImageHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
@@ -2971,12 +3183,12 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
     }
 
     if (offsetY > regionEditor.imageHeight / 2) {
-        placementOffsetY -= 120;
-        magOffsetY -= 80;
+        placementOffsetY -= 200;
+        magOffsetY -= 160;
     }
     else {
-        placementOffsetY += 20;
-        magOffsetY += 80;
+        placementOffsetY += 100;
+        magOffsetY += 140;
     }
 
     if (activeTool == 'paintsquare' || activeTool == 'erasesquare') {
@@ -3056,7 +3268,7 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
     let emissivityText = "Not Defined";
 
 
-    let distanceMeters = null;
+    let distanceMeters = cameraFixedDistanceMeters;
     let materialEmissivity = null;
     let adjTempC = null;
 
@@ -3070,13 +3282,14 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
     else {
         console.error('distance index out of bounds');
     }
-
+    
+    let material = null;
     if (indexMap >= 0 && indexMap < materialMap.length) {
-        let material = materialMap[indexMap];
+        material = materialMap[indexMap];
         if (material != null) {
             materialEmissivity = material.emissivity;
             materialText = material.name;
-            emissivityText = material.emissivity.toFixed(2);
+            emissivityText = material.emissivity == null || material.emissivity <= 0 ? '0.00 Ignored' : material.emissivity.toFixed(2);
         }
     }
     else {
@@ -3086,9 +3299,11 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
 
     if (indexMap > -1 && indexMap < tempsCelsius.length) {
         let tempC = tempsCelsius[indexMap];
-        if (tempC != null && distanceMeters != null && materialEmissivity != null) {
-
-            let ambientTempC = tempC;
+        let ambientTempC = tempC;
+        adjTempC = tempC;
+        let strDBTempC = '--';
+        let strDBTempF = '--';
+        if (tempC != null && distanceMeters != null && materialEmissivity != null && materialEmissivity > 0) {
             adjTempC = getAdjustedTempInCelsius(tempC, ambientTempC, distanceMeters, materialEmissivity);
 
         }
@@ -3103,14 +3318,24 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
             strDistanceColor = 'white';
         }
 
+        
+        if(material != null && (material.emissivity == null || material.emissivity <= 0)){
+            strDBTempC = '0.00 Ignored';
+            strDBTempF = '';
+        }
+        else{
+            strDBTempC = getDisplayTempFromCelsius(adjTempC, false) + '&deg;C&nbsp;&nbsp;';
+            strDBTempF = getDisplayTempFromCelsius(adjTempC, true) + '&deg;F';
+        }
 
         //index:${indexMap}
         tooltip.innerHTML = `<span style="white-space:nowrap;font-size:13px;color:gray">X: ${posX}, Y: ${posY}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:gray">Raw Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:gray">Ambient Temp: ${getDisplayTempFromCelsius(ambientTempC, false)}&deg;C&nbsp;&nbsp;${getDisplayTempFromCelsius(ambientTempC, true)}&deg;F</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:gray">Pixel Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
             `<span style="white-space:nowrap;font-size:13px;color:${strDistanceColor}">Distance: ${distanceText}</span><br/>` +
             `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Matl:&nbsp;</span><span style="white-space:nowrap;font-size:12px;width:100px;text-overflow: ellipsis;overflow: hidden;color:${strMaterialColor}">${materialText}</span><br/>` +
             `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Emissivity: ${emissivityText}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:gray">Adj Temp:${getDisplayTempFromCelsius(adjTempC, false)}&deg;C&nbsp;${getDisplayTempFromCelsius(adjTempC, true)}&deg;F</span>`;
+            `<span style="white-space:nowrap;font-size:13px;color:orange">Temp:${strDBTempC}${strDBTempF}</span>`;
 
     }
     else {
@@ -3130,9 +3355,9 @@ function pointerMove(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDo
 
 
 function getAdjustedTempInCelsius(temperatureInCelsius, ambientTemperatureInCelsius, distanceMeters, emissivity) {
-    const cameraFixedEmissivity = .95;
-    const cameraFixedDistanceMeters = .25;
-    const cameraFixedAmbientTemperatureInCelsius = 25;
+    if(emissivity <= 0){
+        return temperatureInCelsius;
+    }
 
     //The lower the emissivity the more we need to raise the temperature;
     //we shouldn't let them use an emissivity less than .5 as it can't be reliably measured.
@@ -3200,7 +3425,7 @@ function getApiSettings() {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         return { "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
     }
-    else if (false && location.href.indexOf('5500') > -1) {
+    else if (location.href.indexOf('5500') > -1) {
         return { "isPost": false, "url": "", "rootUrl": "" };//running locally
     }
     else {
