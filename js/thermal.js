@@ -3741,6 +3741,43 @@ function adjustRegions(sourceRegions, imageMirrorHorizontally, originalRotation,
     return retRegions;
 }
 
+function assignRegionsMapIndexes(regions) {
+    
+    if(regions !=null && regions.length > 0){
+        for (let i = 0; i < regions.length; i++) {
+            let region = regions[i];
+            let tempPoints = getRegionPointsOnCanvas(region, false);//This will return only points that are in bounds!
+            let indexes = [];
+            for (let j = 0; j < tempPoints.length; j++) {
+                let point = tempPoints[j];
+                let index = getIndexOfMapFromXY(point.x, point.y, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally);
+                if (index >= 0) {
+                    if(index < tempsCelsius.length){
+                        indexes.push(index);
+                    }
+                    else{
+                        console.error('region map index out of bounds: ' + index);
+                    }
+                }
+                else{
+                    console.error('region point could not find map index' + point.x + ',' + point.y)
+                }
+            }
+            if(indexes.length == 0){
+                console.error('region has no valid map indexes');
+            }
+            else{
+                indexes.sort(function(a, b){return a-b});
+                console.log('region ' + region.name + ' has ' + indexes.length + ' valid map indexes');
+            }
+
+            region.mapIndexes = indexes;
+        }
+    }
+   
+
+}
+
 
 function callSaveCameras(camera) {
     hideEverything();
@@ -3748,6 +3785,9 @@ function callSaveCameras(camera) {
     let scriptName = 'rse_thermalcameras_save';
    
     //the editor rotates the regions. We must unrotate unmirror them. when saving.
+    let saveRegions = adjustRegions(regionEditor.regions, regionEditor.imageMirrorHorizontally,regionEditor.imageRotation, 0, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
+    assignRegionsMapIndexes(saveRegions);
+
     let myParms = {
         "saveInfo": {
             existingName: camera.existingName,
@@ -3761,7 +3801,7 @@ function callSaveCameras(camera) {
                 "name": camera.name,
                 "materialMap": materialMap,
                 "distanceMap": distanceMap,
-                "regions": adjustRegions(regionEditor.regions, regionEditor.imageMirrorHorizontally,regionEditor.imageRotation, 0, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight),
+                "regions": saveRegions,
                 "imageNativeWidth": regionEditor.imageNativeWidth,
                 "imageNativeHeight": regionEditor.imageNativeHeight,
                 "imageRotation": regionEditor.imageRotation,
