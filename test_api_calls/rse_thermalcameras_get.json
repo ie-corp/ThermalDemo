@@ -4,8 +4,8 @@
         "cameras": [
             {
                 "usbId": null,
-                "name": "Left",
-                "url": "/test_images/empty.tiff",
+                "name": "Left Hand",
+                "url": "/test_images/reference_001.tiff",
                 "isOnline": true,
                 "isKnown": true,
                 "canEdit":true,

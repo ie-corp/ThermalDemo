@@ -1818,7 +1818,7 @@ function changeImageFilterNext(nextFilter) {
 function changeRegionName() {
     if (regionEditor.selectedRegionIndex >= 0) {
         let region = regionEditor.regions[regionEditor.selectedRegionIndex];
-        showPromptDialog(changeRegionNameCallback, "Spot Name", "Please enter a new spot name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", region.name);
+        showPromptDialog(changeRegionNameCallback, "Spot Name", "Please enter a new spot name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and spaces.", region.name);
     }
 }
 
@@ -1834,8 +1834,8 @@ function changeRegionNameCallback(newName) {
             }
             for (let i = 0; i < newName.length; i++) {
                 let c = newName.charAt(i);
-                if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == '_')) {
-                    showAlertDialog(null, 'Rename Spot', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
+                if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == ' ')) {
+                    showAlertDialog(null, 'Rename Spot', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and spaces are allowed.');
                     return;
                 }
             }
@@ -3325,7 +3325,7 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
 
         
         if(material != null && (material.emissivity == null || material.emissivity <= 0)){
-            strDBTempC = '0.00 Ignored';
+            strDBTempC = 'Ignored';
             strDBTempF = '';
         }
         else{
@@ -3402,7 +3402,7 @@ function getEmptyRegionEditor() {
 
         "imageRotation": 0,
         "imageMirrorHorizontally": false,
-        "maxNameLength": 16,
+        "maxNameLength": 15,//same as RS
         "imageNativeWidth": 256,
         "imageNativeHeight": 192,
         "imageWidth": 256,
@@ -3853,7 +3853,7 @@ function renameCamera() {
         oldCamName = "";
     }
     let showName = oldCamName;
-    showPromptDialog(renameCameraCallback, "Camera Name", "Please enter a new camera name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and underscores.", showName);
+    showPromptDialog(renameCameraCallback, "Camera Name", "Please enter a new camera name with maximum length of " + regionEditor.maxNameLength + " characters consisting only of letters, numbers and spaces.", showName);
 
 }
 
@@ -3876,9 +3876,9 @@ function renameCameraCallback(newName) {
         }
         for (let i = 0; i < newName.length; i++) {
             let c = newName.charAt(i);
-            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == '_')) {
+            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == ' ')) {
 
-                showAlertDialog(null, 'Rename Camera', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and _ are allowed.');
+                showAlertDialog(null, 'Rename Camera', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and spaces are allowed.');
                 return;
             }
         }
