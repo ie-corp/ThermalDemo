@@ -3786,6 +3786,11 @@ function callSaveCameras(camera) {
    
     //the editor rotates the regions. We must unrotate unmirror them. when saving.
     let saveRegions = adjustRegions(regionEditor.regions, regionEditor.imageMirrorHorizontally,regionEditor.imageRotation, 0, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
+    //order the regions.
+    
+    saveRegions.sort(function(a, b){return a.name.localeCompare(b.name)});
+    
+   
     assignRegionsMapIndexes(saveRegions);
 
     let myParms = {
