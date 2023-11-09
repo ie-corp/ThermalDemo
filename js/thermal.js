@@ -2048,7 +2048,7 @@ function fixRegionOutOfBounds(region,imageRotation) {
             moveY = 0 - bounds.minY;
         }
         else if ((imageRotation == 0 || imageRotation == 180) && bounds.maxY > regionEditor.imageNativeHeight) {
-            moveY = imageNativeHeight - bounds.maxY;
+            moveY = regionEditor.imageNativeHeight - bounds.maxY;
         }
         else if ((imageRotation == 90 || imageRotation == 270) && bounds.maxY > regionEditor.imageNativeWidth) {
             moveY = regionEditor.imageNativeWidth - bounds.maxY;
@@ -4499,7 +4499,7 @@ function addRegion(regionType) {
         return;
     }
 
-    let colorToUse = regionColors[Math.floor(Math.random() * regionColors.length)];
+    let colorToUse = 'Lime';
 
     let regionPrefix = regionType;
     let regionName = '';
