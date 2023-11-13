@@ -3770,6 +3770,7 @@ function hideUI() {
     document.getElementById('rowMaterialTools').style.display = 'none';
     document.getElementById('rowDistanceTools').style.display = 'none';
     document.getElementById('touchTools').style.display = 'none';
+    document.getElementById('regionEditorAnnotations').style.display = 'none';
 
 }
 
@@ -3789,6 +3790,7 @@ function showUI() {
     document.getElementById("rowSpotTools").style.display = (activeLayer != 'Spots' ? 'none' : '');
     document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
     document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
+    document.getElementById("regionEditorAnnotations").style.display = '';
     document.getElementById('touchTools').style.display = '';
 }
 
