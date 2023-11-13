@@ -57,7 +57,7 @@
     <div id="busyLayer" style="visibility: hidden;">
         <div class="center">
             <span id="busySpinner" class="loader"></span>
-          </div>
+        </div>
     </div>
     <div class="thermalDialog" id="dialogAlert" style="display:none">
         <div class="thermalDialogContent">
@@ -73,7 +73,7 @@
                     </td>
                 </tr>
             </table>
-            <hr class="thermalDialogRule"/>
+            <hr class="thermalDialogRule" />
             <div id="dialogAlertBody" class="thermalDialogBody"></div>
         </div>
     </div>
@@ -81,7 +81,7 @@
         <div class="thermalDialogContent">
             <table width="100%">
                 <tr>
-                    <td width="50%"><span id="dialogPromptTitle"  class="thermalDialogTitle">Prompt</span></td>
+                    <td width="50%"><span id="dialogPromptTitle" class="thermalDialogTitle">Prompt</span></td>
                     <td width="50%" style="text-align:right">
                         <button id="btnDialogPromptCloseYes" onclick="closePromptDialog(true)" class="resizebutton">
                             <div style="line-height: 4px;">
@@ -97,17 +97,17 @@
                     </td>
                 </tr>
             </table>
-            <hr class="thermalDialogRule"/>
+            <hr class="thermalDialogRule" />
             <input id="dialogPromptValue" style="font-size:28px" value="" />
             <div id="dialogPromptBody" class="thermalDialogBody"></div>
-           
+
         </div>
     </div>
     <div class="thermalDialog" id="dialogConfirm" style="display:none">
         <div class="thermalDialogContent">
             <table width="100%">
                 <tr>
-                    <td width="50%"><span id="dialogConfirmTitle"  class="thermalDialogTitle">Confirm</span></td>
+                    <td width="50%"><span id="dialogConfirmTitle" class="thermalDialogTitle">Confirm</span></td>
                     <td width="50%" style="text-align:right">
                         <button id="btnDialogConfirmCloseYes" onclick="closeConfirmDialog(true)" class="resizebutton">
                             <div style="line-height: 4px;">
@@ -123,7 +123,7 @@
                     </td>
                 </tr>
             </table>
-            <hr class="thermalDialogRule"/>
+            <hr class="thermalDialogRule" />
             <div id="dialogConfirmBody" class="thermalDialogBody"></div>
         </div>
     </div>
@@ -141,41 +141,47 @@
                 </td>
             </tr>
         </table>
-        <div style="padding-left:4px;">Choose Category</div>
-        <div style="padding-left:4px;padding-top: 12px;" id="materialCategoryList"></div>
-        <div style="padding-left:4px;padding-top: 12px;">Limit Emissivity Range</div>
-        <div>
-            <div style="padding-top: 12px;">
-                <table width="95%">
-                    <tr>
-                        <td colspan="2" width="100%">
-                            <div>
-                                <hr style="margin-left:15px;margin-bottom:-12px" />
-                                <input id="fromMaterialSlider" class="sliderFrom" type="range" value="0" min="0" max="1"
-                                    step="0.01" oninput="changeMaterialEmissivityFilter(true,this.value)" />
-                                <input id="toMaterialSlider" class="sliderTo" type="range" value="1" min="0" max="1"
-                                    step="0.01" oninput="changeMaterialEmissivityFilter(false,this.value)" />
-                            </div>
-
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="50%"><span style="color:white">Min</span></td>
-                        <td width="50%" style="text-align:right"><span style="color:white">Max</span></td>
-                    </tr>
-                    <tr>
-                        <td width="50%"><input
-                                style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled
-                                type="text" id="fromMaterialInput" value="0.00" /></td>
-                        <td width="50%" style="text-align:right"><input
-                                style="width:60px;background-color:black;color:white;border: 3px solid black;" disabled
-                                type="text" id="toMaterialInput" value="1.00" /></td>
-                    </tr>
-                </table>
-
-            </div>
+        <div id="areaMaterialsInUse">
+            <div style="padding-left:4px;">Material Usage</div>
+            <div style="padding-left:4px;padding-top: 12px;" id="materialInUseList"></div>
         </div>
-        <div id="materialList"></div>
+        <div id="areaChooseMaterials">
+            <div style="padding-left:4px;">Choose Category</div>
+            <div style="padding-left:4px;padding-top: 12px;" id="materialCategoryList"></div>
+            <div style="padding-left:4px;padding-top: 12px;">Limit Emissivity Range</div>
+            <div>
+                <div style="padding-top: 12px;">
+                    <table width="95%">
+                        <tr>
+                            <td colspan="2" width="100%">
+                                <div>
+                                    <hr style="margin-left:15px;margin-bottom:-12px" />
+                                    <input id="fromMaterialSlider" class="sliderFrom" type="range" value="0" min="0"
+                                        max="1" step="0.01" oninput="changeMaterialEmissivityFilter(true,this.value)" />
+                                    <input id="toMaterialSlider" class="sliderTo" type="range" value="1" min="0" max="1"
+                                        step="0.01" oninput="changeMaterialEmissivityFilter(false,this.value)" />
+                                </div>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50%"><span style="color:white">Min</span></td>
+                            <td width="50%" style="text-align:right"><span style="color:white">Max</span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%"><input
+                                    style="width:60px;background-color:black;color:white;border: 3px solid black;"
+                                    disabled type="text" id="fromMaterialInput" value="0.00" /></td>
+                            <td width="50%" style="text-align:right"><input
+                                    style="width:60px;background-color:black;color:white;border: 3px solid black;"
+                                    disabled type="text" id="toMaterialInput" value="1.00" /></td>
+                        </tr>
+                    </table>
+
+                </div>
+            </div>
+            <div id="materialList"></div>
+        </div>
 
     </div>
     <div id="mainEditor">
@@ -251,7 +257,7 @@
                 </div>
             </button>
 
-           
+
 
             <button id="btnSaveCamera" onclick="saveCamera()" class="resizebutton" style="background-color:green">
                 <div style="line-height: 4px;">
@@ -309,8 +315,7 @@
                 </div>
             </button>
 
-            <div style="width:8px;">
-            </div>
+
 
             <button id="btnRefreshLiveImage" onclick="refreshLiveImage()" class="resizebutton">
                 <div style="line-height: 19px;">
@@ -326,26 +331,35 @@
 
         <div id="rowSpotTools" class="editorrow">
 
+            <button class="resizebutton" onclick="toggleTemps()">
+                <div style="line-height: 14px;">
+                    <div class="regioneditortext2" style="margin-bottom:6px">Toggle</div>
+                    <div id="valToggleTempC" class="regionditortextsub3" style="margin-bottom:6px;color:orange;">&deg;C
+                    </div>
+                    <div id="valToggleTempF" class="regionditortextsub3" style="color:grey">&deg;F</div>
+                </div>
+            </button>
+
             <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 14px;">
-                    <div class="regioneditortext2"  style="margin-bottom:6px" >Img Hi</div>
-                    <div id="valImageHighTempC" class="regionditortextsub3"  style="margin-bottom:6px" >--&deg;C</div>
+                    <div class="regioneditortext2" style="margin-bottom:6px">Img Hi</div>
+                    <div id="valImageHighTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
                     <div id="valImageHighTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
             </button>
 
             <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 14px;">
-                    <div class="regioneditortext2"  style="margin-bottom:6px" >Img Avg</div>
-                    <div id="valImageAverageTempC" class="regionditortextsub3"  style="margin-bottom:6px" >--&deg;C</div>
+                    <div class="regioneditortext2" style="margin-bottom:6px">Img Avg</div>
+                    <div id="valImageAverageTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
                     <div id="valImageAverageTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
             </button>
 
             <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 14px;">
-                    <div class="regioneditortext2"  style="margin-bottom:6px" >Img Lo</div>
-                    <div id="valImageLowTempC" class="regionditortextsub3"  style="margin-bottom:6px" >--&deg;C</div>
+                    <div class="regioneditortext2" style="margin-bottom:6px">Img Lo</div>
+                    <div id="valImageLowTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
                     <div id="valImageLowTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
             </button>
@@ -369,9 +383,10 @@
             <button id="btnChangeColor" onclick="changeRegionColorNext(true)" class="resizebutton">
                 <div style="line-height: 28px;">
                     <div class="regioneditortext">Color</div>
-                    <div id="valRegionColorDemo" style="margin-top:-2px;background-color: red; font-size:8px; line-height: 8px;"
+                    <div id="valRegionColorDemo"
+                        style="margin-top:-2px;background-color: red; font-size:8px; line-height: 8px;"
                         class="regionditortextsub3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                    <div id="valRegionColor"  class="regionditortextsub3" style="margin-top:-6px">Red</div>
+                    <div id="valRegionColor" class="regionditortextsub3" style="margin-top:-6px">Red</div>
                 </div>
             </button>
 
@@ -380,7 +395,7 @@
 
             <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 14px;">
-                    <div class="regioneditortext2" style="margin-bottom:6px" >Spot Hi</div>
+                    <div class="regioneditortext2" style="margin-bottom:6px">Spot Hi</div>
                     <div id="valRegionHighTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
                     <div id="valRegionHighTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
@@ -388,7 +403,7 @@
 
             <button disabled class="resizebutton" style="background-color: black;">
                 <div style="line-height: 14px;">
-                    <div class="regioneditortext2" style="margin-bottom:6px" >Spot Avg</div>
+                    <div class="regioneditortext2" style="margin-bottom:6px">Spot Avg</div>
                     <div id="valRegionAverageTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
                     <div id="valRegionAverageTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
@@ -404,6 +419,7 @@
                     <div id="valRegionLowTempF" class="regionditortextsub3">--&deg;F</div>
                 </div>
             </button>
+
 
 
 
@@ -913,12 +929,17 @@
                 </div>
             </div>
             <div id="regionEditorBorder" class="editorcolumn" style="margin-left:-16px;padding:0px 30px 30px 30px;">
-                <div id="statusText" style="white-space: nowrap; height:30px;color:white;font-size:24px;user-select: none;"></div>
+                <div id="statusText"
+                    style="white-space: nowrap; height:30px;color:white;font-size:24px;user-select: none;"></div>
+
                 <canvas id="regionEditorImage" width="256" height="192" draggable="false"></canvas>
+
             </div>
         </div>
 
-
+        <canvas id="regionEditorAnnotations"
+            style="user-select:none;pointer-events:none;z-index:1;position:absolute;top:0;left:0;" width="256"
+            height="192" draggable="false"></canvas>
         <div id="tiptarget">
 
         </div>

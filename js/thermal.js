@@ -10,6 +10,8 @@ let selectedEventIndex = -1;
 
 let cameraEditor = {
     "selectedCameraIndex": 0,
+    "isViewingCelsius": true,
+    "showHotspotNumbers": false,
     "isEditing": false,
     "cameras": [],
     "tags": [],
@@ -121,7 +123,7 @@ const knownMaterials = [
     { "category": "Painted Surface", "name": "Colorful Label", "emissivity": 0.88 },
     { "category": "Plastic", "name": "PVC Conduit", "emissivity": 0.91 },
     { "category": "Metal", "name": "Galvanized Steel", "emissivity": 0.6 },
-    { "category": "Connector", "name": "Twist-on Wire Connector", "emissivity": 0.93 },
+    { "category": "Connector", "name": "Twist on Wire Connector", "emissivity": 0.93 },
     { "category": "Wiring", "name": "Tinned Copper Wire", "emissivity": 0.04 },
     { "category": "Tape", "name": "Duct Tape", "emissivity": 0.94 },
     { "category": "Metal", "name": "Steel Bracket", "emissivity": 0.85 },
@@ -831,7 +833,83 @@ function pickMaterial() {
     changeMaterialEmissivityFilter(true, 0);
     changeMaterialEmissivityFilter(false, 1);
     document.getElementById('dialogMaterials').style.display = 'block';
+
+    //list the materials in use.
+    let maxAssignable = regionEditor.imageNativeHeight * regionEditor.imageNativeWidth;
+    let notAssignedCount = maxAssignable;
+    let existingMaterials = [];
+
+    if (materialMap != null && materialMap.length > 0) {
+        for (let i = 0; i < materialMap.length; i++) {
+            let material = materialMap[i];
+            if (material != null) {
+                notAssignedCount--;
+                let foundExisting = false;
+                for (let j = 0; j < existingMaterials.length; j++) {
+
+                    let existingMaterial = existingMaterials[j];
+                    if (existingMaterial.name.toLowerCase() == material.name.toLowerCase() && existingMaterial.emissivity == material.emissivity) {
+                        existingMaterial.count++;
+                        foundExisting = true;
+                        break;
+                    }
+                }
+                if (!foundExisting) {
+                    let lastMaterial = { "count": 1, "name": material.name, "emissivity": material.emissivity }
+                    existingMaterials.push(lastMaterial);
+                    console.log('Added material' + material.name + ' to existing material list');
+                }
+
+            }
+        }
+    }
+    else{
+        console.log('materialMap is empty');
+    }
+    let sb = '';
+    if (notAssignedCount == maxAssignable) {
+        sb += '<div style="color:orange">No Materials Assigned.</div>';
+    }
+    else {
+        if (notAssignedCount > 0) {
+            let strPercentNotAssigned = ((notAssignedCount / maxAssignable) * 100).toFixed(2) + '&percnt;';
+            sb += `<div style="color:red">${strPercentNotAssigned} of pixels are not assigned.</div>`;
+        }
+        else {
+            sb += '<div style="color:green">100% of pixels assigned to a material</div>';
+        }
+        //sort the materials.
+        if (existingMaterials.length > 0) {
+            existingMaterials.sort(function(a,b){ return a.count - b.count});
+            sb += '<div>';
+            for (let i = 0; i < existingMaterials.length; i++) {
+
+                let material = existingMaterials[i];
+                let strEmissivity = '0.00 Ignored';
+                if (material.emissivity != null && material.emissivity > 0) {
+                    strEmissivity = material.emissivity.toFixed(2);
+                }
+                let strPercent = ((material.count / maxAssignable) * 100).toFixed(2) + '&percnt;';
+                sb += '<button class="resizebutton2" onclick="changeMaterial(\'' + material.name + '\',' + material.emissivity + ')">';
+                sb += '<div style="line-height: 17px;">';
+                sb += '<div  class="regioneditortext2">' + strPercent + '</div>';
+                sb += '<div style="padding-top:2px" class="regionditortextsub4">' + escapeHTML(material.name) + '</div>';
+                sb += '<div class="regionditortextsub3">' + strEmissivity + '</div>';
+                sb += '</div>';
+                sb += '</button>';
+            }
+            sb += '</div>';
+        }
+
+
+    }
+    
+    document.getElementById('materialInUseList').innerHTML = sb;
+
+
 }
+
+
 
 
 let selectedMaterialCategory = null;
@@ -987,8 +1065,8 @@ function changeMaterial(materialName, emissivity) {
         console.error('invalid material name length');
         return;
     }
-    // regular expression that only allows mixed case letters, whole numbers, spaces and commas.
-    let regex = /^[a-zA-Z0-9 ,]*$/;
+    // regular expression that only allows mixed case letters, whole numbers, spaces and commas and dashes.
+    let regex = /^[a-zA-Z0-9 ,-]*$/;
     if (!regex.test(materialName)) {
         console.error('invalid material name characters');
         return;
@@ -1297,14 +1375,20 @@ function drawRegions() {
     canvas.width = regionEditor.imageWidth;
     canvas.height = regionEditor.imageHeight;
 
+    let canvasTopLayer = document.createElement("canvas");
+    canvasTopLayer.width = regionEditor.imageWidth;
+    canvasTopLayer.height = regionEditor.imageHeight;
+
 
     let ctx = canvas.getContext("2d");
+    let ctxTopLayer = canvasTopLayer.getContext("2d");
     resetSelectedRegionAttributes();
 
     let rotation = regionEditor.imageRotation * Math.PI / 180;
 
     let strFilter = imageFilter == 'none' ? '' : 'url(#' + imageFilter + ')';
     regionEditorImage.style.filter = strFilter;
+    //canvas.style.filter = strFilter;
 
 
     let scale = imageScale;
@@ -1345,7 +1429,12 @@ function drawRegions() {
         drawDistanceMap(ctx, scale);
     }
     else {
-        drawRegionMap(ctx, scale);
+        drawRegionMap(ctx, scale);//can check alignment
+        drawRegionMap(ctxTopLayer, scale);
+        if (!cameraEditor.isEditing) {
+            drawNumbers(ctxTopLayer, scale);
+        }
+
     }
 
     let ctxMain = regionEditorImage.getContext("2d");
@@ -1354,6 +1443,23 @@ function drawRegions() {
     regionEditorImage.height = canvas.height;
     ctxMain.clearRect(0, 0, regionEditorImage.width, regionEditorImage.height);
     ctxMain.drawImage(canvas, 0, 0, regionEditorImage.width, regionEditorImage.height);
+
+    let annotationsCanvas = document.getElementById('regionEditorAnnotations');
+    let ctxAnnotations = annotationsCanvas.getContext("2d");
+    annotationsCanvas.width = canvasTopLayer.width;
+    annotationsCanvas.height = canvasTopLayer.height;
+    ctxAnnotations.clearRect(0, 0, annotationsCanvas.width, annotationsCanvas.height);
+    ctxAnnotations.drawImage(canvasTopLayer, 0, 0, annotationsCanvas.width, annotationsCanvas.height);
+
+    
+    //annotationsCanvas.style.top = '178px';
+    //annotationsCanvas.style.left = '96px';
+    //console.log('offsetTop: ' + regionEditorImage.offsetTop);
+    //console.log('offsetLeft: ' + regionEditorImage.offsetLeft);
+    annotationsCanvas.style.top = `${regionEditorImage.offsetTop}px`;
+    annotationsCanvas.style.left = `${regionEditorImage.offsetLeft}px`;
+
+
 }
 
 
@@ -1519,6 +1625,7 @@ function drawRegionMap(ctx, scale) {
             updateSelectedRegionAttributes(region);
         }
     }
+
 }
 
 function getDisplayTempFromCelsius(celsius, displayFahrenheit) {
@@ -1652,7 +1759,7 @@ function getCalcTempsFromPointsOnCanvas(points) {
                     }
                 }
                 if (temp != null) {
-        
+
                     allCelsius.push(temp);
 
                     if (lowCelsius == null || temp < lowCelsius) {
@@ -1676,15 +1783,15 @@ function getCalcTempsFromPointsOnCanvas(points) {
     }
 
     let avgCelsius = null;
-    if(allCelsius.length > 0){
+    if (allCelsius.length > 0) {
         let totalCelsius = 0;
-        for(let i=0;i<allCelsius.length;i++){
+        for (let i = 0; i < allCelsius.length; i++) {
             totalCelsius += allCelsius[i];
         }
         avgCelsius = totalCelsius / allCelsius.length;
     }
-    
-    let regionTemps = {"avgCelsius":avgCelsius, "lowCelsius": lowCelsius, "highCelsius": highCelsius, "lowX": lowX, "lowY": lowY, "highX": highX, "highY": highY };
+
+    let regionTemps = { "avgCelsius": avgCelsius, "lowCelsius": lowCelsius, "highCelsius": highCelsius, "lowX": lowX, "lowY": lowY, "highX": highX, "highY": highY };
     //console.log('region temps: ' + JSON.stringify(regionTemps));
     return regionTemps;
 }
@@ -1705,15 +1812,27 @@ function updateSelectedRegionAttributes(region) {
     }
 
     let regionTemps = getRegionTemps(region);
+
+    document.getElementById("valRegionHighTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
+
+    document.getElementById("valRegionHighTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
-    
+
+    document.getElementById("valRegionAverageTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionAverageTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.avgCelsius, false) + '&deg;C';
+
+    document.getElementById("valRegionAverageTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionAverageTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.avgCelsius, true) + '&deg;F';
 
+    document.getElementById("valRegionLowTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
+
+    document.getElementById("valRegionLowTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true) + '&deg;F';
 
+    document.getElementById("valToggleTempC").style.color = cameraEditor.isViewingCelsius ? 'white' : 'grey';
+    document.getElementById("valToggleTempF").style.color = !cameraEditor.isViewingCelsius ? 'white' : 'grey';
 
     document.getElementById("valRegionName").innerHTML = region.name;
     document.getElementById("valRegionColor").innerHTML = region.color;
@@ -1862,6 +1981,60 @@ function changeRegionNameCallback(newName) {
     }
 }
 
+
+function drawNumbers(ctx, scale) {
+    if (regionEditor != null && regionEditor.regions != null) {
+        for (let i = 0; i < regionEditor.regions.length; i++) {
+            let region = regionEditor.regions[i];
+            drawNumber(ctx, scale, region, (i + 1));
+        }
+    }
+}
+
+function drawNumber(ctx, scale, region, number) {
+    let fontScale = scale;
+    let plotX = -1;
+    let plotY = -1;
+
+    if (scale < 2) {
+        fontScale = 2;
+        console.log('set font scale to:' + fontScale);
+    }
+    let strNumber = number <= 9 ? "0" + number.toString() : number.toString();
+
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1 * scale;
+    ctx.fillStyle = 'black';
+    ctx.strokeStyle = 'grey';
+    if (region.type == 'point') {
+        plotX = region.x * scale;
+        plotY = region.y * scale;
+    }
+    else {
+        if (region.points != null && region.points.length > 1) {
+            let bounds = getPolygonBounds(region.points);
+            plotX = (((bounds.maxX * scale) - (bounds.minX * scale)) / 2) + (bounds.minX * scale);
+            plotY = (((bounds.maxY * scale) - (bounds.minY * scale)) / 2) + (bounds.minY * scale);
+        }
+        else {
+            return;
+        }
+    }
+
+
+    ctx.beginPath();
+    ctx.arc((plotX), (plotY), (4 * fontScale), 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.fill();
+    ctx.fillStyle = region.color;
+    ctx.font = (Math.round(6 * fontScale)).toString() + 'px Tahoma, Verdana, Geneva,  sans-serif';
+    let textX = (plotX) - fontScale * 3;
+    let textY = (plotY) + fontScale * 2;
+    ctx.fillText(strNumber, textX, textY);
+
+
+}
+
 function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, drawControls) {
     // Reset transformation matrix to the identity matrix
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -1991,7 +2164,8 @@ function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, draw
 
         if (isSelected) {
             ctx.beginPath();
-            ctx.arc((region.x * scale), (region.y * scale), (4 * scale), 0, 2 * Math.PI);
+            ctx.setLineDash([4]);
+            ctx.arc((region.x * scale), (region.y * scale), (8 * scale), 0, 2 * Math.PI);
             ctx.stroke();
         }
 
@@ -2010,17 +2184,18 @@ function getPolygonBounds(points) {
     let minY = points[0].y;
     let maxY = points[0].y;
     for (let index = 1; index < points.length; index++) {
-        if (points[index].x < minX) {
-            minX = points[index].x;
+        let point = points[index];
+        if (point.x < minX) {
+            minX = point.x;
         }
-        if (points[index].x > maxX) {
-            maxX = points[index].x;
+        if (point.x > maxX) {
+            maxX = point.x;
         }
-        if (points[index].y < minY) {
-            minY = points[index].y;
+        if (point.y < minY) {
+            minY = point.y;
         }
-        if (points[index].y > maxY) {
-            maxY = points[index].y;
+        if (point.y > maxY) {
+            maxY = point.y;
         }
     }
     let bounds = { "minX": minX, "minY": minY, "maxX": maxX, "maxY": maxY, "width": maxX - minX, "height": maxY - minY, "x": minX, "y": minY };
@@ -2466,6 +2641,7 @@ function setDefaultDistance() {
             distanceMap[i] = selectedDistance;
         }
     }
+    activeTool = 'look';
     hideTips();
     recalcEditor();
     addMetaHistory('set default distance ' + selectedDistance, false);
@@ -2581,6 +2757,7 @@ function setDefaultMaterial() {
             materialMap[i] = { "name": selectedMaterial.name, "emissivity": selectedMaterial.emissivity };
         }
     }
+    activeTool = 'look';
     hideTips();
     recalcEditor();
     addMetaHistory('set default material ' + JSON.stringify(selectedMaterial), false);
@@ -2964,18 +3141,36 @@ function displayImageTemps() {
 
     let regionTemps = getCalcTempsFromPointsOnCanvas(points);
 
+    document.getElementById("valImageHighTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valImageHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
+    document.getElementById("valImageHighTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valImageHighTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, true) + '&deg;F';
 
+    document.getElementById("valImageAverageTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valImageAverageTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.avgCelsius, false) + '&deg;C';
+
+    document.getElementById("valImageAverageTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valImageAverageTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.avgCelsius, true) + '&deg;F';
 
+    document.getElementById("valImageLowTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valImageLowTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, false) + '&deg;C';
+
+    document.getElementById("valImageLowTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valImageLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true) + '&deg;F';
+
+
 
     tempRanges.highCelsius = regionTemps.highCelsius;
     tempRanges.lowCelsius = regionTemps.lowCelsius;
 
+}
+
+function toggleTemps() {
+    hideTips();
+    cameraEditor.isViewingCelsius = !cameraEditor.isViewingCelsius;
+    hideTips();
+    displayImageTemps();
+    recalcEditor();
 }
 
 
@@ -3353,14 +3548,17 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
             strDBTempF = getDisplayTempFromCelsius(adjTempC, true) + '&deg;F';
         }
 
+        let strAmbientTemp = cameraEditor.isViewingCelsius ? `${getDisplayTempFromCelsius(ambientTempC, false)}&deg;C` : `${getDisplayTempFromCelsius(ambientTempC, true)}&deg;F`;
+        let strPixelTemp = cameraEditor.isViewingCelsius ? `${getDisplayTempFromCelsius(tempC, false)}&deg;C` : `${getDisplayTempFromCelsius(tempC, true)}&deg;F`
+        let strFinalTemp = cameraEditor.isViewingCelsius ? `${strDBTempC}` : `${strDBTempF}`;
         //index:${indexMap}
         tooltip.innerHTML = `<span style="white-space:nowrap;font-size:13px;color:gray">X: ${posX}, Y: ${posY}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:gray">Ambient Temp: ${getDisplayTempFromCelsius(ambientTempC, false)}&deg;C&nbsp;&nbsp;${getDisplayTempFromCelsius(ambientTempC, true)}&deg;F</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:gray">Pixel Temp: ${getDisplayTempFromCelsius(tempC, false)}&deg;C&nbsp;&nbsp;${getDisplayTempFromCelsius(tempC, true)}&deg;F</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:${strDistanceColor}">Distance: ${distanceText}</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:gray">Ambient Temp:&nbsp;${strAmbientTemp}</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:gray">Pixel Temp:&nbsp;${strPixelTemp}</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:${strDistanceColor}">Distance:&nbsp;${distanceText}</span><br/>` +
             `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Matl:&nbsp;</span><span style="white-space:nowrap;font-size:12px;width:100px;text-overflow: ellipsis;overflow: hidden;color:${strMaterialColor}">${materialText}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Emissivity: ${emissivityText}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:orange">Temp:${strDBTempC}${strDBTempF}</span>`;
+            `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Emissivity:&nbsp;${emissivityText}</span><br/>` +
+            `<span style="white-space:nowrap;font-size:13px;color:orange">Temp:&nbsp;${strFinalTemp}</span>`;
 
     }
     else {
@@ -4312,7 +4510,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
 }
 
 function setupMouseEvents() {
-    const image = document.querySelector('#regionEditorImage');
+    const image = document.querySelector("#regionEditorImage");
     const border = document.querySelector('#regionEditorBorder');
     const tooltip = document.getElementById('tooltip');
     const tipmagnifier = document.getElementById('tipmagnifier');
