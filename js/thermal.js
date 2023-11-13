@@ -334,7 +334,7 @@ function selectRegionEditorTool(toolName) {
 }
 
 function reviewIssues() {
-    showAlertDialog(null, 'Review Issues', 'There are no issues.');
+    showAlertDialog(null, 'Review Issues', 'There are no issues.', true);
 }
 
 function redoMetaHistory() {
@@ -863,7 +863,7 @@ function pickMaterial() {
             }
         }
     }
-    else{
+    else {
         console.log('materialMap is empty');
     }
     let sb = '';
@@ -880,7 +880,7 @@ function pickMaterial() {
         }
         //sort the materials.
         if (existingMaterials.length > 0) {
-            existingMaterials.sort(function(a,b){ return a.count - b.count});
+            existingMaterials.sort(function (a, b) { return a.count - b.count });
             sb += '<div>';
             for (let i = 0; i < existingMaterials.length; i++) {
 
@@ -903,7 +903,7 @@ function pickMaterial() {
 
 
     }
-    
+
     document.getElementById('materialInUseList').innerHTML = sb;
 
 
@@ -1154,7 +1154,8 @@ function recalcEditor() {
     }
 
 
-
+    document.getElementById("valToggleTempC").style.color = cameraEditor.isViewingCelsius ? 'white' : 'grey';
+    document.getElementById("valToggleTempF").style.color = !cameraEditor.isViewingCelsius ? 'white' : 'grey';
 
 
 
@@ -1429,8 +1430,8 @@ function drawRegions() {
         drawDistanceMap(ctx, scale);
     }
     else {
-        drawRegionMap(ctx, scale);//can check alignment
-        drawRegionMap(ctxTopLayer, scale);
+        drawRegionMap(ctx, scale, false);//can check alignment
+        drawRegionMap(ctxTopLayer, scale, true);
         if (!cameraEditor.isEditing) {
             drawNumbers(ctxTopLayer, scale);
         }
@@ -1451,7 +1452,7 @@ function drawRegions() {
     ctxAnnotations.clearRect(0, 0, annotationsCanvas.width, annotationsCanvas.height);
     ctxAnnotations.drawImage(canvasTopLayer, 0, 0, annotationsCanvas.width, annotationsCanvas.height);
 
-    
+
     //annotationsCanvas.style.top = '178px';
     //annotationsCanvas.style.left = '96px';
     //console.log('offsetTop: ' + regionEditorImage.offsetTop);
@@ -1606,7 +1607,7 @@ function drawMaterialMap(ctx, scale) {
     document.getElementById("valMaxEmissivityColor").style.backgroundColor = (min == max ? 'rgb(255,0,0)' : 'rgb(0,0,255)');
 }
 
-function drawRegionMap(ctx, scale) {
+function drawRegionMap(ctx, scale, drawShading) {
     for (let i = 0; i < regionEditor.regions.length; i++) {
         let region = regionEditor.regions[i];
         let isSelected = false;
@@ -1620,7 +1621,7 @@ function drawRegionMap(ctx, scale) {
                 }
             }
         }
-        drawRegion(ctx, scale, region, isSelected, region.color, null, drawControls);
+        drawRegion(ctx, scale, region, isSelected, region.color, null, drawControls, drawShading);
         if (isSelected) {
             updateSelectedRegionAttributes(region);
         }
@@ -1706,7 +1707,7 @@ function getRegionPointsOnCanvas(region, outlineOnly) {
     }
     let ctx = canvas.getContext("2d");
     let fillColor = outlineOnly ? null : 'black';
-    drawRegion(ctx, 1, region, false, 'black', fillColor, false);
+    drawRegion(ctx, 1, region, false, 'black', fillColor, false, false);
     let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     let data = imageData.data;
     let points = [];
@@ -1831,6 +1832,7 @@ function updateSelectedRegionAttributes(region) {
     document.getElementById("valRegionLowTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionLowTempF").innerHTML = getDisplayTempFromCelsius(regionTemps.lowCelsius, true) + '&deg;F';
 
+
     document.getElementById("valToggleTempC").style.color = cameraEditor.isViewingCelsius ? 'white' : 'grey';
     document.getElementById("valToggleTempF").style.color = !cameraEditor.isViewingCelsius ? 'white' : 'grey';
 
@@ -1842,13 +1844,19 @@ function updateSelectedRegionAttributes(region) {
 function resetSelectedRegionAttributes() {
     document.getElementById("valRegionIndex").innerHTML = "0 of 0";
 
+    document.getElementById("valRegionHighTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionHighTempC").innerHTML = "--&deg;C";
+    document.getElementById("valRegionHighTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionHighTempF").innerHTML = "--&deg;F";
 
+    document.getElementById("valRegionAverageTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionAverageTempC").innerHTML = "--&deg;C";
+    document.getElementById("valRegionAverageTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionAverageTempF").innerHTML = "--&deg;F";
 
+    document.getElementById("valRegionLowTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionLowTempC").innerHTML = "--&deg;C";
+    document.getElementById("valRegionLowTempF").style.visibility = !cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionLowTempF").innerHTML = "--&deg;F";
 
     document.getElementById("valRegionName").innerHTML = "--";
@@ -1964,13 +1972,13 @@ function changeRegionNameCallback(newName) {
         if (newName != null && newName.trim() != "") {
             newName = newName.trim();
             if (newName.length > regionEditor.maxNameLength) {
-                showAlertDialog(null, 'Rename Spot', 'name too long, max ' + regionEditor.maxNameLength + ' characters');
+                showAlertDialog(null, 'Rename Spot', 'name too long, max ' + regionEditor.maxNameLength + ' characters', true);
                 return;
             }
             for (let i = 0; i < newName.length; i++) {
                 let c = newName.charAt(i);
                 if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == ' ')) {
-                    showAlertDialog(null, 'Rename Spot', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and spaces are allowed.');
+                    showAlertDialog(null, 'Rename Spot', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and spaces are allowed.', true);
                     return;
                 }
             }
@@ -2035,7 +2043,7 @@ function drawNumber(ctx, scale, region, number) {
 
 }
 
-function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, drawControls) {
+function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, drawControls, drawShading) {
     // Reset transformation matrix to the identity matrix
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -2045,26 +2053,32 @@ function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, draw
             ctx.beginPath();
             // we don't have a rotation angle
             //console.log('drawing polygon: ' + JSON.stringify(region.points));
+            for (let i = 0; i < 2; i++) {
+                //0=draw a black line under as it helps it pop.
+                if ((i == 0 && !drawShading) || (i == 0 && fillColor != null)) {
+                    continue;//do not draw if filling.
+                }
+                let myStrokeColor = i < 1 ? 'black' : strokeColor;//shading is black
+                ctx.moveTo((region.points[0].x * scale), (region.points[0].y * scale));
+                for (let i = 1; i < region.points.length; i++) {
+                    ctx.lineTo((region.points[i].x * scale), (region.points[i].y * scale));
+                }
+                ctx.closePath();
+                if (isSelected && i > 0) {
+                    ctx.setLineDash([4]);
+                }
+                else {
+                    ctx.setLineDash([]);
+                }
 
-            ctx.moveTo((region.points[0].x * scale), (region.points[0].y * scale));
-            for (let i = 1; i < region.points.length; i++) {
-                ctx.lineTo((region.points[i].x * scale), (region.points[i].y * scale));
-            }
-            ctx.closePath();
-            if (isSelected) {
-                ctx.setLineDash([4]);
-            }
-            else {
-                ctx.setLineDash([]);
-            }
-
-            ctx.lineWidth = 1 * scale;
-            ctx.strokeStyle = strokeColor;
-            ctx.stroke();
-            ctx.closePath();
-            if (fillColor != null) {
-                ctx.fillStyle = fillColor;
-                ctx.fill();
+                ctx.lineWidth = 1 * scale;
+                ctx.strokeStyle = myStrokeColor;
+                ctx.stroke();
+                ctx.closePath();
+                if (fillColor != null) {
+                    ctx.fillStyle = fillColor;
+                    ctx.fill();
+                }
             }
             if (drawControls) {
                 let showDeleteNodes = region.points.length > 3 && activeTool == 'pointdelete';
@@ -2142,33 +2156,43 @@ function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, draw
     else if (region.type == 'point') {
         ctx.beginPath();
 
-        //console.log('drawing point: ' + region.x + ',' + region.y);
-        ctx.setLineDash([]);
-        ctx.lineWidth = 1 * scale;
-        ctx.strokeStyle = strokeColor;
-        ctx.moveTo((region.x * scale), (region.y * scale) - (8 * scale));
-        ctx.lineTo((region.x * scale), (region.y * scale) - (1 * scale));
-        ctx.stroke();
+        for (let i = 0; i < 2; i++) {
+            //0=draw a black line under as it helps it pop.
+            if ((i == 0 && !drawShading) || (i == 0 && fillColor != null)) {
+                continue;//do not draw if filling.
+            }
+            let myStrokeColor = i < 1 ? 'black' : strokeColor;//shading is black
+            //console.log('drawing point: ' + region.x + ',' + region.y);
+            ctx.setLineDash([]);
+            ctx.lineWidth = 1 * scale;
+            ctx.strokeStyle = myStrokeColor;
+            ctx.moveTo((region.x * scale), (region.y * scale) - (8 * scale));
+            ctx.lineTo((region.x * scale), (region.y * scale) - (1 * scale));
+            ctx.stroke();
 
-        ctx.moveTo((region.x * scale), (region.y * scale) + (1 * scale));
-        ctx.lineTo((region.x * scale), (region.y * scale) + (8 * scale));
-        ctx.stroke();
+            ctx.moveTo((region.x * scale), (region.y * scale) + (1 * scale));
+            ctx.lineTo((region.x * scale), (region.y * scale) + (8 * scale));
+            ctx.stroke();
 
-        ctx.moveTo((region.x * scale) - (8 * scale), (region.y * scale));
-        ctx.lineTo((region.x * scale) - (1 * scale), (region.y * scale));
-        ctx.stroke();
+            ctx.moveTo((region.x * scale) - (8 * scale), (region.y * scale));
+            ctx.lineTo((region.x * scale) - (1 * scale), (region.y * scale));
+            ctx.stroke();
 
-        ctx.moveTo((region.x * scale) + (1 * scale), (region.y * scale));
-        ctx.lineTo((region.x * scale) + (8 * scale), (region.y * scale));
-        ctx.stroke();
+            ctx.moveTo((region.x * scale) + (1 * scale), (region.y * scale));
+            ctx.lineTo((region.x * scale) + (8 * scale), (region.y * scale));
+            ctx.stroke();
 
+            
+        }
+
+        
         if (isSelected) {
             ctx.beginPath();
             ctx.setLineDash([4]);
+            ctx.strokeStyle = strokeColor;
             ctx.arc((region.x * scale), (region.y * scale), (8 * scale), 0, 2 * Math.PI);
             ctx.stroke();
         }
-
 
 
 
@@ -3166,6 +3190,9 @@ function displayImageTemps() {
 }
 
 function toggleTemps() {
+    if (cameraEditor.isEditing) {
+        hasEdited = true;
+    }
     hideTips();
     cameraEditor.isViewingCelsius = !cameraEditor.isViewingCelsius;
     hideTips();
@@ -3648,7 +3675,7 @@ function getApiSettings() {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         return { "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
     }
-    else if (location.href.indexOf('5500') > -1) {
+    else if (false && location.href.indexOf('5500') > -1) {
         return { "isPost": false, "url": "", "rootUrl": "" };//running locally
     }
     else {
@@ -3862,11 +3889,11 @@ function cancelCameraCallback() {
 }
 
 let alertCallback = null;
-function showAlertDialog(callback, messageTitle, messageBody) {
+function showAlertDialog(callback, messageTitle, messageBody, escapeBody) {
     alertCallback = callback;
     hideUI();
     document.getElementById('dialogAlertTitle').innerHTML = escapeHTML(messageTitle);
-    document.getElementById('dialogAlertBody').innerHTML = escapeHTML(messageBody);
+    document.getElementById('dialogAlertBody').innerHTML = escapeBody ? escapeHTML(messageBody) : messageBody;
     document.getElementById('dialogAlert').style.display = '';
 }
 
@@ -3924,7 +3951,7 @@ function saveCamera() {
     }
     else {
         if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == unknownCameraName || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
-            showAlertDialog(null, 'Rename Camera', 'Please rename the camera before saving it.');
+            showAlertDialog(null, 'Rename Camera', 'Please rename the camera before saving it.', true);
             return;
         }
     }
@@ -3988,7 +4015,7 @@ function assignRegionsMapIndexes(regions) {
             }
             else {
                 indexes.sort(function (a, b) { return a - b });
-                console.log('region ' + region.name + ' has ' + indexes.length + ' valid map indexes');
+                
             }
 
             region.mapIndexes = indexes;
@@ -4019,6 +4046,7 @@ function callSaveCameras(camera) {
             usbId: camera.usbId,
             image: rawTiffImageData,
             configuration: {
+                "displayTemperatureInFahrenheit": !cameraEditor.isViewingCelsius,
                 "temperaturesInCelsius": tempsCelsius,
                 "dateCaptured": null,
                 "rawThermalData": null,
@@ -4044,7 +4072,7 @@ function callSaveCameras(camera) {
         .then(response => {
             if (!response.ok) {
                 console.error('response not ok');
-                this.apicamerasSaveReceived();
+                this.apicamerasSaveReceived('Error Saving', 'There was an error saving the camera.', true);
             }
             return response.json();
         })
@@ -4054,18 +4082,48 @@ function callSaveCameras(camera) {
             if (typeof scriptReturnValue == 'string') {
                 scriptReturnValue = JSON.parse(scriptReturnValue);
             }
-            console.log('camera(s) saved');
-            this.apicamerasSaveReceived();
+            if (scriptReturnValue != null && scriptReturnValue.errorMessage != null && scriptReturnValue.errorMessage != "") {
+                this.apicamerasSaveReceived('Error Saving', scriptReturnValue.errorMessage, true);
+            }
+            else {
+                let sb = '';
+                if (scriptReturnValue != null && scriptReturnValue.paths != null && scriptReturnValue.paths.length > 0) {
+                    sb += '<h3>A system reboot will be needed for the sensors to be monitored.</h3>';
+                    sb += '<div>The following sensors were created:</div>';
+                    sb += '<ol>';
+                    for (let i = 0; i < scriptReturnValue.paths.length; i++) {
+                        let path = scriptReturnValue.paths[i];
+                        sb += '<li>';
+                        if (path.MeasurementName != null && path.MeasurementName != '') {
+                            sb += escapeHTML(path.Path) + '&nbsp;-&nbsp;' + escapeHTML(path.MeasurementName);
+                        }
+                        else {
+                            sb += escapeHTML(path.Path);
+                        }
+
+                        sb += '</li>';
+                    }
+                    sb += '</ol>';
+                }
+                this.apicamerasSaveReceived('Saved Successfully', sb, false);
+            }
+
+
 
         })
         .catch(error => {
-            console.error('catch fetch saveCamera', error);
-            this.apicamerasSaveReceived();
+
+            this.apicamerasSaveReceived('Error Saving', 'There was an error saving the camera.');
         })
 }
 
-function apicamerasSaveReceived() {
+function apicamerasSaveReceived(title, message, escapeBody) {
     hideBusy();
+    showAlertDialog(saveOKDialog, title, message, escapeBody);
+
+}
+
+function saveOKDialog() {
     cameraEditor.selectedCameraIndex = -1;
     cameraEditor.cameras = [];
     refreshCameras();
@@ -4096,14 +4154,14 @@ function renameCameraCallback(newName) {
         }
 
         if (newName.length > regionEditor.maxNameLength) {
-            showAlertDialog(null, 'Rename Camera', 'name too long, max ' + regionEditor.maxNameLength + ' characters');
+            showAlertDialog(null, 'Rename Camera', 'name too long, max ' + regionEditor.maxNameLength + ' characters', true);
             return;
         }
         for (let i = 0; i < newName.length; i++) {
             let c = newName.charAt(i);
             if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == ' ')) {
 
-                showAlertDialog(null, 'Rename Camera', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and spaces are allowed.');
+                showAlertDialog(null, 'Rename Camera', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and spaces are allowed.', true);
                 return;
             }
         }
@@ -4114,7 +4172,7 @@ function renameCameraCallback(newName) {
                 continue;
             }
             if ((cameraEditor.cameras[i].existingName + "").toLowerCase() == newName.toLowerCase()) {
-                showAlertDialog(null, 'Rename Camera', 'The camera name is already in use');
+                showAlertDialog(null, 'Rename Camera', 'The camera name is already in use', true);
                 return;
             }
         }
@@ -4171,7 +4229,7 @@ function base64ToArray(base64) {
 function apiLiveCameraReceived(jsonResult) {
     hideBusy();
     if (jsonResult == null || jsonResult.liveCamera == null) {
-        showAlertDialog(null, 'Camera Error', 'There was an error locating the live camera image.');
+        showAlertDialog(null, 'Camera Error', 'There was an error locating the live camera image.', true);
         return;
     }
     let liveCamera = jsonResult.liveCamera;
@@ -4239,13 +4297,13 @@ function getSavedCameraImage(src, usbId) {
         }
         else {
             hideBusy();
-            showAlertDialog(null, 'Camera Error', 'There was an error loading the camera image.');
+            showAlertDialog(null, 'Camera Error', 'There was an error loading the camera image.', true);
         }
 
     };
     xhr.onerror = function () {
         hideBusy();
-        showAlertDialog(null, 'Camera Error', 'There was an error loading the camera image.');
+        showAlertDialog(null, 'Camera Error', 'There was an error loading the camera image.', true);
     };
     xhr.send();
 }
@@ -4276,7 +4334,7 @@ function changeCamera(cameraIndex, editing) {
             getLiveCameraImage(usbId);
         }
         else {
-            showAlertDialog(null, 'Camera Error', 'There is no image for this camera available.');
+            showAlertDialog(null, 'Camera Error', 'There is no image for this camera available.', true);
         }
     }
     else {
@@ -4348,9 +4406,7 @@ function imgLoaded(e) {
         if (regionEditor.regions.length > 0) {
             regionEditor.selectedRegionIndex = 0;
         }
-        else {
-            console.log('No Existing Spots Found');
-        }
+
         if (thermalData.distanceMap != null) {
             distanceMap = [...thermalData.distanceMap];
         }
@@ -4364,6 +4420,7 @@ function imgLoaded(e) {
         else {
             materialMap = new Array(canvas.width * canvas.height);
         }
+        cameraEditor.isViewingCelsius = !(thermalData.displayTemperatureInFahrenheit == true);
 
         imageFilter = 'inferno';
         activeLayer = 'Spots';
@@ -4697,6 +4754,10 @@ function zoomRegionEditor(scale) {
     //Zoom Is not Part of History
 }
 
+function capitalizeFirstLetter(val) {
+    return val.charAt(0).toUpperCase() + val.slice(1);
+}
+
 function addRegion(regionType) {
 
     let camera = null;
@@ -4726,7 +4787,7 @@ function addRegion(regionType) {
 
     let colorToUse = 'Lime';
 
-    let regionPrefix = regionType;
+    let regionPrefix = capitalizeFirstLetter(regionType);
     let regionName = '';
     let regionNameIndex = 0;
     //create a unique region name
