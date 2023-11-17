@@ -2182,10 +2182,10 @@ function drawRegion(ctx, scale, region, isSelected, strokeColor, fillColor, draw
             ctx.lineTo((region.x * scale) + (8 * scale), (region.y * scale));
             ctx.stroke();
 
-            
+
         }
 
-        
+
         if (isSelected) {
             ctx.beginPath();
             ctx.setLineDash([4]);
@@ -3783,7 +3783,7 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
         }
     }
     cameraEditor.cameras = cameras;
-    changeCamera(cameraEditor.selectedCameraIndex, false);
+    changeCamera(cameraEditor.selectedCameraIndex, false,false);
 }
 
 function hideUI() {
@@ -3792,6 +3792,7 @@ function hideUI() {
     document.getElementById('dialogConfirm').style.display = 'none';
     document.getElementById('dialogPrompt').style.display = 'none';
     document.getElementById('cameraTools').style.display = 'none';
+    document.getElementById('cameraAssignLiveButtons').style.display = 'none';
     document.getElementById('cameraEditTools').style.display = 'none';
     document.getElementById('rowSpotTools').style.display = 'none';
     document.getElementById('rowMaterialTools').style.display = 'none';
@@ -3806,19 +3807,98 @@ function setStatusText(text, color, encode) {
     document.getElementById('statusText').style.color = color;
 }
 
+function assignLiveCameraToSavedCamera(camIndex, liveIndex){
+    if(camIndex > -1 && 
+        camIndex < cameraEditor.cameras.length && 
+        liveIndex > -1 && 
+        liveIndex < cameraEditor.cameras.length
+        && camIndex != liveIndex){
+        let liveCam = cameraEditor.cameras[liveIndex];
+        let cam = cameraEditor.cameras[camIndex];
+        if(liveCam != null && cam != null
+            && !liveCam.isKnown && cam.isKnown && (liveCam.usbId != null && liveCam.usbId != '')){
+            cam.usbId = liveCam.usbId;
+            changeCamera(camIndex, true, true);
+        }
+    }
+}
+
+function showAssignableCameras() {
+    
+    //if there are configured cameras but they aren't linked to a usbid because no match found
+    //the camera can be relinked by viewing a live camera and clicking the assign button.
+    var elm = document.getElementById('cameraAssignLiveButtons');
+    let sb = '';
+    let foundAssignableCamera = false;
+    if (cameraEditor != null &&
+            cameraEditor.cameras != null && 
+            cameraEditor.cameras.length > 0 && 
+            cameraEditor.selectedCameraIndex > -1 && 
+            cameraEditor.selectedCameraIndex < cameraEditor.cameras.length) {
+        let liveCamera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+       
+        if (!liveCamera.isKnown && liveCamera.usbId != null && liveCamera.usbId != '') {
+            let liveIndex = cameraEditor.selectedCameraIndex;
+            for (let i = 0; i< cameraEditor.cameras.length; i++) {
+                let camera = cameraEditor.cameras[i];
+                //we want the buttons to line up beneath the existing buttons so hide the buttons if
+                //is a camera that can't be assignd.
+                let strButtonStyle = ' style="visibility:hidden" ';
+                if(camera.isKnown && camera.canEdit && (camera.usbId == null || camera.usbId == '')){
+                    strButtonStyle = '';
+                    foundAssignableCamera = true;
+                }
+                let strIndex = i.toString().padStart(2, '0');
+                sb += '<button ' + strButtonStyle + ' id="btnAssignCam' + strIndex + '" onclick="assignLiveCameraToSavedCamera(' + i + ',' + liveIndex + ')" class="resizebutton2">';
+                sb += '<div style="line-height: 26px;">';
+                if (!camera.isOnline) {
+                    sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:-4px" class="regionditortextsub3">Offline</div>';
+                }
+                else {
+                    sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:-4px" class="regionditortextsub3">Online</div>';
+                }
+                sb += '<div class="regioneditortext" style="margin-top:-15px">Assign Image To</div>';
+                //camera names were already sanitized
+                let strStyle = '';
+                if (camera.name == unknownCameraName) {
+                    strStyle = ' style="color:red"';
+                }
+                sb += '<div id="valCamAssign' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + escapeHTML(camera.name) + '</div>';
+
+                sb += '</div>';
+                sb += '</button>';
+                
+            }
+        }
+    }
+    if(foundAssignableCamera){
+        elm.innerHTML = sb;
+        elm.style.display = '';
+    }
+    else{
+        elm.innerHTML = '';
+        elm.style.display = 'none';
+    }
+    
+}
+
 function showUI() {
     if (cameraEditor.isEditing) {
         document.getElementById('cameraEditTools').style.display = '';
     }
     else {
         document.getElementById('cameraTools').style.display = '';
+        
     }
 
-    document.getElementById("rowSpotTools").style.display = (activeLayer != 'Spots' ? 'none' : '');
-    document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
-    document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
-    document.getElementById("regionEditorAnnotations").style.display = '';
-    document.getElementById('touchTools').style.display = '';
+    if (cameraEditor.selectedCameraIndex > -1) {
+        showAssignableCameras();
+        document.getElementById("rowSpotTools").style.display = (activeLayer != 'Spots' ? 'none' : '');
+        document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
+        document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
+        document.getElementById("regionEditorAnnotations").style.display = '';
+        document.getElementById('touchTools').style.display = '';
+    }
 }
 
 function deleteCamera() {
@@ -4015,7 +4095,7 @@ function assignRegionsMapIndexes(regions) {
             }
             else {
                 indexes.sort(function (a, b) { return a - b });
-                
+
             }
 
             region.mapIndexes = indexes;
@@ -4207,7 +4287,7 @@ function getLiveCameraImage(usbId) {
             if (typeof scriptReturnValue == 'string') {
                 scriptReturnValue = JSON.parse(scriptReturnValue);
             }
-
+            this.showAssignableCameras();
             this.apiLiveCameraReceived(scriptReturnValue);
 
         })
@@ -4309,9 +4389,12 @@ function getSavedCameraImage(src, usbId) {
 }
 
 
-function changeCamera(cameraIndex, editing) {
+function changeCamera(cameraIndex, editing, startWithHasEdited) {
     regionEditor = null;
     hasEdited = false;
+    if(editing && startWithHasEdited){
+        hasEdited = true;
+    };
     activeLayer = 'Spots';
     activeTool = 'look';
     //activeLayer = 'Spots';
@@ -4497,7 +4580,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                 }
                 else {
                     setStatusText('Viewing ' + camera.name + ' Camera', 'white', true);
-                    sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',' + (camera.canEdit ? 'true' : 'false') + ')" class="resizebutton2" style="border-color:white">';
+                    sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',' + (camera.canEdit ? 'true' : 'false') + ',false)" class="resizebutton2" style="border-color:white">';
                     sb += '<div style="line-height: 14px;">';
                     if (!camera.isOnline) {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>';
@@ -4524,7 +4607,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
 
             }
             else if (!editing) {
-                sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',false)" class="resizebutton2">';
+                sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',false,false)" class="resizebutton2">';
 
                 sb += '<div style="line-height: 26px;">';
                 if (!camera.isOnline) {
