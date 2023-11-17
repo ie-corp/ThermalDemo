@@ -4269,11 +4269,11 @@ function renameCameraCallback(newName) {
 
 }
 
-function getLiveCameraImage(usbId) {
+function getLiveCameraImage(usbId,url) {
 
     showBusy(true);
     let scriptName = 'rse_thermalcameraslive_get';
-    getFetch(scriptName, { "usbId": usbId })
+    getFetch(scriptName, { "usbId": usbId, "url":url })
         .then(response => {
             if (!response.ok) {
                 console.error('response not ok');
@@ -4322,6 +4322,14 @@ function apiLiveCameraReceived(jsonResult) {
         DateTime timeStamp
     */
 
+    if(jsonResult.isSavedImage){
+        document.getElementById('btnRefreshLiveImage').style.borderColor = '';
+        document.getElementById('btnRefreshSavedImage').style.borderColor = 'white';
+    }
+    else{
+        document.getElementById('btnRefreshLiveImage').style.borderColor = 'white';
+        document.getElementById('btnRefreshSavedImage').style.borderColor = '';
+    }
 
     //brgImageData is a byte[] that get converted to a base64 string by the c# Serializer
     rawTiffImageData = base64ToArray(liveCamera.bgrImageData);
@@ -4370,6 +4378,9 @@ function getSavedCameraImage(src, usbId) {
     xhr.responseType = "arraybuffer";
     xhr.onload = function (e) {
         if (xhr.status === 200 || xhr.status == 0) {
+            
+            document.getElementById('btnRefreshLiveImage').style.borderColor = '';
+            document.getElementById('btnRefreshSavedImage').style.borderColor = 'white';
             imgLoaded(e);
             if (usbId != null && usbId != "") {
                 getLiveCameraImage(usbId);
@@ -4390,6 +4401,7 @@ function getSavedCameraImage(src, usbId) {
 
 
 function changeCamera(cameraIndex, editing, startWithHasEdited) {
+   
     regionEditor = null;
     hasEdited = false;
     if(editing && startWithHasEdited){
@@ -4407,14 +4419,28 @@ function changeCamera(cameraIndex, editing, startWithHasEdited) {
 
         cameraEditor.selectedCameraIndex = Math.max(0, Math.min(cameraIndex, cameraEditor.cameras.length - 1));
         let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+
+        document.getElementById('btnRefreshLiveImage').style.visibility = 'hidden';
+        document.getElementById('btnRefreshSavedImage').style.visibility = 'hidden';
+        document.getElementById('btnRefreshLiveImage').style.borderColor = '';
+        document.getElementById('btnRefreshSavedImage').style.borderColor = '';
+
+
         let usbId = camera.usbId;
         let src = camera.url;
         if (src != null && src != "") {
+            document.getElementById('btnRefreshSavedImage').style.visibility = 'visible';
+            document.getElementById('btnRefreshSavedImage').style.borderColor = 'white';
+            if (usbId != null && usbId != ''){
+                document.getElementById('btnRefreshLiveImage').style.visibility = 'visible';
+            }
             getSavedCameraImage(src, usbId);
 
         }
         else if (usbId != null && usbId != '') {
-            getLiveCameraImage(usbId);
+            document.getElementById('btnRefreshLiveImage').style.visibility = 'visible';
+            document.getElementById('btnRefreshLiveImage').style.borderColor = 'white';
+            getLiveCameraImage(usbId,null);
         }
         else {
             showAlertDialog(null, 'Camera Error', 'There is no image for this camera available.', true);
@@ -4428,11 +4454,22 @@ function changeCamera(cameraIndex, editing, startWithHasEdited) {
     }
 }
 
+function refreshSavedImage(){
+    let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+    if(camera.isKnown){
+        let url = camera.url;
+        if (url != null && url != "") {
+            getLiveCameraImage(null,camera.url);
+        }
+    }
+}
+
+
 function refreshLiveImage() {
     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
     let usbId = camera.usbId;
     if (usbId != null && usbId != "") {
-        getLiveCameraImage(usbId);
+        getLiveCameraImage(usbId,null);
     }
 }
 

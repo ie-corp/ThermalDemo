@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>Thermal</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/thermalstyle.css">
     <script src="js/UTIF.js"></script>
     <script src="js/thermal.js"></script>
     <script>
@@ -260,7 +260,25 @@
                 </div>
             </button>
 
+           
 
+            <button id="btnRefreshLiveImage" onclick="refreshLiveImage()" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Refresh</div>
+                    <div style="margin-bottom:10px" class="regioneditortext2">Live</div>
+                    <div class="regioneditortext2">Image</div>
+                </div>
+            </button>
+            
+            <button id="btnRefreshSavedImage" onclick="refreshSavedImage()" class="resizebutton">
+                <div style="line-height: 19px;">
+                    <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Show</div>
+                    <div style="margin-bottom:10px" class="regioneditortext2">Saved</div>
+                    <div class="regioneditortext2">Image</div>
+                </div>
+            </button>
+
+            <div style="width:138px"></div>
 
             <button id="btnSaveCamera" onclick="saveCamera()" class="resizebutton" style="background-color:green">
                 <div style="line-height: 4px;">
@@ -317,16 +335,11 @@
                     </svg>
                 </div>
             </button>
+            <div style="width:8px"></div>
 
+            
 
-
-            <button id="btnRefreshLiveImage" onclick="refreshLiveImage()" class="resizebutton">
-                <div style="line-height: 19px;">
-                    <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Get</div>
-                    <div style="margin-bottom:10px" class="regioneditortext2">Live</div>
-                    <div class="regioneditortext2">Image</div>
-                </div>
-            </button>
+            
 
 
         </div>
@@ -518,7 +531,7 @@
                 </div>
             </button>
 
-            <div style="width:136px;">
+            <div style="width:328px;">
             </div>
 
             <button id="btnClearMaterial" onclick="clearMaterialMap()" class="resizebutton">
@@ -607,7 +620,7 @@
                 </div>
             </button>
 
-            <div style="width:8px;">
+            <div style="width:200px;">
             </div>
 
             <button id="btnClearDistance" onclick="clearDistanceMap()" class="resizebutton">
