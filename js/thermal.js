@@ -243,12 +243,7 @@ function setActiveLayer(layer) {
         console.error('invalid layer: ' + layer);
         return;
     }
-    if (activeLayer == 'inferno') {
-        imageFilter = 'none';
-    }
-    else {
-        imageFilter = 'none';
-    }
+
     activeLayer = layer;
     activeTool = 'look';
     recalcEditor();
@@ -626,6 +621,15 @@ function setButtons() {
     const inactiveToolColor = 'white';
 
     document.getElementById("rowSpotTools").style.display = (activeLayer != 'Spots' ? 'none' : '');
+    if (activeLayer == 'Spots') {
+        document.getElementById("btnToggleTemps").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+        document.getElementById("btnImageHighTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+        document.getElementById("btnImageAverageTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+        document.getElementById("btnImageLowTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+        document.getElementById("btnRegionHighTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+        document.getElementById("btnRegionAverageTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+        document.getElementById("btnRegionLowTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+    }
     document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
     document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
 
@@ -1737,8 +1741,8 @@ function getCalcTempsFromPointsOnCanvas(points) {
 
         let index = getIndexOfMapFromXY(point.x, point.y, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally);
 
-        if (index > -1 && index < tempsCelsius.length) {
-            let temp = tempsCelsius[index];
+        if (index > -1) {
+            let temp = (tempsCelsius != null && index < tempsCelsius.length) ? tempsCelsius[index] : null;
 
             if (temp != null) {
 
@@ -3544,8 +3548,8 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
     }
 
 
-    if (indexMap > -1 && indexMap < tempsCelsius.length) {
-        let tempC = tempsCelsius[indexMap];
+    if (indexMap > -1) {
+        let tempC = (tempsCelsius != null && indexMap < tempsCelsius.length) ? tempsCelsius[indexMap]: null;
         let ambientTempC = tempC;
         adjTempC = tempC;
         let strDBTempC = '--';
@@ -3579,13 +3583,27 @@ function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMous
         let strPixelTemp = cameraEditor.isViewingCelsius ? `${getDisplayTempFromCelsius(tempC, false)}&deg;C` : `${getDisplayTempFromCelsius(tempC, true)}&deg;F`
         let strFinalTemp = cameraEditor.isViewingCelsius ? `${strDBTempC}` : `${strDBTempF}`;
         //index:${indexMap}
-        tooltip.innerHTML = `<span style="white-space:nowrap;font-size:13px;color:gray">X: ${posX}, Y: ${posY}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:gray">Ambient Temp:&nbsp;${strAmbientTemp}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:gray">Pixel Temp:&nbsp;${strPixelTemp}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:${strDistanceColor}">Distance:&nbsp;${distanceText}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Matl:&nbsp;</span><span style="white-space:nowrap;font-size:12px;width:100px;text-overflow: ellipsis;overflow: hidden;color:${strMaterialColor}">${materialText}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Emissivity:&nbsp;${emissivityText}</span><br/>` +
-            `<span style="white-space:nowrap;font-size:13px;color:orange">Temp:&nbsp;${strFinalTemp}</span>`;
+        let camera = null;
+        let isThermalCamera = false;
+        if (cameraEditor != null && cameraEditor.cameras != null && cameraEditor.selectedCameraIndex > -1 && cameraEditor.selectedCameraIndex < cameraEditor.cameras.length) {
+            camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+            isThermalCamera = camera.isThermalCamera;
+        }
+
+        let sb = '';
+
+        sb+= `<span style="white-space:nowrap;font-size:13px;color:gray">X: ${posX}, Y: ${posY}</span><br/>`;
+        if(isThermalCamera){
+            sb+= `<span style="white-space:nowrap;font-size:13px;color:gray">Ambient Temp:&nbsp;${strAmbientTemp}</span><br/>`;
+            sb+= `<span style="white-space:nowrap;font-size:13px;color:gray">Pixel Temp:&nbsp;${strPixelTemp}</span><br/>`;
+        }
+        sb+= `<span style="white-space:nowrap;font-size:13px;color:${strDistanceColor}">Distance:&nbsp;${distanceText}</span><br/>`;
+        sb+= `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Matl:&nbsp;</span><span style="white-space:nowrap;font-size:12px;width:100px;text-overflow: ellipsis;overflow: hidden;color:${strMaterialColor}">${materialText}</span><br/>`;
+        if(isThermalCamera){
+            sb+= `<span style="white-space:nowrap;font-size:13px;color:${strMaterialColor}">Emissivity:&nbsp;${emissivityText}</span><br/>`;
+            sb+= `<span style="white-space:nowrap;font-size:13px;color:orange">Temp:&nbsp;${strFinalTemp}</span>`;
+        }
+        tooltip.innerHTML = sb;
 
     }
     else {
@@ -3725,8 +3743,9 @@ function refreshCameras() {
     getFetch(scriptName, {})
         .then(response => {
             if (!response.ok) {
-                console.error('response not ok');
-                this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
+                this.showAlertDialog(()=>{
+                    this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
+                },'Network Error', 'Network Error refreshing cameras.',true);
             }
             return response.json();
         })
@@ -3740,8 +3759,10 @@ function refreshCameras() {
 
         })
         .catch(error => {
-            console.error('catch fetch refreshCameras', error);
-            this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
+            this.showAlertDialog(()=>{
+                this.apiGetCamerasReceived(camPrefix, { "cameras": [] });
+            },'Network Error', 'Network Error refreshing cameras.',true);
+            
         })
 }
 
@@ -3761,11 +3782,11 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
                 "existingName": (camera.isKnown ? camera.name : null),
                 "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                 "isOnline": camera.isOnline,
+                "isThermalCamera": camera.isThermalCamera,
                 "isKnown": camera.isKnown,
                 "canEdit": camera.canEdit,
                 "materialMap": null,
                 "distanceMap": null,
-                "canEdit": camera.canEdit,
                 "canDeleteCamera": camera.canDeleteCamera,
                 "canRenameCamera": camera.canRenameCamera,
                 "canEditRotation": camera.canEditRotation,
@@ -3783,7 +3804,7 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
         }
     }
     cameraEditor.cameras = cameras;
-    changeCamera(cameraEditor.selectedCameraIndex, false,false);
+    changeCamera(cameraEditor.selectedCameraIndex, false, false);
 }
 
 function hideUI() {
@@ -3807,16 +3828,16 @@ function setStatusText(text, color, encode) {
     document.getElementById('statusText').style.color = color;
 }
 
-function assignLiveCameraToSavedCamera(camIndex, liveIndex){
-    if(camIndex > -1 && 
-        camIndex < cameraEditor.cameras.length && 
-        liveIndex > -1 && 
+function assignLiveCameraToSavedCamera(camIndex, liveIndex) {
+    if (camIndex > -1 &&
+        camIndex < cameraEditor.cameras.length &&
+        liveIndex > -1 &&
         liveIndex < cameraEditor.cameras.length
-        && camIndex != liveIndex){
+        && camIndex != liveIndex) {
         let liveCam = cameraEditor.cameras[liveIndex];
         let cam = cameraEditor.cameras[camIndex];
-        if(liveCam != null && cam != null
-            && !liveCam.isKnown && cam.isKnown && (liveCam.usbId != null && liveCam.usbId != '')){
+        if (liveCam != null && cam != null
+            && !liveCam.isKnown && cam.isKnown && (liveCam.usbId != null && liveCam.usbId != '')) {
             cam.usbId = liveCam.usbId;
             changeCamera(camIndex, true, true);
         }
@@ -3824,27 +3845,27 @@ function assignLiveCameraToSavedCamera(camIndex, liveIndex){
 }
 
 function showAssignableCameras() {
-    
+
     //if there are configured cameras but they aren't linked to a usbid because no match found
     //the camera can be relinked by viewing a live camera and clicking the assign button.
     var elm = document.getElementById('cameraAssignLiveButtons');
     let sb = '';
     let foundAssignableCamera = false;
     if (cameraEditor != null &&
-            cameraEditor.cameras != null && 
-            cameraEditor.cameras.length > 0 && 
-            cameraEditor.selectedCameraIndex > -1 && 
-            cameraEditor.selectedCameraIndex < cameraEditor.cameras.length) {
+        cameraEditor.cameras != null &&
+        cameraEditor.cameras.length > 0 &&
+        cameraEditor.selectedCameraIndex > -1 &&
+        cameraEditor.selectedCameraIndex < cameraEditor.cameras.length) {
         let liveCamera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-       
+
         if (!liveCamera.isKnown && liveCamera.usbId != null && liveCamera.usbId != '') {
             let liveIndex = cameraEditor.selectedCameraIndex;
-            for (let i = 0; i< cameraEditor.cameras.length; i++) {
+            for (let i = 0; i < cameraEditor.cameras.length; i++) {
                 let camera = cameraEditor.cameras[i];
                 //we want the buttons to line up beneath the existing buttons so hide the buttons if
                 //is a camera that can't be assignd.
                 let strButtonStyle = ' style="visibility:hidden" ';
-                if(camera.isKnown && camera.canEdit && (camera.usbId == null || camera.usbId == '')){
+                if (camera.isKnown && camera.canEdit && (camera.usbId == null || camera.usbId == '') && camera.isThermalCamera == liveCamera.isThermalCamera) {
                     strButtonStyle = '';
                     foundAssignableCamera = true;
                 }
@@ -3867,19 +3888,19 @@ function showAssignableCameras() {
 
                 sb += '</div>';
                 sb += '</button>';
-                
+
             }
         }
     }
-    if(foundAssignableCamera){
+    if (foundAssignableCamera) {
         elm.innerHTML = sb;
         elm.style.display = '';
     }
-    else{
+    else {
         elm.innerHTML = '';
         elm.style.display = 'none';
     }
-    
+
 }
 
 function showUI() {
@@ -3888,12 +3909,29 @@ function showUI() {
     }
     else {
         document.getElementById('cameraTools').style.display = '';
-        
+
     }
 
     if (cameraEditor.selectedCameraIndex > -1) {
         showAssignableCameras();
+        let camera = null;
+        if (cameraEditor.cameras != null && cameraEditor.selectedCameraIndex > -1 && cameraEditor.selectedCameraIndex < cameraEditor.cameras.length) {
+            camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+        }
         document.getElementById("rowSpotTools").style.display = (activeLayer != 'Spots' ? 'none' : '');
+
+        
+        if (activeLayer == 'Spots') {
+            document.getElementById("btnToggleTemps").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+            document.getElementById("btnImageHighTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+            document.getElementById("btnImageAverageTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+            document.getElementById("btnImageLowTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+            document.getElementById("btnRegionHighTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+            document.getElementById("btnRegionAverageTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+            document.getElementById("btnRegionLowTemp").style.display = (camera == null || !camera.isThermalCamera || activeLayer != 'Spots' ? 'none' : '');
+        }
+
+
         document.getElementById("rowMaterialTools").style.display = (activeLayer != 'Matl' ? 'none' : '');
         document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
         document.getElementById("regionEditorAnnotations").style.display = '';
@@ -3970,6 +4008,7 @@ function cancelCameraCallback() {
 
 let alertCallback = null;
 function showAlertDialog(callback, messageTitle, messageBody, escapeBody) {
+    hideBusy();
     alertCallback = callback;
     hideUI();
     document.getElementById('dialogAlertTitle').innerHTML = escapeHTML(messageTitle);
@@ -4269,11 +4308,11 @@ function renameCameraCallback(newName) {
 
 }
 
-function getLiveCameraImage(usbId,url) {
+function getLiveCameraImage(usbId, url) {
 
     showBusy(true);
     let scriptName = 'rse_thermalcameraslive_get';
-    getFetch(scriptName, { "usbId": usbId, "url":url })
+    getFetch(scriptName, { "usbId": usbId, "url": url })
         .then(response => {
             if (!response.ok) {
                 console.error('response not ok');
@@ -4322,11 +4361,11 @@ function apiLiveCameraReceived(jsonResult) {
         DateTime timeStamp
     */
 
-    if(jsonResult.isSavedImage){
+    if (jsonResult.isSavedImage) {
         document.getElementById('btnRefreshLiveImage').style.borderColor = '';
         document.getElementById('btnRefreshSavedImage').style.borderColor = 'white';
     }
-    else{
+    else {
         document.getElementById('btnRefreshLiveImage').style.borderColor = 'white';
         document.getElementById('btnRefreshSavedImage').style.borderColor = '';
     }
@@ -4360,10 +4399,18 @@ function apiLiveCameraReceived(jsonResult) {
         regionEditor.imageNativeHeight = canvas.height;
         distanceMap = new Array(canvas.width * canvas.height);
         materialMap = new Array(canvas.width * canvas.height);
+
         imageScale = 3.0;
         imageFilter = 'inferno';
         activeLayer = 'Spots';
         activeTool = 'look';
+        if (cameraEditor != null && cameraEditor.cameras != null && cameraEditor.cameras.length > 0 && cameraEditor.selectedCameraIndex > -1) {
+            let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+            if (!camera.isThermalCamera) {
+                imageScale = 1;
+                imageFilter = 'none';
+            }
+        }
     }
 
     clearStoredImageData();
@@ -4378,7 +4425,7 @@ function getSavedCameraImage(src, usbId) {
     xhr.responseType = "arraybuffer";
     xhr.onload = function (e) {
         if (xhr.status === 200 || xhr.status == 0) {
-            
+
             document.getElementById('btnRefreshLiveImage').style.borderColor = '';
             document.getElementById('btnRefreshSavedImage').style.borderColor = 'white';
             imgLoaded(e);
@@ -4401,10 +4448,10 @@ function getSavedCameraImage(src, usbId) {
 
 
 function changeCamera(cameraIndex, editing, startWithHasEdited) {
-   
+
     regionEditor = null;
     hasEdited = false;
-    if(editing && startWithHasEdited){
+    if (editing && startWithHasEdited) {
         hasEdited = true;
     };
     activeLayer = 'Spots';
@@ -4431,7 +4478,7 @@ function changeCamera(cameraIndex, editing, startWithHasEdited) {
         if (src != null && src != "") {
             document.getElementById('btnRefreshSavedImage').style.visibility = 'visible';
             document.getElementById('btnRefreshSavedImage').style.borderColor = 'white';
-            if (usbId != null && usbId != ''){
+            if (usbId != null && usbId != '') {
                 document.getElementById('btnRefreshLiveImage').style.visibility = 'visible';
             }
             getSavedCameraImage(src, usbId);
@@ -4440,7 +4487,7 @@ function changeCamera(cameraIndex, editing, startWithHasEdited) {
         else if (usbId != null && usbId != '') {
             document.getElementById('btnRefreshLiveImage').style.visibility = 'visible';
             document.getElementById('btnRefreshLiveImage').style.borderColor = 'white';
-            getLiveCameraImage(usbId,null);
+            getLiveCameraImage(usbId, null);
         }
         else {
             showAlertDialog(null, 'Camera Error', 'There is no image for this camera available.', true);
@@ -4454,12 +4501,12 @@ function changeCamera(cameraIndex, editing, startWithHasEdited) {
     }
 }
 
-function refreshSavedImage(){
+function refreshSavedImage() {
     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-    if(camera.isKnown){
+    if (camera.isKnown) {
         let url = camera.url;
         if (url != null && url != "") {
-            getLiveCameraImage(null,camera.url);
+            getLiveCameraImage(null, camera.url);
         }
     }
 }
@@ -4469,7 +4516,7 @@ function refreshLiveImage() {
     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
     let usbId = camera.usbId;
     if (usbId != null && usbId != "") {
-        getLiveCameraImage(usbId,null);
+        getLiveCameraImage(usbId, null);
     }
 }
 
@@ -4545,6 +4592,14 @@ function imgLoaded(e) {
         imageFilter = 'inferno';
         activeLayer = 'Spots';
         activeTool = 'look';
+
+        if (cameraEditor != null && cameraEditor.cameras != null && cameraEditor.cameras.length > 0 && cameraEditor.selectedCameraIndex > -1) {
+            let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+            if (!camera.isThermalCamera) {
+                imageScale = 1;
+                imageFilter = 'none';
+            }
+        }
     }
     clearStoredImageData();
     hideBusy();
@@ -4572,6 +4627,13 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             imageScale = 3.0;
             imageFilter = 'inferno';
             imageRotation = 0;
+            if (cameraEditor != null && cameraEditor.cameras != null && cameraEditor.cameras.length > 0 && cameraEditor.selectedCameraIndex > -1) {
+                let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+                if (!camera.isThermalCamera) {
+                    imageScale = 1;
+                    imageFilter = 'none';
+                }
+            }
 
         }
     }
@@ -4631,8 +4693,8 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     else {
                         sb += '<div class="regioneditortext" style="margin-top:-12px;color:red">Read Only</div>';
                     }
-
-                    sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">Viewing</div>';
+                    let strViewing = camera.isThermalCamera ? 'Thermal Cam' : 'Picture Cam';
+                    sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">' + strViewing + '</div>';
                     let strStyle = 'margin-top:-2px;';
                     if (camera.name == unknownCameraName) {
                         strStyle += 'color:red;';
@@ -4646,20 +4708,22 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             else if (!editing) {
                 sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',false,false)" class="resizebutton2">';
 
-                sb += '<div style="line-height: 26px;">';
+                sb += '<div style="line-height: 14px;">';
                 if (!camera.isOnline) {
-                    sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:-4px" class="regionditortextsub3">Offline</div>';
+                    sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>';
                 }
                 else {
-                    sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:-4px" class="regionditortextsub3">Online</div>';
+                    sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
                 }
-                sb += '<div class="regioneditortext" style="margin-top:-15px">View Camera</div>';
+                sb += '<div class="regioneditortext" style="margin-top:-10px;">Tap To View</div>';
+                let strViewing = camera.isThermalCamera ? 'Thermal Cam' : 'Picture Cam';
+                sb += '<div style="margin-top:-6px" class="regionditortextsub3">' + strViewing + '</div>';
                 //camera names were already sanitized
-                let strStyle = '';
+                let strStyle = 'margin-top:-2px;';
                 if (camera.name == unknownCameraName) {
-                    strStyle = ' style="color:red"';
+                    strStyle += 'color:red;';
                 }
-                sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + escapeHTML(camera.name) + '</div>';
+                sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3" style="' + strStyle + '">' + escapeHTML(camera.name) + '</div>';
 
                 sb += '</div>';
                 sb += '</button>';
@@ -4865,7 +4929,7 @@ function zoomRegionEditor(scale) {
     if (value < 1) {
         value = 5;
     }
-    else if (value > 5) {
+    else if (value > 7) {
         value = 1;
     }
 
