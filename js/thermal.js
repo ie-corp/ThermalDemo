@@ -1817,6 +1817,8 @@ function updateSelectedRegionAttributes(region) {
     }
 
     let regionTemps = getRegionTemps(region);
+    console.log('region:' + JSON.stringify(region));
+    console.log('regionTemps: ' + JSON.stringify(regionTemps));
 
     document.getElementById("valRegionHighTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
@@ -3693,7 +3695,7 @@ function getApiSettings() {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         return { "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
     }
-    else if (false && location.href.indexOf('5500') > -1) {
+    else if (location.href.indexOf('5500') > -1) {
         return { "isPost": false, "url": "", "rootUrl": "" };//running locally
     }
     else {
