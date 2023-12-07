@@ -1694,12 +1694,12 @@ function setRegionIndex(regionIndex) {
     //I don't think this needs a undo.
 }
 
-function getRegionPointsOnCanvas(region, outlineOnly) {
+function getRegionPointsOnCanvas(region,imageRotation, imageMirrorHorizontally, outlineOnly) {
     if (region.type == 'point') {
         return [{ "x": region.x, "y": region.y }];//only one point
     }
     let canvas = document.createElement("canvas");
-    if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
+    if (imageRotation == 0 || imageRotation == 180) {
         canvas.width = regionEditor.imageNativeWidth;
         canvas.height = regionEditor.imageNativeHeight;
 
@@ -1804,7 +1804,7 @@ function getCalcTempsFromPointsOnCanvas(points) {
 
 function getRegionTemps(region) {
     //console.log('getting region temps')
-    let points = getRegionPointsOnCanvas(region, false);//This will return only points that are in bounds!
+    let points = getRegionPointsOnCanvas(region, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally, false);//This will return only points that are in bounds!
     return getCalcTempsFromPointsOnCanvas(points);
 
 }
@@ -2494,7 +2494,7 @@ function findIndexOfClosestRegion(x, y, ignoreList) {
             continue;
         }
         let region = regionEditor.regions[i];
-        let points = getRegionPointsOnCanvas(region, true);
+        let points = getRegionPointsOnCanvas(region, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally, true);
         let index = findIndexOfClosestPoint(x, y, points);
         if (index == -1) {
             continue;
@@ -4080,17 +4080,17 @@ function saveCamera() {
 }
 
 
-function adjustRegions(sourceRegions, imageMirrorHorizontally, originalRotation, desiredRotation, imageNativeWidth, imageNativeHeight) {
+function adjustRegions(sourceRegions, imageMirrorHorizontally, desiredMirrorHorizontally, originalRotation, desiredRotation, imageNativeWidth, imageNativeHeight) {
     if (sourceRegions == null || sourceRegions.length == 0) {
         return [];
     }
     let retRegions = JSON.parse(JSON.stringify(sourceRegions));
-    if (!imageMirrorHorizontally && originalRotation == desiredRotation) {
+    if (imageMirrorHorizontally == desiredMirrorHorizontally && originalRotation == desiredRotation) {
         return retRegions;
     }
 
 
-    if (imageMirrorHorizontally) {
+    if (imageMirrorHorizontally != desiredMirrorHorizontally) {
         mirrorRegions(retRegions);
     }
 
@@ -4109,16 +4109,16 @@ function adjustRegions(sourceRegions, imageMirrorHorizontally, originalRotation,
     return retRegions;
 }
 
-function assignRegionsMapIndexes(regions) {
+function assignRegionsMapIndexes(regions, imageRotation, imageMirrorHorizontally) {
 
     if (regions != null && regions.length > 0) {
         for (let i = 0; i < regions.length; i++) {
             let region = regions[i];
-            let tempPoints = getRegionPointsOnCanvas(region, false);//This will return only points that are in bounds!
+            let tempPoints = getRegionPointsOnCanvas(region, imageRotation, imageMirrorHorizontally, false);//This will return only points that are in bounds!
             let indexes = [];
             for (let j = 0; j < tempPoints.length; j++) {
                 let point = tempPoints[j];
-                let index = getIndexOfMapFromXY(point.x, point.y, regionEditor.imageRotation, regionEditor.imageMirrorHorizontally);
+                let index = getIndexOfMapFromXY(point.x, point.y, imageRotation, imageMirrorHorizontally);
                 if (index >= 0) {
                     if (index < tempsCelsius.length) {
                         indexes.push(index);
@@ -4152,14 +4152,26 @@ function callSaveCameras(camera) {
 
     let scriptName = 'rse_thermalcameras_save';
 
-    //the editor rotates the regions. We must unrotate unmirror them. when saving.
-    let saveRegions = adjustRegions(regionEditor.regions, regionEditor.imageMirrorHorizontally, regionEditor.imageRotation, 0, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
-    //order the regions.
+    let saveRegions = JSON.parse(JSON.stringify(regionEditor.regions));
 
+    
+    //the editor rotates the regions. We must unrotate unmirror them. when saving.
+    saveRegions = adjustRegions(saveRegions, regionEditor.imageMirrorHorizontally,false, regionEditor.imageRotation, 0, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
+    
+    //this must be done before rotating the regions because it uses current rotation info
+    assignRegionsMapIndexes(saveRegions,0,false);
+
+    //order the regions.
     saveRegions.sort(function (a, b) { return a.name.localeCompare(b.name) });
 
 
-    assignRegionsMapIndexes(saveRegions);
+    
+    /*
+    if(saveRegions.length > 0){
+        let lastRegion = saveRegions[saveRegions.length - 1];
+        console.log('index test:' + lastRegion.mapIndexes[0]);
+    }
+    */
 
     let myParms = {
         "saveInfo": {
@@ -4570,7 +4582,7 @@ function imgLoaded(e) {
         regionEditor.regions = thermalData.regions ?? [];
         //the editor expect these pre rotated and pre mirrored.
 
-        regionEditor.regions = adjustRegions(regionEditor.regions, regionEditor.imageMirrorHorizontally, 0, regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
+        regionEditor.regions = adjustRegions(regionEditor.regions, false, regionEditor.imageMirrorHorizontally, 0, regionEditor.imageRotation, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
 
         if (regionEditor.regions.length > 0) {
             regionEditor.selectedRegionIndex = 0;
