@@ -4171,6 +4171,7 @@ function callSaveCameras(camera) {
         let lastRegion = saveRegions[saveRegions.length - 1];
         console.log('index test:' + lastRegion.mapIndexes[0]);
     }
+    */
     
 
     let myParms = {
