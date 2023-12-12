@@ -13,6 +13,9 @@ let cameraEditor = {
     "isViewingCelsius": true,
     "showHotspotNumbers": false,
     "isEditing": false,
+    "minZoomLevel":1,
+    "maxZoomLevel":7,
+    "defaultZoomLevel":3,
     "cameras": [],
     "tags": [],
 };
@@ -211,7 +214,7 @@ let waiterTime = 100;
 
 const imageFilters = ['none', 'inferno', 'bluered', 'light', 'dark'];
 let imageFilter = imageFilters[1];
-let imageScale = 1.0;
+let imageScale = cameraEditor.defaultZoomLevel;
 
 function changeLayerNext(doNext) {
 
@@ -657,8 +660,8 @@ function setButtons() {
     document.getElementById("btnRotateImage").disabled = (!cameraEditor.isEditing || camera == null || !camera.canEditRotation);
     document.getElementById("btnMirrorImageHorizontally").disabled = (!cameraEditor.isEditing || camera == null || !camera.canEditMirror);
 
-    document.getElementById('btnSaveCamera').disabled = (!hasEdited || !cameraEditor.isEditing || camera == null || !camera.canEdit);
-    document.getElementById('btnSaveCamera').style.backgroundColor = (!hasEdited || !cameraEditor.isEditing || camera == null || !camera.canEdit) ? 'gray' : 'green';
+    document.getElementById('btnSaveCamera').disabled = (!cameraEditor.isEditing || camera == null || !camera.canEdit);
+    document.getElementById('btnSaveCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canEdit) ? 'gray' : 'green';
 
     document.getElementById('btnDeleteCamera').disabled = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown);
     document.getElementById('btnDeleteCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown) ? 'gray' : 'red';
@@ -1978,13 +1981,27 @@ function changeRegionNameCallback(newName) {
         if (newName != null && newName.trim() != "") {
             newName = newName.trim();
             if (newName.length > regionEditor.maxNameLength) {
-                showAlertDialog(null, 'Rename Spot', 'name too long, max ' + regionEditor.maxNameLength + ' characters', true);
+                showAlertDialog(null, 'Rename Spot', 'Name too long, max ' + regionEditor.maxNameLength + ' characters', true);
+                return;
+            }
+            else if (newName.toLowerCase() == 'image') {
+                showAlertDialog(null, 'Rename Spot', 'Name cannot be image', true);
                 return;
             }
             for (let i = 0; i < newName.length; i++) {
                 let c = newName.charAt(i);
                 if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= 9) || c == ' ')) {
                     showAlertDialog(null, 'Rename Spot', 'Invalid character in name: ' + c + ', only a-z, A-Z, 0-9 and spaces are allowed.', true);
+                    return;
+                }
+            }
+            for(let i=0;i<regionEditor.regions.length;i++){
+                if(i == regionEditor.selectedRegionIndex){
+                    continue;
+                }
+                let region2 = regionEditor.regions[i];
+                if(region2.name.toLowerCase() == newName.toLowerCase()){
+                    showAlertDialog(null, 'Rename Spot', 'Name already exists.', true);
                     return;
                 }
             }
@@ -4193,6 +4210,7 @@ function callSaveCameras(camera) {
                 "imageNativeHeight": regionEditor.imageNativeHeight,
                 "imageRotation": regionEditor.imageRotation,
                 "imageMirrorHorizontally": regionEditor.imageMirrorHorizontally,
+                "imageScale":imageScale
             }
 
 
@@ -4415,7 +4433,7 @@ function apiLiveCameraReceived(jsonResult) {
         distanceMap = new Array(canvas.width * canvas.height);
         materialMap = new Array(canvas.width * canvas.height);
 
-        imageScale = 3.0;
+        imageScale = cameraEditor.defaultZoomLevel;
         imageFilter = 'inferno';
         activeLayer = 'Spots';
         activeTool = 'look';
@@ -4565,7 +4583,13 @@ function imgLoaded(e) {
         tempsCelsius = new Array(canvas.width * canvas.height);
     }
     if (!cameraEditor.isEditing) {
-        imageScale = 3.0;
+        imageScale = thermalData.imageScale ?? cameraEditor.defaultZoomLevel;
+        console.log('image Scale set to: ' + thermalData.imageScale);
+        if(imageScale < cameraEditor.minZoomLevel || imageScale > cameraEditor.maxZoomLevel){
+            imageScale = cameraEditor.defaultZoomLevel;
+            console.warn('Image Scale Was Out Of Bounds');
+        }
+
         regionEditor = getEmptyRegionEditor();
         regionEditor.imageNativeWidth = canvas.width;
         regionEditor.imageNativeHeight = canvas.height;
@@ -4639,7 +4663,7 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
             regionEditor = getEmptyRegionEditor();
             materialMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
             distanceMap = new Array(regionEditor.imageNativeWidth * regionEditor.imageNativeHeight);
-            imageScale = 3.0;
+            imageScale = cameraEditor.defaultZoomLevel;
             imageFilter = 'inferno';
             imageRotation = 0;
             if (cameraEditor != null && cameraEditor.cameras != null && cameraEditor.cameras.length > 0 && cameraEditor.selectedCameraIndex > -1) {
@@ -4941,11 +4965,11 @@ function goRegionEditor() {
 function zoomRegionEditor(scale) {
     hideTips();
     let value = imageScale + scale;
-    if (value < 1) {
-        value = 5;
+    if (value < cameraEditor.minZoomLevel) {
+        value = cameraEditor.maxZoomLevel;
     }
-    else if (value > 7) {
-        value = 1;
+    else if (value > cameraEditor.maxZoomLevel) {
+        value = cameraEditor.minZoomLevel;
     }
 
     imageScale = value;
