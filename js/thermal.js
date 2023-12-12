@@ -3164,7 +3164,7 @@ function processScreenTouchCoordinates(offsetX, offsetY, isMouseMoveEvent) {
     }
 }
 
-function displayImageTemps() {
+function getImageTemps(){
     let arraySize = (regionEditor.imageNativeHeight * regionEditor.imageNativeWidth);
     let points = new Array(arraySize);
 
@@ -3185,8 +3185,14 @@ function displayImageTemps() {
         }
     }
 
+    return getCalcTempsFromPointsOnCanvas(points);
 
-    let regionTemps = getCalcTempsFromPointsOnCanvas(points);
+}
+
+function displayImageTemps() {
+    
+
+    let regionTemps = getImageTemps();
 
     document.getElementById("valImageHighTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valImageHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
@@ -4943,6 +4949,56 @@ function setupMouseEvents() {
 
         );
     });
+
+}
+
+function showTemp(showImageTemp,showHighTemp){
+    let regionTemps = null;
+    let x = null;
+    let y = null;
+    if(showImageTemp){
+        regionTemps = getImageTemps();
+        
+    }
+    else{
+        if(regionEditor.selectedRegionIndex >= 0 && regionEditor.regions != null && regionEditor.selectedRegionIndex < regionEditor.regions.length){
+            regionTemps = getRegionTemps(regionEditor.regions[regionEditor.selectedRegionIndex]);
+        }
+        
+    }
+    if(regionTemps != null){
+        if(showHighTemp){
+            x = regionTemps.highX;
+            y = regionTemps.highY;
+        }
+        else{
+            x = regionTemps.lowX;
+            y = regionTemps.lowY;
+        }
+        if(x != null && y!= null){
+            console.log('Show Temp x:' + x + ' y:' + y);
+            const image = document.querySelector("#regionEditorImage");
+            
+
+
+            let isLeftMouseClick = false;
+            let minY = image.offsetTop;
+            let maxY = image.offsetTop + image.offsetHeight - 1;
+            let minX = image.offsetLeft;
+            let maxX = image.offsetLeft + image.offsetWidth - 1;
+
+            let myX = minX + (x * imageScale);
+            let myY = minY + (y * imageScale);
+
+            let pageX = Math.max(Math.min(myX, maxX), minX);
+            let pageY = Math.max(Math.min(myY, maxY), minY);
+            let offsetX = pageX - image.offsetLeft - 1;
+            let offsetY = pageY - image.offsetTop - 1;
+            pointerMove(offsetX, offsetY, pageX, pageY, false, isLeftMouseClick);
+        }
+
+        
+    }
 
 }
 

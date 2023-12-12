@@ -356,7 +356,7 @@
                 </div>
             </button>
 
-            <button id="btnImageHighTemp" disabled class="resizebutton" style="background-color: black;">
+            <button id="btnImageHighTemp" onclick="showTemp(true,true)" class="resizebutton" style="background-color: black;">
                 <div style="line-height: 14px;">
                     <div class="regioneditortext2" style="margin-bottom:6px">Img Hi</div>
                     <div id="valImageHighTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
@@ -372,7 +372,7 @@
                 </div>
             </button>
 
-            <button id="btnImageLowTemp" disabled class="resizebutton" style="background-color: black;">
+            <button id="btnImageLowTemp" onclick="showTemp(true,false)" class="resizebutton" style="background-color: black;">
                 <div style="line-height: 14px;">
                     <div class="regioneditortext2" style="margin-bottom:6px">Img Lo</div>
                     <div id="valImageLowTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
@@ -409,7 +409,7 @@
 
 
 
-            <button id="btnRegionHighTemp" disabled class="resizebutton" style="background-color: black;">
+            <button id="btnRegionHighTemp" onclick="showTemp(false,true)" class="resizebutton" style="background-color: black;">
                 <div style="line-height: 14px;">
                     <div class="regioneditortext2" style="margin-bottom:6px">Spot Hi</div>
                     <div id="valRegionHighTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
@@ -428,7 +428,7 @@
 
 
 
-            <button id="btnRegionLowTemp" disabled class="resizebutton" style="background-color: black;">
+            <button id="btnRegionLowTemp" onclick="showTemp(false,false)" class="resizebutton" style="background-color: black;">
                 <div style="line-height: 14px;">
                     <div class="regioneditortext2" style="margin-bottom:6px">Spot Lo</div>
                     <div id="valRegionLowTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
