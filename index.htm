@@ -59,6 +59,7 @@
             <span id="busySpinner" class="loader"></span>
         </div>
     </div>
+    
     <div class="thermalDialog" id="dialogAlert" style="display:none">
         <div class="thermalDialogContent">
             <table width="100%">
@@ -127,6 +128,25 @@
             <div id="dialogConfirmBody" class="thermalDialogBody"></div>
         </div>
     </div>
+    <div class="thermalDialog" id="dialogHistory" style="display:none">
+        <div class="thermalDialogContent">
+            <table width="100%">
+                <tr>
+                    <td width="50%"><span id="dialogHistoryTitle" class="thermalDialogTitle">History</span></td>
+                    <td width="50%" style="text-align:right">
+                        <button id="btnDialogHistoryClose" onclick="closeThermalDialog()" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">Close</span>
+                            </div>
+                        </button>
+                    </td>
+                </tr>
+            </table>
+            <hr class="thermalDialogRule" />
+            <div id="dialogHistoryBody" class="thermalDialogBody"></div>
+        </div>
+    </div>
+
     <div id="dialogDistance" style="display:none"></div>
     <div id="dialogMaterials" style="display:none">
         <table width="100%">
@@ -442,6 +462,17 @@
 
             <div style="width:8px;">
             </div>
+
+            
+
+            <button id="btnShowHistory" onclick="showHistory()" style="display:none" class="resizebutton">
+                <div style="line-height: 28px;">
+                    <div class="regioneditortext">Show</div>
+                    <div id="valRegionIndex" class="regionditortextsub3">History</div>
+                </div>
+            </button>
+
+
 
 
             <button id="btnDeleteRegion" onclick="deleteRegionEditor()" class="resizebutton">

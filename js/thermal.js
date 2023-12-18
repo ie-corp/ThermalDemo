@@ -762,6 +762,7 @@ function setButtons() {
     document.getElementById("btnChangeEraseSizeMore").disabled = !eraseSelected;
 
 
+    document.getElementById("btnShowHistory").style.display = ((cameraEditor.isEditing || camera == null || !camera.isKnown) ? 'none' : '');
 
     document.getElementById("btnDeleteRegion").disabled = !hasActiveItem || camera == null || !camera.canDeleteSpots;
     document.getElementById("btnDeleteRegion").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
@@ -3718,7 +3719,7 @@ function getApiSettings() {
         //when hosted on github pages, we have to make json calls and image calls with this prefix.
         return { "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
     }
-    else if (location.href.indexOf('5500') > -1) {
+    else if (false && location.href.indexOf('5500') > -1) {
         return { "isPost": false, "url": "", "rootUrl": "" };//running locally
     }
     else {
@@ -3837,6 +3838,7 @@ function hideUI() {
     document.getElementById('dialogAlert').style.display = 'none';
     document.getElementById('dialogConfirm').style.display = 'none';
     document.getElementById('dialogPrompt').style.display = 'none';
+    document.getElementById('dialogHistory').style.display = 'none';
     document.getElementById('cameraTools').style.display = 'none';
     document.getElementById('cameraAssignLiveButtons').style.display = 'none';
     document.getElementById('cameraEditTools').style.display = 'none';
@@ -4031,6 +4033,77 @@ function cancelCameraCallback() {
     refreshCameras();
 }
 
+
+function showHistory(){
+    let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+    showHistoryDialog(camera.name, camera.name + ' History');
+}
+
+function showHistoryDialog(cameraName, messageTitle){
+    hideBusy();
+    hideUI();
+    document.getElementById('dialogHistoryTitle').innerHTML = escapeHTML(messageTitle);
+    document.getElementById('dialogHistoryBody').innerHTML = 'Loading';
+    document.getElementById('dialogHistory').style.display = '';
+    getHistoryCameraImage(cameraName,Number.MAX_SAFE_INTEGER - 10000, false);
+}
+
+function showHistoryGraph(scriptReturnValue){
+    if(scriptReturnValue == null){
+        hideBusy();
+        hideUI();
+        showUI();
+        showAlertDialog(null, 'Error', 'Error loading history.', true);
+        return;
+    }
+    else{
+        let frameCount = scriptReturnValue.frameCount;
+        let strMessage = `There are ${frameCount} historical images available.`;
+        hideBusy();
+        hideUI();
+        showUI();
+        showAlertDialog(null, 'History', strMessage, true);
+        return;
+    }
+}
+
+function getHistoryCameraImage(cameraName, timeStamp,showImage) {
+
+    showBusy(true);
+    let scriptName = 'rse_thermalcamerasstream_get';
+    getFetch(scriptName, { "cameraName": cameraName, "timeStamp": timeStamp })
+        .then(response => {
+            if (!response.ok) {
+                console.error('response not ok');
+                showHistoryGraph(null);
+                
+            }
+            return response.json();
+        })
+        .then(json => {
+            console.log('response ok');
+            let scriptReturnValue = json.ScriptReturnValue;
+            if (typeof scriptReturnValue == 'string') {
+                scriptReturnValue = JSON.parse(scriptReturnValue);
+            }
+            if(showImage){
+                this.apiLiveCameraReceived(scriptReturnValue);
+            }
+            showHistoryGraph(scriptReturnValue);
+
+        })
+        .catch(error => {
+            console.error('catch fetch getLiveImage', error);
+            showHistoryGraph(scriptReturnValue);
+        })
+
+}
+
+function closeThermalDialog(){
+    hideUI();
+    showUI();
+}
+
 let alertCallback = null;
 function showAlertDialog(callback, messageTitle, messageBody, escapeBody) {
     hideBusy();
@@ -4058,6 +4131,9 @@ function showPromptDialog(callback, promptTitle, promptBody, promptValue) {
     document.getElementById('dialogPromptValue').value = promptValue
     document.getElementById('dialogPrompt').style.display = '';
 }
+
+
+
 
 function closePromptDialog(isYes) {
     hideUI();
@@ -4230,7 +4306,9 @@ function callSaveCameras(camera) {
         .then(response => {
             if (!response.ok) {
                 console.error('response not ok');
-                this.apicamerasSaveReceived('Error Saving', 'There was an error saving the camera.', true);
+                let message = 'There was an error saving the camera.';
+
+                this.apicamerasSaveReceived('Error Saving', message , true);
             }
             return response.json();
         })
@@ -4387,7 +4465,11 @@ function base64ToArray(base64) {
 function apiLiveCameraReceived(jsonResult) {
     hideBusy();
     if (jsonResult == null || jsonResult.liveCamera == null) {
-        showAlertDialog(null, 'Camera Error', 'There was an error locating the live camera image.', true);
+        let message = 'There was an error locating the camera image file.';
+        if(jsonResult != null && jsonResult.errorMessage != null && jsonResult.errorMessage != ""){
+            message = jsonResult.errorMessage;
+        }
+        showAlertDialog(null, 'Camera Error', message, true);
         return;
     }
     let liveCamera = jsonResult.liveCamera;
@@ -4410,7 +4492,10 @@ function apiLiveCameraReceived(jsonResult) {
     }
 
     //brgImageData is a byte[] that get converted to a base64 string by the c# Serializer
-    rawTiffImageData = base64ToArray(liveCamera.bgrImageData);
+    //if they are viewing history they won't send this and we should just leave what is there alone.
+    if(liveCamera != null && liveCamera.bgrImageData != null){
+        rawTiffImageData = base64ToArray(liveCamera.bgrImageData);
+    }
 
 
     let canvas = document.createElement("canvas");

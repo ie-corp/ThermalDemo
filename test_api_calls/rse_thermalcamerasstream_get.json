@@ -1,0 +1,8 @@
+{
+    "StatusCode": 0,
+    "ScriptReturnValue": {
+        "errorMessage":"This Demo Contains No History",
+        "liveCamera":null,
+        "frameCount":0
+    }
+}
