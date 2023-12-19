@@ -13,6 +13,7 @@ let cameraEditor = {
     "isViewingCelsius": true,
     "showHotspotNumbers": false,
     "isEditing": false,
+    "isWatchingLive":false,
     "minZoomLevel":1,
     "maxZoomLevel":7,
     "defaultZoomLevel":3,
@@ -763,7 +764,7 @@ function setButtons() {
 
 
     document.getElementById("btnShowHistory").style.display = ((cameraEditor.isEditing || camera == null || !camera.isKnown) ? 'none' : '');
-
+    document.getElementById("btnWatchLive").style.display = ((cameraEditor.isWatchingLive || cameraEditor.isEditing || camera == null || camera.usbId == null || camera.usbId == '') ? 'none' : '');
     document.getElementById("btnDeleteRegion").disabled = !hasActiveItem || camera == null || !camera.canDeleteSpots;
     document.getElementById("btnDeleteRegion").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
     document.getElementById("btnChangeRegion").disabled = !hasActiveItem;
@@ -3761,6 +3762,7 @@ function hideBusy() {
 }
 
 function refreshCameras() {
+    cameraEditor.isWatchingLive = false;//shut this off if it was on.
     showBusy(true);
 
     let apiSettings = getApiSettings();
@@ -4034,7 +4036,32 @@ function cancelCameraCallback() {
 }
 
 
+
+
+
+function watchLive(){
+    cameraEditor.isWatchingLive = true;
+    getLive();
+}
+
+function getLive(){
+    if(!cameraEditor.isWatchingLive){
+        return;
+    }
+    let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+    if(camera == null || camera.usbId == null || camera.usbId == ''){
+        return;
+    }
+    document.getElementById('btnWatchLive').style.display = 'none';
+    setStatusText('Fetching Live ' + camera.name + ' Camera...', 'white', true);
+    
+    let usbId = camera.usbId;
+    getLiveCameraImage(usbId, null);
+}
+
+
 function showHistory(){
+    cameraEditor.isWatchingLive = false;
     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
     showHistoryDialog(camera.name, camera.name + ' History');
 }
@@ -4426,8 +4453,9 @@ function renameCameraCallback(newName) {
 }
 
 function getLiveCameraImage(usbId, url) {
-
-    showBusy(true);
+    if(!cameraEditor.isWatchingLive){
+        showBusy(true);
+    }
     let scriptName = 'rse_thermalcameraslive_get';
     getFetch(scriptName, { "usbId": usbId, "url": url })
         .then(response => {
@@ -4445,6 +4473,17 @@ function getLiveCameraImage(usbId, url) {
             }
             this.showAssignableCameras();
             this.apiLiveCameraReceived(scriptReturnValue);
+            if(cameraEditor.isWatchingLive){
+                let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+                if(camera == null || camera.usbId == null || camera.usbId == ''){
+                    return;
+                }
+                document.getElementById('btnWatchLive').style.display = 'none';
+                setStatusText('Live ' + camera.name + ' Camera', 'white', true);
+                setTimeout(()=>{
+                    this.getLive();//call ourself
+                },100);
+            }
 
         })
         .catch(error => {
@@ -4572,7 +4611,7 @@ function getSavedCameraImage(src, usbId) {
 
 
 function changeCamera(cameraIndex, editing, startWithHasEdited) {
-
+    cameraEditor.isWatchingLive = false;
     regionEditor = null;
     hasEdited = false;
     if (editing && startWithHasEdited) {
@@ -4808,7 +4847,13 @@ function cameraChangedImageLoaded(cameraIndex, editing) {
                     break;
                 }
                 else {
-                    setStatusText('Viewing ' + camera.name + ' Camera', 'white', true);
+                    if(cameraEditor.isWatchingLive){
+                        setStatusText('Viewing Live ' + camera.name + ' Camera', 'white', true);
+                    }
+                    else{
+                        setStatusText('Viewing ' + camera.name + ' Camera', 'white', true);
+                    }
+                   
                     sb += '<button id="btnCam' + strIndex + '" onclick="changeCamera(' + i + ',' + (camera.canEdit ? 'true' : 'false') + ',false)" class="resizebutton2" style="border-color:white">';
                     sb += '<div style="line-height: 14px;">';
                     if (!camera.isOnline) {
