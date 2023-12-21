@@ -667,7 +667,7 @@ function setButtons() {
     document.getElementById('btnDeleteCamera').disabled = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown);
     document.getElementById('btnDeleteCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown) ? 'gray' : 'red';
 
-    document.getElementById('btnRefreshLiveImage').disabled = (!cameraEditor.isEditing || camera == null || camera.usbId == null || camera.usbId == '');
+    document.getElementById('btnRefreshLiveImage').disabled = (!cameraEditor.isEditing || camera == null || camera.usbIndex == null || camera.api == null);
 
 
     document.getElementById("btnChangeMaterial").style.display = (activeLayer == 'Matl' && cameraEditor.isEditing && camera != null && camera.canEditMaterialLayer) ? '' : 'none';
@@ -764,7 +764,7 @@ function setButtons() {
 
 
     document.getElementById("btnShowHistory").style.display = ((cameraEditor.isEditing || camera == null || !camera.isKnown) ? 'none' : '');
-    document.getElementById("btnWatchLive").style.display = ((cameraEditor.isWatchingLive || cameraEditor.isEditing || camera == null || camera.usbId == null || camera.usbId == '') ? 'none' : '');
+    document.getElementById("btnWatchLive").style.display = ((cameraEditor.isWatchingLive || cameraEditor.isEditing || camera == null || camera.usbIndex == null || camera.api == null) ? 'none' : '');
     document.getElementById("btnDeleteRegion").disabled = !hasActiveItem || camera == null || !camera.canDeleteSpots;
     document.getElementById("btnDeleteRegion").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
     document.getElementById("btnChangeRegion").disabled = !hasActiveItem;
@@ -1822,8 +1822,8 @@ function updateSelectedRegionAttributes(region) {
     }
 
     let regionTemps = getRegionTemps(region);
-    console.log('region:' + JSON.stringify(region));
-    console.log('regionTemps: ' + JSON.stringify(regionTemps));
+    //console.log('region:' + JSON.stringify(region));
+    //console.log('regionTemps: ' + JSON.stringify(regionTemps));
 
     document.getElementById("valRegionHighTempC").style.visibility = cameraEditor.isViewingCelsius ? 'visible' : 'hidden';
     document.getElementById("valRegionHighTempC").innerHTML = getDisplayTempFromCelsius(regionTemps.highCelsius, false) + '&deg;C';
@@ -3805,7 +3805,8 @@ function apiGetCamerasReceived(urlPrefix, jsonResult) {
             let camera = jsonResult.cameras[i];
 
             let newCamera = {
-                "usbId": camera.usbId,
+                "usbIndex": camera.usbIndex,
+                "api": camera.api,
                 "name": ((camera.name ?? unknownCameraName).trim()),
                 "existingName": (camera.isKnown ? camera.name : null),
                 "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
@@ -3866,8 +3867,9 @@ function assignLiveCameraToSavedCamera(camIndex, liveIndex) {
         let liveCam = cameraEditor.cameras[liveIndex];
         let cam = cameraEditor.cameras[camIndex];
         if (liveCam != null && cam != null
-            && !liveCam.isKnown && cam.isKnown && (liveCam.usbId != null && liveCam.usbId != '')) {
-            cam.usbId = liveCam.usbId;
+            && !liveCam.isKnown && cam.isKnown && (liveCam.usbIndex != null && liveCam.api != null)) {
+            cam.usbIndex = liveCam.usbIndex;
+            cam.api = liveCam.api;
             changeCamera(camIndex, true, true);
         }
     }
@@ -3887,14 +3889,14 @@ function showAssignableCameras() {
         cameraEditor.selectedCameraIndex < cameraEditor.cameras.length) {
         let liveCamera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
 
-        if (!liveCamera.isKnown && liveCamera.usbId != null && liveCamera.usbId != '') {
+        if (!liveCamera.isKnown && liveCamera.usbIndex != null && liveCamera.api != null) {
             let liveIndex = cameraEditor.selectedCameraIndex;
             for (let i = 0; i < cameraEditor.cameras.length; i++) {
                 let camera = cameraEditor.cameras[i];
                 //we want the buttons to line up beneath the existing buttons so hide the buttons if
                 //is a camera that can't be assignd.
                 let strButtonStyle = ' style="visibility:hidden" ';
-                if (camera.isKnown && camera.canEdit && (camera.usbId == null || camera.usbId == '') && camera.isThermalCamera == liveCamera.isThermalCamera) {
+                if (camera.isKnown && camera.canEdit && (camera.usbIndex == null || camera.api == null) && camera.isThermalCamera == liveCamera.isThermalCamera) {
                     strButtonStyle = '';
                     foundAssignableCamera = true;
                 }
@@ -4049,14 +4051,15 @@ function getLive(){
         return;
     }
     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-    if(camera == null || camera.usbId == null || camera.usbId == ''){
+    if(camera == null || camera.usbIndex == null || camera.api == null){
         return;
     }
     document.getElementById('btnWatchLive').style.display = 'none';
     setStatusText('Fetching Live ' + camera.name + ' Camera...', 'white', true);
     
-    let usbId = camera.usbId;
-    getLiveCameraImage(usbId, null);
+    let usbIndex = camera.usbIndex;
+    let api = camera.api;
+    getLiveCameraImage(api, usbIndex, null);
 }
 
 
@@ -4303,7 +4306,8 @@ function callSaveCameras(camera) {
     let myParms = {
         "saveInfo": {
             existingName: camera.existingName,
-            usbId: camera.usbId,
+            usbIndex: camera.usbIndex,
+            api: camera.api,
             image: rawTiffImageData,
             configuration: {
                 "displayTemperatureInFahrenheit": !cameraEditor.isViewingCelsius,
@@ -4452,12 +4456,12 @@ function renameCameraCallback(newName) {
 
 }
 
-function getLiveCameraImage(usbId, url) {
+function getLiveCameraImage(api, usbIndex, url) {
     if(!cameraEditor.isWatchingLive){
         showBusy(true);
     }
     let scriptName = 'rse_thermalcameraslive_get';
-    getFetch(scriptName, { "usbId": usbId, "url": url })
+    getFetch(scriptName, {"api":api, "usbIndex": usbIndex, "url": url })
         .then(response => {
             if (!response.ok) {
                 console.error('response not ok');
@@ -4475,7 +4479,7 @@ function getLiveCameraImage(usbId, url) {
             this.apiLiveCameraReceived(scriptReturnValue);
             if(cameraEditor.isWatchingLive){
                 let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-                if(camera == null || camera.usbId == null || camera.usbId == ''){
+                if(camera == null || camera.usbIndex == null || camera.api == null){
                     return;
                 }
                 document.getElementById('btnWatchLive').style.display = 'none';
@@ -4512,14 +4516,7 @@ function apiLiveCameraReceived(jsonResult) {
         return;
     }
     let liveCamera = jsonResult.liveCamera;
-    /*
-        string usbId
-        byte[] pictureData
-        int nativeHeight
-        int nativeWidth
-        decimal[] temperaturesInCelsius
-        DateTime timeStamp
-    */
+    
 
     if (jsonResult.isSavedImage) {
         document.getElementById('btnRefreshLiveImage').style.borderColor = '';
@@ -4581,7 +4578,7 @@ function apiLiveCameraReceived(jsonResult) {
 
 }
 
-function getSavedCameraImage(src, usbId) {
+function getSavedCameraImage(src, api, usbIndex) {
     showBusy(true);
     let xhr = new XMLHttpRequest();
     xhr.open("GET", src + "?t=" + new Date().getTime());//nocache please
@@ -4592,8 +4589,8 @@ function getSavedCameraImage(src, usbId) {
             document.getElementById('btnRefreshLiveImage').style.borderColor = '';
             document.getElementById('btnRefreshSavedImage').style.borderColor = 'white';
             imgLoaded(e);
-            if (usbId != null && usbId != "") {
-                getLiveCameraImage(usbId);
+            if (api != null && usbIndex != null) {
+                getLiveCameraImage(api, usbIndex, null);
             }
         }
         else {
@@ -4636,23 +4633,25 @@ function changeCamera(cameraIndex, editing, startWithHasEdited) {
         document.getElementById('btnRefreshSavedImage').style.borderColor = '';
 
 
-        let usbId = camera.usbId;
+        let usbIndex = camera.usbIndex;
+        let api = camera.api;
         let src = camera.url;
         if (src != null && src != "") {
             document.getElementById('btnRefreshSavedImage').style.visibility = 'visible';
             document.getElementById('btnRefreshSavedImage').style.borderColor = 'white';
-            if (usbId != null && usbId != '') {
+            if (usbIndex != null && api != null) {
                 document.getElementById('btnRefreshLiveImage').style.visibility = 'visible';
             }
-            getSavedCameraImage(src, usbId);
+            getSavedCameraImage(src, api, usbIndex);
 
         }
-        else if (usbId != null && usbId != '') {
+        else if (usbIndex != null && api != null) {
             document.getElementById('btnRefreshLiveImage').style.visibility = 'visible';
             document.getElementById('btnRefreshLiveImage').style.borderColor = 'white';
-            getLiveCameraImage(usbId, null);
+            getLiveCameraImage(api, usbIndex, null);
         }
         else {
+            console.log("Camera With No Live Image:" + JSON.stringify(camera));
             showAlertDialog(null, 'Camera Error', 'There is no image for this camera available.', true);
         }
     }
@@ -4669,7 +4668,7 @@ function refreshSavedImage() {
     if (camera.isKnown) {
         let url = camera.url;
         if (url != null && url != "") {
-            getLiveCameraImage(null, camera.url);
+            getLiveCameraImage(null, null, camera.url);
         }
     }
 }
@@ -4677,9 +4676,10 @@ function refreshSavedImage() {
 
 function refreshLiveImage() {
     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-    let usbId = camera.usbId;
-    if (usbId != null && usbId != "") {
-        getLiveCameraImage(usbId, null);
+    let api = camera.api;
+    let usbIndex = camera.usbIndex;
+    if (usbIndex != null && api != null) {
+        getLiveCameraImage(api, usbIndex, null);
     }
 }
 
