@@ -4042,6 +4042,10 @@ module CamManager {
     }
 
     export function deleteCamera() {
+        if (isDemo()) {
+            showAlertDialog(null, 'Demo', 'This is a demo. Camera cannot be deleted.', true);
+            return;
+        }
         let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
         let cameraName = camera.existingName;
         showConfirmDialog(deleteCameraCallback, "Delete Camera?", "Are you sure you want to delete the camera?");
@@ -4262,9 +4266,21 @@ module CamManager {
         }
     }
 
-
+    function isDemo(){
+       let settings = getApiSettings();
+       if(settings.url.indexOf('github.io') > -1 || settings.rootUrl.indexOf('github.io') > -1){
+           return true;
+       }
+       else{
+        return false;
+       }
+    }
 
     export function saveCamera() {
+        if (isDemo()) {
+            showAlertDialog(null, 'Demo', 'This is a demo. Changes cannot be saved.', true);
+            return;
+        }
 
         if (stagedUpdateCameraName != null) {
             cameraEditor.cameras[cameraEditor.selectedCameraIndex].name = stagedUpdateCameraName;
