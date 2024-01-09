@@ -4093,7 +4093,7 @@ module CamManager {
     }
 
 
-    function cancelCameraEdit() {
+    export function cancelCameraEdit() {
         if (!hasEdited) {//only confirm if there have been changes made.
             refreshCameras();
         }

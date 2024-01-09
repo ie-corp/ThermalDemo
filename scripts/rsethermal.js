@@ -3457,6 +3457,7 @@ var CamManager;
             showConfirmDialog(cancelCameraCallback, "Discard Changes?", "Are you sure you want to discard your changes for the camera?");
         }
     }
+    CamManager.cancelCameraEdit = cancelCameraEdit;
     function cancelCameraCallback() {
         refreshCameras();
     }
