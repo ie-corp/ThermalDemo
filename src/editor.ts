@@ -4268,7 +4268,7 @@ module CamManager {
 
     function isDemo(){
        let settings = getApiSettings();
-       if(settings.url.indexOf('github.io') > -1 || settings.rootUrl.indexOf('github.io') > -1){
+       if(settings.url.indexOf('github') > -1 || settings.rootUrl.indexOf('github') > -1){
            return true;
        }
        else{
