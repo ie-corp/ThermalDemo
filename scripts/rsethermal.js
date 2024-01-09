@@ -1405,6 +1405,7 @@ var CamManager;
         }
         setRegionIndex(regionIndex);
     }
+    CamManager.changeRegionNext = changeRegionNext;
     function setRegionIndex(regionIndex) {
         if (regionIndex < 0 || regionIndex >= regionEditor.regions.length) {
             console.error('invalid region index: ' + regionIndex);

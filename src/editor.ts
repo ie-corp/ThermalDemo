@@ -1665,7 +1665,7 @@ module CamManager {
 
     }
 
-    function changeRegionNext(nextRegion: boolean) {
+    export function changeRegionNext(nextRegion: boolean) {
         if (regionEditor!.regions.length <= 1) {
             return;
         }
