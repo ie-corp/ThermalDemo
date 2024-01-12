@@ -3455,6 +3455,16 @@ module CamManager {
         ctx.stroke();
         ctx.closePath();
         ctx.restore();
+
+        //draw a black border
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = 'black'
+        ctx.lineWidth = lineWidth;
+        ctx.rect(x-lineWidth, y-lineWidth, width+(lineWidth*2), width+(lineWidth*2));
+        ctx.stroke();
+        ctx.closePath();
+        ctx.restore();
     }
 
     function drawPixels(ctx: CanvasRenderingContext2D, width: number, points: IPoint[]) {
@@ -3566,7 +3576,7 @@ module CamManager {
             tiptarget.style.left = `${pageX - posOffSetX}px`;
         }
         else {
-            tiptarget.innerHTML = `<svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="7" width="12" height="12" stroke="red" stroke-width="2" /></svg>`;
+            tiptarget.innerHTML = `<svg width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="16" height="16" stroke="black" stroke-width="2" /><rect x="7" y="7" width="12" height="12" stroke="red" stroke-width="2" /></svg>`;
             tiptarget.style.top = `${pageY - 12}px`;
             tiptarget.style.left = `${pageX - 12}px`;
         }
