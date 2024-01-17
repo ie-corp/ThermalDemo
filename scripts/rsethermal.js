@@ -3,8 +3,9 @@ var CamManager;
 (function (CamManager) {
     const cameraFixedEmissivity = .95;
     const cameraFixedDistanceMeters = .25;
-    const cameraFixedAmbientTemperatureInCelsius = 25;
     const unknownCameraName = 'Unknown';
+    let comparingImageDirectionIsUp = true;
+    let compareDividerPosition = 0;
     let materialMap = [];
     let distanceMap = [];
     let rawTiffImageData = null; //this is what we need to send on the save service call.
@@ -44,6 +45,9 @@ var CamManager;
     let selectedDistance = 1.0;
     let fillRange = 1.0;
     let escapeElm = null;
+    function isAutoComparingImages() {
+        return isDemo() && !cameraEditor.isEditing && activeLayer == 'Spots';
+    }
     function escapeHTML(html) {
         if (html == null || html.trim() == '') {
             return '';
@@ -1022,6 +1026,7 @@ var CamManager;
         valImageRotation.innerHTML = regionEditor.imageRotation + "&deg;";
         drawRegions();
         setButtons();
+        updateMagnifierIfShown();
     }
     function rotateFillPoint(imageRotation, imageNativeWidth, imageNativeHeight, imageMirrorHorizontally, x, y) {
         //test by putting a 1 pixel block in a corner
@@ -1158,76 +1163,106 @@ var CamManager;
     let lastRedrawDate = null;
     let waitingRedraw = false;
     function drawRegions() {
-        if (lastRedrawDate != null) {
-            let now = new Date();
-            let diff = now.valueOf() - lastRedrawDate.valueOf();
-            if (diff < 100) {
-                if (!waitingRedraw) {
-                    waitingRedraw = true;
-                    window.setTimeout(drawRegions, 100); //when they are painting with a prush updates are too fast.
+        if (regionEditor == null) {
+            return;
+        }
+        if (isAutoComparingImages()) {
+            //nothing to do here
+        }
+        else {
+            if (lastRedrawDate != null) {
+                let now = new Date();
+                let diff = now.valueOf() - lastRedrawDate.valueOf();
+                if (diff < 100) {
+                    if (!waitingRedraw) {
+                        waitingRedraw = true;
+                        window.setTimeout(drawRegions, 100); //when they are painting with a brush updates are too fast.
+                    }
+                    return;
                 }
-                return;
             }
         }
         waitingRedraw = false;
         lastRedrawDate = new Date();
-        let regionEditorImage = document.getElementById("regionEditorImage");
-        let regionEditorImageRef = document.getElementById("regionEditorImageRef");
-        let canvas = document.createElement("canvas");
-        canvas.width = regionEditor.imageWidth;
-        canvas.height = regionEditor.imageHeight;
+        let regionEditorImageCanvas = document.getElementById("regionEditorImageCanvas");
+        let regionEditorBaseImage = document.getElementById("regionEditorBaseImage");
+        let canvasBottomLayer = document.createElement("canvas");
+        canvasBottomLayer.width = regionEditor.imageWidth;
+        canvasBottomLayer.height = regionEditor.imageHeight;
         let canvasTopLayer = document.createElement("canvas");
         canvasTopLayer.width = regionEditor.imageWidth;
         canvasTopLayer.height = regionEditor.imageHeight;
-        let ctx = canvas.getContext("2d");
+        let ctxBottomLayer = canvasBottomLayer.getContext("2d");
         let ctxTopLayer = canvasTopLayer.getContext("2d");
         resetSelectedRegionAttributes();
         let rotation = regionEditor.imageRotation * Math.PI / 180;
         let strFilter = imageFilter == 'none' ? '' : 'url(#' + imageFilter + ')';
-        regionEditorImage.style.filter = strFilter;
+        regionEditorImageCanvas.style.filter = strFilter;
         //canvas.style.filter = strFilter;
         let scale = imageScale;
-        //fix this
-        if (rotation != 0 || regionEditor.imageMirrorHorizontally) {
-            ctx.save();
-            // translate context to center of canvas
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(rotation);
-            if (regionEditor.imageMirrorHorizontally) {
-                ctx.scale(-1, 1);
+        ctxBottomLayer.save();
+        // translate context to center of canvas
+        ctxBottomLayer.translate(canvasBottomLayer.width / 2, canvasBottomLayer.height / 2);
+        ctxBottomLayer.rotate(rotation);
+        if (regionEditor.imageMirrorHorizontally) {
+            ctxBottomLayer.scale(-1, 1);
+        }
+        // draw image
+        ctxBottomLayer.scale(scale, scale);
+        let dx = (-regionEditor.imageNativeWidth / 2);
+        let dy = (-regionEditor.imageNativeHeight / 2);
+        ctxBottomLayer.drawImage(regionEditorBaseImage, dx, dy, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
+        if (isAutoComparingImages() && compareDividerPosition >= 1) {
+            let regionEditorCompareImage = document.getElementById("regionEditorCompareImage");
+            let testCanvas = document.createElement("canvas");
+            let testCtx = testCanvas.getContext("2d");
+            testCanvas.width = regionEditor.imageNativeWidth;
+            testCanvas.height = regionEditor.imageNativeHeight;
+            ctxBottomLayer.drawImage(regionEditorBaseImage, dx, dy, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
+            testCtx.fillStyle = 'rgba(0,0,0,.3)';
+            testCtx.fillRect(0, 0, testCanvas.width, testCanvas.height);
+            regionEditorCompareImage.src = testCanvas.toDataURL();
+            ctxBottomLayer.lineWidth = 1;
+            ctxBottomLayer.strokeStyle = 'rgba(255,255,255,1)';
+            if (rotation == 0 || rotation == 180) {
+                ctxBottomLayer.drawImage(regionEditorCompareImage, dx, dy, compareDividerPosition, regionEditor.imageNativeHeight);
+                ctxBottomLayer.beginPath();
+                ctxBottomLayer.moveTo(compareDividerPosition + dx, dy);
+                ctxBottomLayer.lineTo(compareDividerPosition + dx, dy + regionEditor.imageNativeHeight);
+                // Draw the Path
+                ctxBottomLayer.stroke();
             }
-            // draw image
-            ctx.scale(scale, scale);
-            ctx.drawImage(regionEditorImageRef, (-regionEditor.imageNativeWidth / 2), (-regionEditor.imageNativeHeight / 2));
-            ctx.scale(1 / scale, 1 / scale);
-            //ctx.drawImage(regionEditorImageRef,(-regionEditor.imageNativeWidth * imageScale) / 2, (-regionEditor.imageNativeHeight * imageScale) / 2);
-            //unrotate
-            ctx.rotate(-rotation);
-            // un-translate the canvas back to origin==top-left canvas
-            ctx.translate(-canvas.width / 2, -canvas.height / 2);
-            ctx.restore();
+            else {
+                ctxBottomLayer.drawImage(regionEditorCompareImage, dx, dy, regionEditor.imageNativeWidth, compareDividerPosition);
+                ctxBottomLayer.beginPath();
+                ctxBottomLayer.moveTo(dx, compareDividerPosition + dy);
+                ctxBottomLayer.lineTo(dx + regionEditor.imageNativeWidth, compareDividerPosition + dy);
+                // Draw the Path
+                ctxBottomLayer.stroke();
+            }
         }
-        else {
-            ctx.drawImage(regionEditorImageRef, 0, 0, canvas.width, canvas.height);
-        }
+        ctxBottomLayer.scale(1 / scale, 1 / scale);
+        ctxBottomLayer.rotate(-rotation);
+        ctxBottomLayer.translate(-canvasBottomLayer.width / 2, -canvasBottomLayer.height / 2);
+        ctxBottomLayer.restore();
         if (activeLayer == 'Matl') {
-            drawMaterialMap(ctx, scale);
+            drawMaterialMap(ctxBottomLayer, scale);
         }
         else if (activeLayer == 'Dist') {
-            drawDistanceMap(ctx, scale);
+            drawDistanceMap(ctxBottomLayer, scale);
         }
         else {
-            drawRegionMap(ctx, scale, false); //can check alignment
+            drawRegionMap(ctxBottomLayer, scale, false); //can check alignment
             drawRegionMap(ctxTopLayer, scale, true);
             if (!cameraEditor.isEditing) {
                 drawNumbers(ctxTopLayer, scale);
             }
         }
-        let ctxMain = regionEditorImage.getContext("2d");
-        regionEditorImage.width = canvas.width;
-        regionEditorImage.height = canvas.height;
-        ctxMain.clearRect(0, 0, regionEditorImage.width, regionEditorImage.height);
-        ctxMain.drawImage(canvas, 0, 0, regionEditorImage.width, regionEditorImage.height);
+        let ctxRegionEditorImageCanvas = regionEditorImageCanvas.getContext("2d");
+        regionEditorImageCanvas.width = canvasBottomLayer.width;
+        regionEditorImageCanvas.height = canvasBottomLayer.height;
+        ctxRegionEditorImageCanvas.clearRect(0, 0, regionEditorImageCanvas.width, regionEditorImageCanvas.height);
+        ctxRegionEditorImageCanvas.drawImage(canvasBottomLayer, 0, 0, regionEditorImageCanvas.width, regionEditorImageCanvas.height);
         let annotationsCanvas = document.getElementById('regionEditorAnnotations');
         let ctxAnnotations = annotationsCanvas.getContext("2d");
         annotationsCanvas.width = canvasTopLayer.width;
@@ -1238,8 +1273,37 @@ var CamManager;
         //annotationsCanvas.style.left = '96px';
         //console.log('offsetTop: ' + regionEditorImage.offsetTop);
         //console.log('offsetLeft: ' + regionEditorImage.offsetLeft);
-        annotationsCanvas.style.top = `${regionEditorImage.offsetTop}px`;
-        annotationsCanvas.style.left = `${regionEditorImage.offsetLeft}px`;
+        annotationsCanvas.style.top = `${regionEditorImageCanvas.offsetTop}px`;
+        annotationsCanvas.style.left = `${regionEditorImageCanvas.offsetLeft}px`;
+        if (isAutoComparingImages()) {
+            //console.log('drawing compare image:' + compareDividerPosition);
+            if (comparingImageDirectionIsUp) {
+                compareDividerPosition++;
+                if (rotation == 0 || rotation == 180) {
+                    if (compareDividerPosition >= regionEditor.imageNativeWidth) {
+                        compareDividerPosition = regionEditor.imageNativeWidth + 5;
+                        comparingImageDirectionIsUp = false;
+                    }
+                }
+                else if (compareDividerPosition >= regionEditor.imageNativeHeight) {
+                    compareDividerPosition = regionEditor.imageNativeHeight + 5;
+                    comparingImageDirectionIsUp = false;
+                }
+            }
+            else {
+                compareDividerPosition--;
+                if (compareDividerPosition <= 0) {
+                    compareDividerPosition = -5;
+                    comparingImageDirectionIsUp = true;
+                }
+            }
+            clearStoredImageData();
+            window.requestAnimationFrame(nextCompareStep);
+        }
+    }
+    function nextCompareStep() {
+        drawRegions();
+        updateMagnifierIfShown();
     }
     function getColorRampValueRGBA(min, max, num, alpha, rgbColors) {
         // Check if the parameters are valid
@@ -2791,13 +2855,12 @@ var CamManager;
         storedImageWidth = null;
         storedImageHeight = null;
         storedImageMirrorHorizontally = null;
-        hideTips(); //this is now invalid.
     }
     function drawTipMagnifier(x, y) {
         if (regionEditor == null) {
             return;
         }
-        let regionEditorImageRef = document.getElementById('regionEditorImage');
+        let regionEditorImageCanvas = document.getElementById('regionEditorImageCanvas');
         //const tipmagnifier = document.getElementById('tipmagnifier')!;
         const magnifierCanvas = document.getElementById('magnifierCanvas');
         if (storedImageData == null || storedImageRotation != regionEditor.imageRotation || storedImageMirrorHorizontally != regionEditor.imageMirrorHorizontally) {
@@ -2815,7 +2878,7 @@ var CamManager;
             storedImageWidth = dummyCanvas.width;
             storedImageHeight = dummyCanvas.height;
             storedImageMirrorHorizontally = regionEditor.imageMirrorHorizontally;
-            ctxSource.drawImage(regionEditorImageRef, 0, 0, dummyCanvas.width, dummyCanvas.height);
+            ctxSource.drawImage(regionEditorImageCanvas, 0, 0, dummyCanvas.width, dummyCanvas.height);
             //@ts-ignore
             storedImageData = ctxSource.getImageData(0, 0, dummyCanvas.width, dummyCanvas.height).data;
             storedImageRotation = regionEditor.imageRotation;
@@ -2826,7 +2889,7 @@ var CamManager;
         ctx.beginPath();
         ctx.fillStyle = 'white';
         ctx.lineWidth = 5;
-        ctx.strokeStyle = 'black';
+        ctx.strokeStyle = 'white';
         ctx.ellipse(100, 100, 75, 75, 0, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
@@ -2951,24 +3014,34 @@ var CamManager;
         }
         ctx.restore();
     }
-    function placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown) {
+    let lastMagnifierSettings = null;
+    function updateMagnifierIfShown() {
+        if (lastMagnifierSettings != null) {
+            const tooltip = document.getElementById('tooltip');
+            if (tooltip.style.display == 'block') {
+                placeMagnifier(lastMagnifierSettings);
+            }
+        }
+    }
+    function placeMagnifier(magnifierSettings) {
         if (regionEditor == null) {
             return;
         }
+        lastMagnifierSettings = magnifierSettings;
         //const image = document.querySelector('#regionEditorImage');
         const tooltip = document.getElementById('tooltip');
         const tipmagnifier = document.getElementById('tipmagnifier');
         const tiptarget = document.getElementById('tiptarget');
-        let x = Math.max(0, Math.round(offsetX / imageScale));
-        let y = Math.max(0, Math.round(offsetY / imageScale));
+        let x = Math.max(0, Math.round(magnifierSettings.offsetX / imageScale));
+        let y = Math.max(0, Math.round(magnifierSettings.offsetY / imageScale));
         let indexMap = -1;
         let posX = -1;
         let posY = -1;
         let placementOffsetX = 0;
         let placementOffsetY = 0;
-        let magOffsetX = pageX - 100;
-        let magOffsetY = pageY - 100;
-        if (imageScale > 2 && offsetX > regionEditor.imageWidth / 2) {
+        let magOffsetX = magnifierSettings.pageX - 100;
+        let magOffsetY = magnifierSettings.pageY - 100;
+        if (imageScale > 2 && magnifierSettings.offsetX > regionEditor.imageWidth / 2) {
             placementOffsetX -= 256; //bottom left x
             magOffsetX -= 340;
         }
@@ -2976,7 +3049,7 @@ var CamManager;
             placementOffsetX += 50; //left side
             magOffsetX += 340;
         }
-        if (offsetY > regionEditor.imageHeight / 2) {
+        if (magnifierSettings.offsetY > regionEditor.imageHeight / 2) {
             placementOffsetY -= 200;
             magOffsetY -= 160;
         }
@@ -2993,8 +3066,8 @@ var CamManager;
                 posOffSetY += 8;
             }
             tiptarget.innerHTML = `<svg width="${width + 2}" height="${width + 2}" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="${width}" height="${width}" stroke="red" stroke-width="2" /></svg>`;
-            tiptarget.style.top = `${pageY - posOffSetY}px`;
-            tiptarget.style.left = `${pageX - posOffSetX}px`;
+            tiptarget.style.top = `${magnifierSettings.pageY - posOffSetY}px`;
+            tiptarget.style.left = `${magnifierSettings.pageX - posOffSetX}px`;
         }
         else if (activeTool == 'paintround' || activeTool == 'eraseround') {
             let myBrushSize = activeTool == 'paintround' ? paintBrushSize : eraseBrushSize;
@@ -3005,16 +3078,16 @@ var CamManager;
                 posOffSetY += 8;
             }
             tiptarget.innerHTML = `<svg width="${width + 2}" height="${width + 2}" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="${width / 2 + 1}" cy="${width / 2 + 1}" r="${width / 2}" stroke="red" stroke-width="2" /></svg>`;
-            tiptarget.style.top = `${pageY - posOffSetY}px`;
-            tiptarget.style.left = `${pageX - posOffSetX}px`;
+            tiptarget.style.top = `${magnifierSettings.pageY - posOffSetY}px`;
+            tiptarget.style.left = `${magnifierSettings.pageX - posOffSetX}px`;
         }
         else {
             tiptarget.innerHTML = `<svg width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="16" height="16" stroke="black" stroke-width="2" /><rect x="7" y="7" width="12" height="12" stroke="red" stroke-width="2" /></svg>`;
-            tiptarget.style.top = `${pageY - 12}px`;
-            tiptarget.style.left = `${pageX - 12}px`;
+            tiptarget.style.top = `${magnifierSettings.pageY - 12}px`;
+            tiptarget.style.left = `${magnifierSettings.pageX - 12}px`;
         }
-        tooltip.style.top = `${pageY + placementOffsetY}px`;
-        tooltip.style.left = `${pageX + placementOffsetX}px`;
+        tooltip.style.top = `${magnifierSettings.pageY + placementOffsetY}px`;
+        tooltip.style.left = `${magnifierSettings.pageX + placementOffsetX}px`;
         tipmagnifier.style.top = `${magOffsetY}px`;
         tipmagnifier.style.left = `${magOffsetX}px`;
         if (regionEditor.imageRotation == 0) {
@@ -3129,7 +3202,8 @@ var CamManager;
         if (isLeftMouseDown) {
             processScreenTouchCoordinates(offsetX, offsetY, true);
         }
-        placeMagnifier(offsetX, offsetY, pageX, pageY, isTouchEvent, isLeftMouseDown);
+        let magnifierSettings = { "offsetX": offsetX, "offsetY": offsetY, "pageX": pageX, "pageY": pageY };
+        placeMagnifier(magnifierSettings);
     }
     function getAdjustedTempInCelsius(temperatureInCelsius, ambientTemperatureInCelsius, distanceMeters, emissivity) {
         if (emissivity <= 0) {
@@ -3177,8 +3251,8 @@ var CamManager;
     function go() {
         hideEverything();
         setupMouseEvents();
-        let image = document.getElementById('regionEditorImageRef');
-        image.onload = function () {
+        let regionEditorBaseImage = document.getElementById('regionEditorBaseImage');
+        regionEditorBaseImage.onload = function () {
             cameraChangedImageLoaded(cameraEditor.selectedCameraIndex, doEditing);
         };
         refreshCameras();
@@ -3187,13 +3261,13 @@ var CamManager;
     function getApiSettings() {
         if (location.href.indexOf('github.io') > -1) {
             //when hosted on github pages, we have to make json calls and image calls with this prefix.
-            return { "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
+            return { "isDemo": true, "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
         }
-        else if (false && location.href.indexOf('5500') > -1) {
-            return { "isPost": false, "url": "", "rootUrl": "" }; //running locally
+        else if (location.href.indexOf('5500') > -1) {
+            return { "isDemo": true, "isPost": false, "url": "", "rootUrl": "" }; //running locally
         }
         else {
-            return { "isPost": true, "url": "http://localhost:81/jsonproxy.ashx", "rootUrl": "http://localhost:81" }; //running embedded
+            return { "isDemo": false, "isPost": true, "url": "http://localhost:81/jsonproxy.ashx", "rootUrl": "http://localhost:81" }; //running embedded
         }
     }
     function getFetch(scriptName, apiParams) {
@@ -3260,8 +3334,23 @@ var CamManager;
         document.getElementById('mainEditor').style.display = 'block';
         let cameras = [];
         if (jsonResult != null && jsonResult.cameras != null) {
-            for (let i = 0; i < jsonResult.cameras.length; i++) {
-                let camera = jsonResult.cameras[i];
+            let sortedArray = [...jsonResult.cameras];
+            //sort these by name.
+            sortedArray.sort((a, b) => {
+                let nameA = (a.name ?? unknownCameraName).trim().toLowerCase();
+                let nameB = (b.name ?? unknownCameraName).trim().toLowerCase();
+                if (nameA < nameB) {
+                    return -1;
+                }
+                else if (nameA > nameB) {
+                    return 1;
+                }
+                else {
+                    return 0;
+                }
+            });
+            for (let i = 0; i < sortedArray.length; i++) {
+                let camera = sortedArray[i];
                 let newCamera = {
                     "usbIndex": camera.usbIndex,
                     "api": camera.api,
@@ -3613,12 +3702,7 @@ var CamManager;
     CamManager.closeConfirmDialog = closeConfirmDialog;
     function isDemo() {
         let settings = getApiSettings();
-        if (settings.url.indexOf('github') > -1 || settings.rootUrl.indexOf('github') > -1) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return settings.isDemo;
     }
     function saveCamera() {
         if (isDemo()) {
@@ -3925,8 +4009,8 @@ var CamManager;
         //rgbaImageData is a byte[] that get converted to a base64 string by the c# Serializer
         imageData.data.set(base64ToArray(liveCamera.rgbaImageData));
         ctx.putImageData(imageData, 0, 0);
-        let image = document.getElementById('regionEditorImageRef');
-        image.src = canvas.toDataURL();
+        let regionEditorBaseImage = document.getElementById('regionEditorBaseImage');
+        regionEditorBaseImage.src = canvas.toDataURL();
         tempsCelsius = liveCamera.temperaturesInCelsius;
         if (regionEditor == null) {
             regionEditor = getEmptyRegionEditor();
@@ -3947,6 +4031,7 @@ var CamManager;
             }
         }
         clearStoredImageData();
+        updateMagnifierIfShown();
         hideBusy();
     }
     CamManager.apiLiveCameraReceived = apiLiveCameraReceived;
@@ -4066,8 +4151,8 @@ var CamManager;
         let imageData = ctx.createImageData(canvas.width, canvas.height);
         imageData.data.set(rgba);
         ctx.putImageData(imageData, 0, 0);
-        let image = document.getElementById('regionEditorImageRef');
-        image.src = canvas.toDataURL();
+        let regionEditorBaseImage = document.getElementById('regionEditorBaseImage');
+        regionEditorBaseImage.src = canvas.toDataURL();
         tempsCelsius = thermalData.temperaturesInCelsius;
         if (tempsCelsius == null) {
             tempsCelsius = new Array(canvas.width * canvas.height);
@@ -4078,7 +4163,6 @@ var CamManager;
         }
         if (!cameraEditor.isEditing) {
             imageScale = thermalData.imageScale ?? cameraEditor.defaultZoomLevel;
-            console.log('image Scale set to: ' + thermalData.imageScale);
             if (imageScale < cameraEditor.minZoomLevel || imageScale > cameraEditor.maxZoomLevel) {
                 imageScale = cameraEditor.defaultZoomLevel;
                 console.warn('Image Scale Was Out Of Bounds');
@@ -4128,11 +4212,13 @@ var CamManager;
             }
         }
         clearStoredImageData();
+        updateMagnifierIfShown();
         hideBusy();
     }
     function cameraChangedImageLoaded(cameraIndex, editing) {
         clearStoredImageData();
         showUI();
+        updateMagnifierIfShown();
         if (cameraEditor.cameras.length > 0) {
             cameraEditor.selectedCameraIndex = cameraIndex;
             if (regionEditor != null) {
@@ -4179,12 +4265,20 @@ var CamManager;
                         let elmCamStatus = document.getElementById('valCamStatus');
                         elmCamStatus.style.color = camera.isOnline ? "green" : "red";
                         elmCamStatus.innerHTML = camera.isOnline ? "Online" : "Offline";
+                        let elmCamType = document.getElementById('valCamType');
+                        elmCamType.style.color = camera.isThermalCamera ? "skyblue" : "DarkGray";
+                        elmCamType.innerHTML = camera.isThermalCamera ? "Thermal Cam" : "Picture Cam";
                         let elmCamName = document.getElementById('valCamName');
                         elmCamName.innerHTML = camera.name;
                         elmCamName.style.color = camera.name == unknownCameraName ? "red" : "white";
                         let elmCamIssues = document.getElementById('valCamIssues');
                         elmCamIssues.innerHTML = "0";
-                        setStatusText('Editing ' + camera.name + ' Camera', 'white', true);
+                        if (camera.isOnline) {
+                            setStatusText('Editing Online' + camera.name + ' Camera', 'white', true);
+                        }
+                        else {
+                            setStatusText('Editing Offline ' + camera.name + ' Camera', 'red', true);
+                        }
                         break;
                     }
                     else {
@@ -4192,7 +4286,12 @@ var CamManager;
                             setStatusText('Viewing Live ' + camera.name + ' Camera', 'white', true);
                         }
                         else {
-                            setStatusText('Viewing ' + camera.name + ' Camera', 'white', true);
+                            if (camera.isOnline) {
+                                setStatusText('Viewing Online ' + camera.name + ' Camera', 'white', true);
+                            }
+                            else {
+                                setStatusText('Viewing Offline ' + camera.name + ' Camera', 'red', true);
+                            }
                         }
                         sb += '<button id="btnCam' + strIndex + '" onclick="CamManager.changeCamera(' + i + ',' + (camera.canEdit ? 'true' : 'false') + ',false)" class="resizebutton2" style="border-color:white">';
                         sb += '<div style="line-height: 14px;">';
@@ -4209,7 +4308,8 @@ var CamManager;
                             sb += '<div class="regioneditortext" style="margin-top:-12px;color:red">Read Only</div>';
                         }
                         let strViewing = camera.isThermalCamera ? 'Thermal Cam' : 'Picture Cam';
-                        sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px" class="regionditortextsub3">' + strViewing + '</div>';
+                        let strCamTypeColor = camera.isThermalCamera ? 'skyblue' : 'DarkGray';
+                        sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px;color:' + strCamTypeColor + '" class="regionditortextsub3">' + strViewing + '</div>';
                         let strStyle = 'margin-top:-2px;';
                         if (camera.name == unknownCameraName) {
                             strStyle += 'color:red;';
@@ -4228,9 +4328,10 @@ var CamManager;
                     else {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:green;margin-top:3px" class="regionditortextsub3">Online</div>';
                     }
-                    sb += '<div class="regioneditortext" style="margin-top:-10px;">Tap To View</div>';
+                    sb += '<div class="regioneditortext" style="margin-top:-10px;">&nbsp;</div>'; //this was Tap To View
                     let strViewing = camera.isThermalCamera ? 'Thermal Cam' : 'Picture Cam';
-                    sb += '<div style="margin-top:-6px" class="regionditortextsub3">' + strViewing + '</div>';
+                    let strCamTypeColor = camera.isThermalCamera ? 'skyblue' : 'DarkGray';
+                    sb += '<div style="margin-top:-6px;color:' + strCamTypeColor + '" class="regionditortextsub3">' + strViewing + '</div>';
                     //camera names were already sanitized
                     let strStyle = 'margin-top:-2px;';
                     if (camera.name == unknownCameraName) {
@@ -4262,7 +4363,7 @@ var CamManager;
         }
     }
     function setupMouseEvents() {
-        const image = document.querySelector("#regionEditorImage");
+        const image = document.querySelector("#regionEditorImageCanvas");
         const border = document.querySelector('#regionEditorBorder');
         const tooltip = document.getElementById('tooltip');
         const tipmagnifier = document.getElementById('tipmagnifier');
@@ -4410,7 +4511,7 @@ var CamManager;
             }
             if (x != null && y != null) {
                 console.log('Show Temp x:' + x + ' y:' + y);
-                const image = document.querySelector("#regionEditorImage");
+                const image = document.querySelector("#regionEditorImageCanvas");
                 let isLeftMouseClick = false;
                 let minY = image.offsetTop;
                 let maxY = image.offsetTop + image.offsetHeight - 1;

@@ -236,7 +236,7 @@
                     <div id="valCamStatus" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>
 
                     <div class="regioneditortext" style="margin-top:-10px;color:orange">Editing</div>
-                    <div class="regionditortextsub3" style="margin-top:-10px">Camera</div>
+                    <div id="valCamType" class="regionditortextsub3" style="margin-top:-10px">Camera</div>
 
                     <div id="valCamName" class="regionditortextsub3">Name</div>
                 </div>
@@ -986,7 +986,7 @@
                 <div id="statusText"
                     style="white-space: nowrap; height:30px;color:white;font-size:24px;user-select: none;"></div>
 
-                <canvas id="regionEditorImage" width="256" height="192" draggable="false"></canvas>
+                <canvas id="regionEditorImageCanvas" width="256" height="192" draggable="false"></canvas>
 
             </div>
         </div>
@@ -1001,7 +1001,8 @@
             <canvas id="magnifierCanvas" width="200" height="200"></canvas>
         </div>
         <div id="tooltip">This is a tooltip</div>
-        <img id="regionEditorImageRef" style="display: none;">
+        <img id="regionEditorBaseImage" style="display: none;">
+        <img id="regionEditorCompareImage" style="display: none;">
     </div>
 </body>
 
