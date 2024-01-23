@@ -128,22 +128,27 @@
             <div id="dialogConfirmBody" class="thermalDialogBody"></div>
         </div>
     </div>
-    <div class="thermalDialog" id="dialogHistory" style="display:none">
+    <div class="thermalDialog" id="dialogRetention" style="display:none">
         <div class="thermalDialogContent">
             <table width="100%">
                 <tr>
-                    <td width="50%"><span id="dialogHistoryTitle" class="thermalDialogTitle">History</span></td>
+                    <td width="50%"><span id="dialogRetentionTitle" class="thermalDialogTitle">History</span></td>
                     <td width="50%" style="text-align:right">
-                        <button id="btnDialogHistoryClose" onclick="CamManager.closeThermalDialog()" class="resizebutton">
+                        <button id="btnDialogRetentionSave" onclick="CamManager.retainSave()" class="resizebutton">
                             <div style="line-height: 4px;">
-                                <span class="regioneditortext">Close</span>
+                                <span class="regioneditortext">Save</span>
+                            </div>
+                        </button>
+                        <button id="btnDialogRetentionClose" onclick="CamManager.closeThermalDialogAndRefresh()" class="resizebutton">
+                            <div style="line-height: 4px;">
+                                <span class="regioneditortext">Cancel</span>
                             </div>
                         </button>
                     </td>
                 </tr>
             </table>
             <hr class="thermalDialogRule" />
-            <div id="dialogHistoryBody" class="thermalDialogBody"></div>
+            <div id="dialogRetentionBody" class="thermalDialogBody"></div>
         </div>
     </div>
 
@@ -465,10 +470,10 @@
 
             
 
-            <button id="btnShowHistory" onclick="CamManager.showHistory()" style="display:none" class="resizebutton">
+            <button id="btnShowRetained" onclick="CamManager.showRetained()" style="display:none" class="resizebutton">
                 <div style="line-height: 28px;">
                     <div class="regioneditortext">Show</div>
-                    <div id="valRegionIndex" class="regionditortextsub3">History</div>
+                    <div id="valRegionIndex" class="regionditortextsub3">Retained</div>
                 </div>
             </button>
 
@@ -479,7 +484,12 @@
                 </div>
             </button>
 
-
+            <button id="btnRetainLive" onclick="CamManager.retainLive()" style="display:none" class="resizebutton">
+                <div style="line-height: 28px;">
+                    <div class="regioneditortext">Retain</div>
+                    <div id="valRegionIndex" style="color:red" class="regionditortextsub3">Live</div>
+                </div>
+            </button>
 
 
             <button id="btnDeleteRegion" onclick="CamManager.deleteRegionEditor()" class="resizebutton">

@@ -4,7 +4,7 @@ module CamManager {
     const cameraFixedDistanceMeters: number = .25;
     const unknownCameraName: string = 'Unknown';
 
-    
+
     let comparingImageDirectionIsUp = true;
     let compareDividerPosition = 0;
     let materialMap: (IKnownMaterial | null)[] = [];
@@ -19,6 +19,7 @@ module CamManager {
         "showHotspotNumbers": false,
         "isEditing": false,
         "isWatchingLive": false,
+        "isRetaining": false,
         "minZoomLevel": 1,
         "maxZoomLevel": 7,
         "defaultZoomLevel": 3,
@@ -53,7 +54,7 @@ module CamManager {
     let fillRange: number = 1.0;
     let escapeElm: HTMLTextAreaElement | null = null;
 
-    function isAutoComparingImages(){
+    function isAutoComparingImages() {
         return isDemo() && !cameraEditor.isEditing && activeLayer == 'Spots';
     }
 
@@ -776,8 +777,9 @@ module CamManager {
         getDomButton("btnChangeEraseSizeMore").disabled = !eraseSelected;
 
 
-        getDomButton("btnShowHistory").style.display = ((cameraEditor.isEditing || camera == null || !camera.isKnown) ? 'none' : '');
-        getDomButton("btnWatchLive").style.display = ((cameraEditor.isWatchingLive || cameraEditor.isEditing || camera == null || camera.usbIndex == null || camera.api == null) ? 'none' : '');
+        getDomButton("btnShowRetained").style.display = ((cameraEditor.isRetaining || cameraEditor.isEditing || camera == null || !camera.isKnown) ? 'none' : '');
+        getDomButton("btnWatchLive").style.display = ((cameraEditor.isRetaining || cameraEditor.isWatchingLive || cameraEditor.isEditing || camera == null || camera.usbIndex == null || camera.api == null) ? 'none' : '');
+        getDomButton("btnRetainLive").style.display = ((!cameraEditor.isRetaining && cameraEditor.isWatchingLive) ? '' : 'none');
         getDomButton("btnDeleteRegion").disabled = !hasActiveItem || camera == null || !camera.canDeleteSpots;
         getDomButton("btnDeleteRegion").style.visibility = cameraEditor.isEditing ? 'visible' : 'hidden';
         getDomButton("btnChangeRegion").disabled = !hasActiveItem;
@@ -1382,7 +1384,7 @@ module CamManager {
     let lastRedrawDate: Date | null = null;
     let waitingRedraw = false;
     function drawRegions() {
-        if(regionEditor == null){
+        if (regionEditor == null) {
             return;
         }
 
@@ -1410,7 +1412,7 @@ module CamManager {
 
 
         let canvasBottomLayer = document.createElement("canvas")!;
-       
+
         canvasBottomLayer.width = regionEditor.imageWidth;
         canvasBottomLayer.height = regionEditor.imageHeight;
 
@@ -1535,7 +1537,7 @@ module CamManager {
             //console.log('drawing compare image:' + compareDividerPosition);
             if (comparingImageDirectionIsUp) {
                 compareDividerPosition++;
-                if(rotation == 0 || rotation == 180){
+                if (rotation == 0 || rotation == 180) {
                     if (compareDividerPosition >= regionEditor!.imageNativeWidth) {
                         compareDividerPosition = regionEditor!.imageNativeWidth + 5;
                         comparingImageDirectionIsUp = false;
@@ -1554,15 +1556,15 @@ module CamManager {
                 }
             }
             clearStoredImageData();
-            
+
             window.requestAnimationFrame(nextCompareStep);
         }
 
 
     }
 
-    
-    function nextCompareStep(){
+
+    function nextCompareStep() {
         drawRegions();
         updateMagnifierIfShown();
     }
@@ -3394,7 +3396,7 @@ module CamManager {
         storedImageWidth = null;
         storedImageHeight = null;
         storedImageMirrorHorizontally = null;
-        
+
     }
 
     function drawTipMagnifier(x: number, y: number) {
@@ -3594,12 +3596,12 @@ module CamManager {
 
     }
 
-    
-    let lastMagnifierSettings:IMagnifierSettings|null = null;
-    function updateMagnifierIfShown(){
-        if(lastMagnifierSettings != null){
+
+    let lastMagnifierSettings: IMagnifierSettings | null = null;
+    function updateMagnifierIfShown() {
+        if (lastMagnifierSettings != null) {
             const tooltip = document.getElementById('tooltip')!;
-            if(tooltip.style.display == 'block'){
+            if (tooltip.style.display == 'block') {
                 placeMagnifier(lastMagnifierSettings);
             }
         }
@@ -3819,7 +3821,7 @@ module CamManager {
 
         }
 
-        let magnifierSettings:IMagnifierSettings = { "offsetX": offsetX, "offsetY": offsetY, "pageX": pageX, "pageY": pageY};
+        let magnifierSettings: IMagnifierSettings = { "offsetX": offsetX, "offsetY": offsetY, "pageX": pageX, "pageY": pageY };
         placeMagnifier(magnifierSettings);
     }
 
@@ -3894,14 +3896,14 @@ module CamManager {
     function getApiSettings() {
         if (location.href.indexOf('github.io') > -1) {
             //when hosted on github pages, we have to make json calls and image calls with this prefix.
-            return {"isDemo":true, "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
+            return { "isDemo": true, "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
         }
-        else if (location.href.indexOf('5500') > -1) {
-            return {"isDemo":true, "isPost": false, "url": "", "rootUrl": "" };//running locally
+        else if (false && location.href.indexOf('5500') > -1) {
+            return { "isDemo": true, "isPost": false, "url": "", "rootUrl": "" };//running locally
         }
         else {
 
-            return {"isDemo":false, "isPost": true, "url": "http://localhost:81/jsonproxy.ashx", "rootUrl": "http://localhost:81" };//running embedded
+            return { "isDemo": false, "isPost": true, "url": "http://localhost:81/jsonproxy.ashx", "rootUrl": "http://localhost:81" };//running embedded
         }
     }
 
@@ -4034,7 +4036,7 @@ module CamManager {
         document.getElementById('dialogAlert')!.style.display = 'none';
         document.getElementById('dialogConfirm')!.style.display = 'none';
         document.getElementById('dialogPrompt')!.style.display = 'none';
-        document.getElementById('dialogHistory')!.style.display = 'none';
+        document.getElementById('dialogRetention')!.style.display = 'none';
         document.getElementById('cameraTools')!.style.display = 'none';
         document.getElementById('cameraAssignLiveButtons')!.style.display = 'none';
         document.getElementById('cameraEditTools')!.style.display = 'none';
@@ -4136,8 +4138,15 @@ module CamManager {
 
         }
 
+
+        document.getElementById('cameraList')!.style.display = cameraEditor.isRetaining ? 'none' : '';
+        getDomButton('btnRefreshCameras').style.display = cameraEditor.isRetaining ? 'none' : '';
+
+
         if (cameraEditor.selectedCameraIndex > -1) {
-            showAssignableCameras();
+            if (!cameraEditor.isRetaining) {
+                showAssignableCameras();
+            }
             let camera = null;
             if (cameraEditor.cameras != null && cameraEditor.selectedCameraIndex > -1 && cameraEditor.selectedCameraIndex < cameraEditor.cameras.length) {
                 camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
@@ -4234,8 +4243,110 @@ module CamManager {
         refreshCameras();
     }
 
+    export function showRetained() {
+        showAlertDialog(null, 'Retained', 'Retained Images are not supported yet', true);
+    }
+
+    export function retainSave() {
+        let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+        if (camera == null) {
+            return;
+        }
+        showAlertDialog(null, 'Retained', 'Retained Images are not supported yet', true);
+    }
+
+    export function retainLive() {
+        if (!cameraEditor.isWatchingLive) {
+            return;
+        }
+        cameraEditor.isRetaining = true;
+        cameraEditor.isWatchingLive = false;
+        let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+        if (camera == null) {
+            return;
+        }
+        getRetentionFields(camera);
 
 
+    }
+
+    export function RetentionFieldsReceived(camera: ICamera, success: boolean, fields: IRetentionField[] | null) {
+        hideBusy();
+        if (!success || fields == null || fields.length == 0) {
+            return;
+        }
+        hideBusy();
+        hideUI();
+        let messageTitle = camera.name + ' Retention';
+        document.getElementById('dialogRetentionTitle')!.innerHTML = escapeHTML(messageTitle);
+        document.getElementById('dialogRetentionBody')!.innerHTML = 'Loading';
+        document.getElementById('dialogRetention')!.style.display = '';
+        let sb = '';
+        for (let i = 0; i < fields.length; i++) {
+            let field = fields[i];
+            sb += `<div>${field.DisplayName}</div>`;
+            sb += `<div style="margin-bottom:15px">`;
+            switch (field.FieldType) {
+
+                case 'datetime-local':
+                    sb += `<input class="thermalFormField" type="datetime-local" id="${field.FormID}" name="${field.FormID}" value="${field.Value}" style="width:100%">`;
+                    break;
+                case 'text':
+                    sb += `<input class="thermalFormField" type="text" id="${field.FormID}" name="${field.FormID}" value="${field.Value}" maxlength="${field.MaximumLength}" style="width:100%">`;
+                    break;
+                case 'textarea':
+                    sb += `<textarea class="thermalFormField" style="resize:none;width:100%" rows="5" id="${field.FormID}" name="${field.FormID}">${field.Value}</textarea>`;
+                    break;
+                case 'radio':
+                    if (field.Values != null && field.Values.length > 0) {
+                        for (let j = 0; j < field.Values.length; j++) {
+                            let strValue = field.Values[j];
+                           
+                            sb += `<input class="thermalFormField" type="radio" id="${field.FormID + j.toString()}" name="${field.FormID}" value="${strValue}">`;
+                            sb += `<label class="thermalFormField" for="${field.FormID + j.toString()}">${escapeHTML(strValue)}</label>`;
+                            sb += '<br>';
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+
+            sb += `</div>`;
+        }
+        document.getElementById('dialogRetentionBody')!.innerHTML = sb;
+        showUI();//let them see the form
+
+    }
+
+    function getRetentionFields(camera: ICamera) {
+
+        showBusy(true);
+
+        let scriptName = "rse_themalcameras_retention_config_get";
+        getFetch(scriptName, { "isThermalCamera": camera.isThermalCamera })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('getRetentionFields response not ok');
+                    CamManager.RetentionFieldsReceived(camera, false, null);
+                }
+                return response.json();
+            })
+            .then(json => {
+                let scriptReturnValue = json.ScriptReturnValue;
+                if (typeof scriptReturnValue == 'string') {
+                    scriptReturnValue = JSON.parse(scriptReturnValue);
+                }
+                CamManager.RetentionFieldsReceived(camera, true, scriptReturnValue.fields);
+
+            })
+            .catch(error => {
+                console.error('catch fetch getRetentionFields', error);
+                CamManager.RetentionFieldsReceived(camera, false, null);
+            })
+
+    }
 
 
     export function watchLive() {
@@ -4259,77 +4370,82 @@ module CamManager {
         getLiveCameraImage(api, usbIndex, null);
     }
 
-
-    export function showHistory() {
-        cameraEditor.isWatchingLive = false;
-        let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-        showHistoryDialog(camera.name, camera.name + ' History');
-    }
-
-    function showHistoryDialog(cameraName: string, messageTitle: string) {
-        hideBusy();
-        hideUI();
-        document.getElementById('dialogHistoryTitle')!.innerHTML = escapeHTML(messageTitle);
-        document.getElementById('dialogHistoryBody')!.innerHTML = 'Loading';
-        document.getElementById('dialogHistory')!.style.display = '';
-        getHistoryCameraImage(cameraName, Number.MAX_SAFE_INTEGER - 10000, false);
-    }
-
-    function showHistoryGraph(scriptReturnValue: any) {
-        if (scriptReturnValue == null) {
+    /*
+        export function showStreamed() {
+            cameraEditor.isWatchingLive = false;
+            let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
+            showStreamedDialog(camera.name, camera.name + ' Stream');
+        }
+    
+        function showStreamedDialog(cameraName: string, messageTitle: string) {
             hideBusy();
             hideUI();
-            showUI();
-            showAlertDialog(null, 'Error', 'Error loading history.', true);
-            return;
+            document.getElementById('dialogRetentionTitle')!.innerHTML = escapeHTML(messageTitle);
+            document.getElementById('dialogRetentionBody')!.innerHTML = 'Loading';
+            document.getElementById('dialogRetention')!.style.display = '';
+            getStreamCameraImage(cameraName, Number.MAX_SAFE_INTEGER - 10000, false);
         }
-        else {
-            let frameCount = scriptReturnValue.frameCount;
-            let strMessage = `There are ${frameCount} historical images available.`;
-            hideBusy();
-            hideUI();
-            showUI();
-            showAlertDialog(null, 'History', strMessage, true);
-            return;
+    
+        function showStreamGraph(scriptReturnValue: any) {
+            if (scriptReturnValue == null) {
+                hideBusy();
+                hideUI();
+                showUI();
+                showAlertDialog(null, 'Error', 'Error loading history.', true);
+                return;
+            }
+            else {
+                let frameCount = scriptReturnValue.frameCount;
+                let strMessage = `There are ${frameCount} historical images available.`;
+                hideBusy();
+                hideUI();
+                showUI();
+                showAlertDialog(null, 'Stream', strMessage, true);
+                return;
+            }
         }
-    }
+        
+    
+        function getStreamCameraImage(cameraName: string, timeStamp: number, showImage: boolean) {
+    
+            showBusy(true);
+            let scriptName = 'rse_thermalcamerasstream_get';
+            getFetch(scriptName, { "cameraName": cameraName, "timeStamp": timeStamp })
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('response not ok');
+                        showStreamGraph(null);
+    
+                    }
+                    return response.json();
+                })
+                .then(json => {
+                    console.log('response ok');
+                    let scriptReturnValue = json.ScriptReturnValue;
+                    if (typeof scriptReturnValue == 'string') {
+                        scriptReturnValue = JSON.parse(scriptReturnValue);
+                    }
+                    if (showImage) {
+                        CamManager.apiLiveCameraReceived(scriptReturnValue);
+                    }
+                    showStreamGraph(scriptReturnValue);
+    
+                })
+                .catch(error => {
+                    console.error('catch fetch getLiveImage', error);
+                    showStreamGraph(null);
+                })
+    
+        }
+        */
 
-    function getHistoryCameraImage(cameraName: string, timeStamp: number, showImage: boolean) {
-
-        showBusy(true);
-        let scriptName = 'rse_thermalcamerasstream_get';
-        getFetch(scriptName, { "cameraName": cameraName, "timeStamp": timeStamp })
-            .then(response => {
-                if (!response.ok) {
-                    console.error('response not ok');
-                    showHistoryGraph(null);
-
-                }
-                return response.json();
-            })
-            .then(json => {
-                console.log('response ok');
-                let scriptReturnValue = json.ScriptReturnValue;
-                if (typeof scriptReturnValue == 'string') {
-                    scriptReturnValue = JSON.parse(scriptReturnValue);
-                }
-                if (showImage) {
-                    CamManager.apiLiveCameraReceived(scriptReturnValue);
-                }
-                showHistoryGraph(scriptReturnValue);
-
-            })
-            .catch(error => {
-                console.error('catch fetch getLiveImage', error);
-                showHistoryGraph(null);
-            })
-
-    }
-
-    export function closeThermalDialog() {
+    export function closeThermalDialogAndRefresh() {
+        cameraEditor.isRetaining = false;
         hideUI();
         showUI();
+        CamManager.refreshCameras();
     }
+
 
     let alertCallback: any = null;
     export function showAlertDialog(callback: any, messageTitle: string, messageBody: string, escapeBody: boolean) {
@@ -5055,7 +5171,7 @@ module CamManager {
                         let elmCamType = document.getElementById('valCamType')!;
                         elmCamType.style.color = camera.isThermalCamera ? "skyblue" : "DarkGray";
                         elmCamType.innerHTML = camera.isThermalCamera ? "Thermal Cam" : "Picture Cam";
-                        
+
 
                         let elmCamName = document.getElementById('valCamName')!;
                         elmCamName.innerHTML = camera.name;
@@ -5153,6 +5269,7 @@ module CamManager {
         }
 
         cameraList.innerHTML = sb;
+        cameraList.style.display = cameraEditor.isRetaining ? 'none' : '';
         if (cameraEditor.cameras.length > 0) {
             goRegionEditor();
         }

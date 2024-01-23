@@ -11,6 +11,12 @@ body{
   font-family: Tahoma, Verdana, Geneva,  sans-serif;
 }
 
+.thermalFormField{
+  color:black;
+  font-family: Tahoma, Verdana, Geneva,  sans-serif;
+  font-size: 18px;
+}
+
 #busyLayer{
   background:rgba(0,0,0,.95);
   position: fixed;
