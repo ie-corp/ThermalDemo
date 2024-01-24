@@ -1162,6 +1162,13 @@ var CamManager;
         addRegionHistory('rotate image', null, false); //I don't think this needs a undo.
     }
     CamManager.rotateImage = rotateImage;
+    function positionAnnotationsLayer() {
+        //this may need to get called as things get scrolled or dialogs are shown.
+        let annotationsCanvas = document.getElementById('regionEditorAnnotations');
+        let regionEditorImageCanvas = document.getElementById('regionEditorImageCanvas');
+        annotationsCanvas.style.top = `${regionEditorImageCanvas.offsetTop}px`;
+        annotationsCanvas.style.left = `${regionEditorImageCanvas.offsetLeft}px`;
+    }
     let lastRedrawDate = null;
     let waitingRedraw = false;
     function drawRegions() {
@@ -1271,12 +1278,7 @@ var CamManager;
         annotationsCanvas.height = canvasTopLayer.height;
         ctxAnnotations.clearRect(0, 0, annotationsCanvas.width, annotationsCanvas.height);
         ctxAnnotations.drawImage(canvasTopLayer, 0, 0, annotationsCanvas.width, annotationsCanvas.height);
-        //annotationsCanvas.style.top = '178px';
-        //annotationsCanvas.style.left = '96px';
-        //console.log('offsetTop: ' + regionEditorImage.offsetTop);
-        //console.log('offsetLeft: ' + regionEditorImage.offsetLeft);
-        annotationsCanvas.style.top = `${regionEditorImageCanvas.offsetTop}px`;
-        annotationsCanvas.style.left = `${regionEditorImageCanvas.offsetLeft}px`;
+        positionAnnotationsLayer();
         if (isAutoComparingImages()) {
             //console.log('drawing compare image:' + compareDividerPosition);
             if (comparingImageDirectionIsUp) {
@@ -3506,6 +3508,7 @@ var CamManager;
             document.getElementById("rowDistanceTools").style.display = (activeLayer != 'Dist' ? 'none' : '');
             document.getElementById("regionEditorAnnotations").style.display = '';
             document.getElementById('touchTools').style.display = '';
+            positionAnnotationsLayer();
         }
     }
     function deleteCamera() {
@@ -3576,12 +3579,55 @@ var CamManager;
     CamManager.showRetained = showRetained;
     function retainSave() {
         let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-        if (camera == null) {
+        if (camera == null || lastRetentionFields == null) {
             return;
         }
-        showAlertDialog(null, 'Retained', 'Retained Images are not supported yet', true);
+        let myFields = JSON.parse(JSON.stringify(lastRetentionFields));
+        //validate the fields.
+        for (let i = 0; i < myFields.length; i++) {
+            let field = myFields[i];
+            let value = getDomInputValue(field.FormID, field.Values);
+            if (field.Required && (value == null || value == '')) {
+                showAlertDialog(() => { document.getElementById('dialogRetention').style.display = ''; positionAnnotationsLayer(); }, 'Error', `${field.DisplayName} is required.`, true);
+                return;
+            }
+            if (field.Values == null) {
+                if (field.MaximumLength > 0 && value != null && value.length > field.MaximumLength) {
+                    showAlertDialog(() => { document.getElementById('dialogRetention').style.display = ''; positionAnnotationsLayer(); }, 'Error', `${field.DisplayName} cannot be longer than ${field.MaximumLength} characters.`, true);
+                    return;
+                }
+                if (field.MinimumLength > 0 && value != null && value.length < field.MinimumLength) {
+                    showAlertDialog(() => { document.getElementById('dialogRetention').style.display = ''; positionAnnotationsLayer(); }, 'Error', `${field.DisplayName} cannot be shorter than ${field.MinimumLength} characters.`, true);
+                    return;
+                }
+            }
+            field.Value = value;
+        }
+        cameraEditor.isRetaining = false;
+        callSaveCameras(camera, true, myFields);
     }
     CamManager.retainSave = retainSave;
+    function getDomInputValue(id, values) {
+        if (values != null && values.length > 0) {
+            let strValue = '';
+            for (let i = 0; i < values.length; i++) {
+                let value = values[i];
+                let elm = document.getElementById(id + i.toString());
+                if (elm != null && elm.checked) {
+                    strValue = value;
+                    break;
+                }
+            }
+            return strValue.trim();
+        }
+        else {
+            let elm = document.getElementById(id);
+            if (elm == null) {
+                return '';
+            }
+            return elm.value.trim();
+        }
+    }
     function retainLive() {
         if (!cameraEditor.isWatchingLive) {
             return;
@@ -3595,7 +3641,9 @@ var CamManager;
         getRetentionFields(camera);
     }
     CamManager.retainLive = retainLive;
+    let lastRetentionFields = null;
     function RetentionFieldsReceived(camera, success, fields) {
+        lastRetentionFields = fields;
         hideBusy();
         if (!success || fields == null || fields.length == 0) {
             return;
@@ -3609,7 +3657,8 @@ var CamManager;
         let sb = '';
         for (let i = 0; i < fields.length; i++) {
             let field = fields[i];
-            sb += `<div>${field.DisplayName}</div>`;
+            let strRequired = field.Required ? '*' : '';
+            sb += `<div>${field.DisplayName}${strRequired}</div>`;
             sb += `<div style="margin-bottom:15px">`;
             switch (field.FieldType) {
                 case 'datetime-local':
@@ -3829,7 +3878,7 @@ var CamManager;
                 return;
             }
         }
-        callSaveCameras(cameraEditor.cameras[cameraEditor.selectedCameraIndex]);
+        callSaveCameras(cameraEditor.cameras[cameraEditor.selectedCameraIndex], false, null);
     }
     CamManager.saveCamera = saveCamera;
     function adjustRegions(sourceRegions, imageMirrorHorizontally, desiredMirrorHorizontally, originalRotation, desiredRotation, imageNativeWidth, imageNativeHeight) {
@@ -3887,12 +3936,12 @@ var CamManager;
             }
         }
     }
-    function callSaveCameras(camera) {
+    function callSaveCameras(camera, isRetention, retentionFields = null) {
         if (regionEditor == null) {
             return;
         }
         hideEverything();
-        let scriptName = 'rse_thermalcameras_save';
+        let scriptName = isRetention ? 'rse_themalcameras_retention_save' : 'rse_thermalcameras_save';
         let saveRegions = JSON.parse(JSON.stringify(regionEditor.regions));
         //the editor rotates the regions. We must unrotate unmirror them. when saving.
         saveRegions = adjustRegions(saveRegions, regionEditor.imageMirrorHorizontally, false, regionEditor.imageRotation, 0, regionEditor.imageNativeWidth, regionEditor.imageNativeHeight);
@@ -3926,7 +3975,8 @@ var CamManager;
                     "imageNativeHeight": regionEditor.imageNativeHeight,
                     "imageRotation": regionEditor.imageRotation,
                     "imageMirrorHorizontally": regionEditor.imageMirrorHorizontally,
-                    "imageScale": imageScale
+                    "imageScale": imageScale,
+                    "retentionFields": retentionFields
                 }
             }
         };
@@ -3951,7 +4001,7 @@ var CamManager;
             }
             else {
                 let sb = '';
-                if (scriptReturnValue != null && scriptReturnValue.paths != null && scriptReturnValue.paths.length > 0) {
+                if (!isRetention && (scriptReturnValue != null && scriptReturnValue.paths != null && scriptReturnValue.paths.length > 0)) {
                     sb += '<h3>A system reboot will be needed for the sensors to be monitored.</h3>';
                     sb += '<div>The following sensors were created:</div>';
                     sb += '<ol>';

@@ -6,9 +6,17 @@ html{
 body{
   margin:0px;
   height:100%;
-  background-color: #282828;
+  
+
+  background: linear-gradient(
+      217deg,
+      rgb(6 28  43 / 99%),
+      rgb(0 0 0 / 40%) 70.71%
+    ), linear-gradient(127deg, rgb(6 28  43 / 99%), rgb(0 0 0 / 40%) 70.71%),
+    linear-gradient(336deg, rgb(6 28  43 / 99%), rgb(0 0 0 / 40%) 70.71%);
   color:white;
   font-family: Tahoma, Verdana, Geneva,  sans-serif;
+ 
 }
 
 .thermalFormField{
@@ -29,8 +37,7 @@ body{
 }
 
 .thermalDialog{
-  background-color: #282828;
-  color:white;
+  
   user-select: none;
   
 }
@@ -74,9 +81,13 @@ body{
     min-width: 80px;
   }
 
+  .regionContainer{
+    border:2px solid rgb(73, 202, 190, 1);
+  }
+
 .resizebutton{
   border-radius: 8px;
-  border: 2px solid rgb(32,32,32);
+  border: 2px solid rgb(73, 202, 190, .3);
     padding:0px;
     margin-bottom:4px;
     margin-right:4px;
@@ -100,7 +111,7 @@ body{
 
 .resizebutton2{
   border-radius: 8px;
-  border: 2px solid rgb(32,32,32);
+  border: 2px solid rgb(73, 202, 190, .3);
   padding:0px;
   margin-bottom:4px;
   margin-right:4px;
@@ -120,7 +131,7 @@ body{
 
 .resizebutton3{
   border-radius: 8px;
-  border: 2px solid rgb(32,32,32);
+  border: 2px solid rgb(73, 202, 190, .3);
   padding:0px;
   margin-bottom:4px;
   margin-right:4px;
@@ -241,7 +252,7 @@ background-color:grey;
 
 .regionbutton{
   border-radius: 8px;
-  border: 2px solid rgb(32,32,32);
+  border: 2px solid rgb(73, 202, 190, .3);
   padding:0px;
   user-select: none;
   margin-bottom:4px; 

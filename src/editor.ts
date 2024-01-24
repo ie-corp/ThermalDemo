@@ -1381,6 +1381,14 @@ module CamManager {
         addRegionHistory('rotate image', null, false);//I don't think this needs a undo.
     }
 
+    function positionAnnotationsLayer(){
+        //this may need to get called as things get scrolled or dialogs are shown.
+        let annotationsCanvas = document.getElementById('regionEditorAnnotations') as HTMLCanvasElement;
+        let regionEditorImageCanvas = document.getElementById('regionEditorImageCanvas') as HTMLCanvasElement;
+        annotationsCanvas.style.top = `${regionEditorImageCanvas.offsetTop}px`;
+        annotationsCanvas.style.left = `${regionEditorImageCanvas.offsetLeft}px`;
+    }
+
     let lastRedrawDate: Date | null = null;
     let waitingRedraw = false;
     function drawRegions() {
@@ -1526,12 +1534,9 @@ module CamManager {
         ctxAnnotations.drawImage(canvasTopLayer, 0, 0, annotationsCanvas.width, annotationsCanvas.height);
 
 
-        //annotationsCanvas.style.top = '178px';
-        //annotationsCanvas.style.left = '96px';
-        //console.log('offsetTop: ' + regionEditorImage.offsetTop);
-        //console.log('offsetLeft: ' + regionEditorImage.offsetLeft);
-        annotationsCanvas.style.top = `${regionEditorImageCanvas.offsetTop}px`;
-        annotationsCanvas.style.left = `${regionEditorImageCanvas.offsetLeft}px`;
+        
+        positionAnnotationsLayer();
+        
 
         if (isAutoComparingImages()) {
             //console.log('drawing compare image:' + compareDividerPosition);
@@ -4169,6 +4174,8 @@ module CamManager {
             document.getElementById("rowDistanceTools")!.style.display = (activeLayer != 'Dist' ? 'none' : '');
             document.getElementById("regionEditorAnnotations")!.style.display = '';
             document.getElementById('touchTools')!.style.display = '';
+
+            positionAnnotationsLayer();
         }
     }
 
@@ -4249,10 +4256,58 @@ module CamManager {
 
     export function retainSave() {
         let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-        if (camera == null) {
+        if (camera == null || lastRetentionFields == null) {
             return;
         }
-        showAlertDialog(null, 'Retained', 'Retained Images are not supported yet', true);
+        let myFields:IRetentionField[] = JSON.parse(JSON.stringify(lastRetentionFields));
+        //validate the fields.
+        for(let i = 0; i < myFields.length; i++){
+            let field = myFields[i];
+            let value = getDomInputValue(field.FormID, field.Values);
+            if (field.Required && (value == null || value == '')) {
+                showAlertDialog(()=>{ document.getElementById('dialogRetention')!.style.display = ''; positionAnnotationsLayer(); }, 'Error', `${field.DisplayName} is required.`, true);
+                return;
+            }
+            if(field.Values == null)
+            {
+                if (field.MaximumLength > 0 && value != null && value.length > field.MaximumLength) {
+                    showAlertDialog(()=>{ document.getElementById('dialogRetention')!.style.display = ''; positionAnnotationsLayer();  }, 'Error', `${field.DisplayName} cannot be longer than ${field.MaximumLength} characters.`, true);
+                    return;
+                }
+                if (field.MinimumLength > 0 && value != null && value.length < field.MinimumLength) {
+                    showAlertDialog(()=>{ document.getElementById('dialogRetention')!.style.display = ''; positionAnnotationsLayer();  }, 'Error', `${field.DisplayName} cannot be shorter than ${field.MinimumLength} characters.`, true);
+                    return;
+                }
+            }
+            field.Value = value;
+        }
+        cameraEditor.isRetaining = false;
+        callSaveCameras(camera, true, myFields);
+    }
+
+
+   
+
+    function getDomInputValue(id: string, values:string[] | null):string {
+        if(values != null && values.length > 0){
+            let strValue = '';
+            for(let i = 0; i < values.length; i++){
+                let value = values[i];
+                let elm = document.getElementById(id + i.toString()) as HTMLInputElement;
+                if(elm != null && elm.checked){
+                    strValue = value;
+                    break;
+                }
+            }
+            return strValue.trim();
+        }
+        else{
+            let elm = document.getElementById(id) as HTMLInputElement;
+            if (elm == null) {
+                return '';
+            }
+            return elm.value.trim();
+        }
     }
 
     export function retainLive() {
@@ -4270,7 +4325,9 @@ module CamManager {
 
     }
 
+    let lastRetentionFields:IRetentionField[]|null = null;
     export function RetentionFieldsReceived(camera: ICamera, success: boolean, fields: IRetentionField[] | null) {
+        lastRetentionFields = fields;
         hideBusy();
         if (!success || fields == null || fields.length == 0) {
             return;
@@ -4284,7 +4341,8 @@ module CamManager {
         let sb = '';
         for (let i = 0; i < fields.length; i++) {
             let field = fields[i];
-            sb += `<div>${field.DisplayName}</div>`;
+            let strRequired = field.Required ? '*' : '';
+            sb += `<div>${field.DisplayName}${strRequired}</div>`;
             sb += `<div style="margin-bottom:15px">`;
             switch (field.FieldType) {
 
@@ -4317,6 +4375,7 @@ module CamManager {
         }
         document.getElementById('dialogRetentionBody')!.innerHTML = sb;
         showUI();//let them see the form
+        
 
     }
 
@@ -4525,7 +4584,7 @@ module CamManager {
                 return;
             }
         }
-        callSaveCameras(cameraEditor.cameras[cameraEditor.selectedCameraIndex]);
+        callSaveCameras(cameraEditor.cameras[cameraEditor.selectedCameraIndex],false, null);
     }
 
 
@@ -4596,13 +4655,13 @@ module CamManager {
     }
 
 
-    function callSaveCameras(camera: ICamera) {
+    function callSaveCameras(camera: ICamera, isRetention:boolean, retentionFields: IRetentionField[] | null = null) {
         if (regionEditor == null) {
             return;
         }
         hideEverything();
 
-        let scriptName = 'rse_thermalcameras_save';
+        let scriptName = isRetention? 'rse_themalcameras_retention_save' : 'rse_thermalcameras_save';
 
         let saveRegions = JSON.parse(JSON.stringify(regionEditor.regions)) as IRegion[];
 
@@ -4646,7 +4705,8 @@ module CamManager {
                     "imageNativeHeight": regionEditor.imageNativeHeight,
                     "imageRotation": regionEditor.imageRotation,
                     "imageMirrorHorizontally": regionEditor.imageMirrorHorizontally,
-                    "imageScale": imageScale
+                    "imageScale": imageScale,
+                    "retentionFields": retentionFields
                 }
 
 
@@ -4677,7 +4737,7 @@ module CamManager {
                 }
                 else {
                     let sb = '';
-                    if (scriptReturnValue != null && scriptReturnValue.paths != null && scriptReturnValue.paths.length > 0) {
+                    if (!isRetention && ( scriptReturnValue != null && scriptReturnValue.paths != null && scriptReturnValue.paths.length > 0)) {
                         sb += '<h3>A system reboot will be needed for the sensors to be monitored.</h3>';
                         sb += '<div>The following sensors were created:</div>';
                         sb += '<ol>';
