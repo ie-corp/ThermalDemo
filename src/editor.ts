@@ -676,10 +676,10 @@ module CamManager {
         getDomButton("btnMirrorImageHorizontally").disabled = (!cameraEditor.isEditing || camera == null || !camera.canEditMirror);
 
         getDomButton('btnSaveCamera').disabled = (!cameraEditor.isEditing || camera == null || !camera.canEdit);
-        getDomButton('btnSaveCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canEdit) ? 'gray' : 'green';
+        getDomButton('btnSaveCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canEdit) ? 'gray' : 'rgb(0,255,0,.4)';
 
         getDomButton('btnDeleteCamera').disabled = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown);
-        getDomButton('btnDeleteCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown) ? 'gray' : 'red';
+        getDomButton('btnDeleteCamera').style.backgroundColor = (!cameraEditor.isEditing || camera == null || !camera.canDeleteCamera || !camera.isKnown) ? 'gray' : 'rgb(255,0,0,.4)';
 
         getDomButton('btnRefreshLiveImage').disabled = (!cameraEditor.isEditing || camera == null || camera.usbIndex == null || camera.api == null);
 
