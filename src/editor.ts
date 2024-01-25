@@ -14,6 +14,8 @@ module CamManager {
     let selectedEventIndex = -1;
 
     let cameraEditor: ICameraEditor = {
+        "isViewingGallery":true,
+        "isViewingEditor":false,
         "selectedCameraIndex": 0,
         "isViewingCelsius": true,
         "showHotspotNumbers": false,
@@ -831,6 +833,7 @@ module CamManager {
 
     function hideEverything() {
         hideTips();
+        document.getElementById('gallery')!.style.display = 'none';
         document.getElementById('mainEditor')!.style.display = 'none';
         document.getElementById('dialogDistance')!.style.display = 'none';
         document.getElementById('dialogMaterials')!.style.display = 'none';
@@ -838,7 +841,12 @@ module CamManager {
 
     export function cancelEventDialog() {
         hideEverything();
-        document.getElementById('mainEditor')!.style.display = 'block';
+        if(cameraEditor.isViewingEditor){
+            document.getElementById('mainEditor')!.style.display = 'block';
+        }
+        if(cameraEditor.isViewingGallery){
+            document.getElementById('gallery')!.style.display = '';
+        }
     }
 
 
@@ -848,7 +856,12 @@ module CamManager {
 
     function cancelMaterial() {
         hideEverything();
-        document.getElementById('mainEditor')!.style.display = 'block';
+        if(cameraEditor.isViewingEditor){
+            document.getElementById('mainEditor')!.style.display = 'block';
+        }
+        if(cameraEditor.isViewingGallery){
+            document.getElementById('gallery')!.style.display = '';
+        }
     }
 
     export function pickMaterial() {
@@ -3903,7 +3916,7 @@ module CamManager {
             //when hosted on github pages, we have to make json calls and image calls with this prefix.
             return { "isDemo": true, "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
         }
-        else if (false && location.href.indexOf('5500') > -1) {
+        else if (location.href.indexOf('5500') > -1) {
             return { "isDemo": true, "isPost": false, "url": "", "rootUrl": "" };//running locally
         }
         else {
@@ -3946,6 +3959,7 @@ module CamManager {
     }
 
     export function refreshCameras() {
+        document.getElementById('galleryList')!.innerHTML = '';
         cameraEditor.isWatchingLive = false;//shut this off if it was on.
         showBusy(true);
 
@@ -3978,11 +3992,80 @@ module CamManager {
             })
     }
 
+    export function inspectCamera(cameraIndex: number) {
+        hideEverything();
+        cameraEditor.isViewingGallery = false;
+        cameraEditor.isViewingEditor = true;
+        changeCamera(cameraIndex, false, false);
+        document.getElementById('mainEditor')!.style.display = 'block';
+        positionAnnotationsLayer();
+    }
+
+    export function showGallery() {
+        cameraEditor.isWatchingLive = false;
+        cameraEditor.isEditing = false;
+        cameraEditor.isRetaining = false;
+        hideEverything();
+        cameraEditor.isViewingGallery = true;
+        cameraEditor.isViewingEditor = false;
+        refreshCameras();
+    }
+
+    function drawCameraGallery(cameras:ICamera[]){
+        let sb = '';
+        for(let i=0;i<cameras.length;i++){
+            let camera:ICamera = cameras[i];
+            let cameraName = camera.name;
+            if(cameraName == null || cameraName == ''){
+                cameraName = 'Unknown Camera';
+            }
+            let strIndex = i.toString();
+            sb += `<div class="galleryItem" onclick="CamManager.selectCamera(${i})">`;
+            if (!camera.isOnline) {
+                sb += '<div id="valCamGallery' + strIndex + 'Status" style="color:red;margin-top:0px" class="regionditortextsub3">Offline</div>';
+            }
+            else {
+                sb += '<div id="valCamGallery' + strIndex + 'Status" style="color:green;margin-top:0px" class="regionditortextsub3">Online</div>';
+            }
+
+            let strFilter = camera.isThermalCamera? 'filter:url(#' + imageFilter + ')' : '';
+            sb += `<div class="galleryItemName">${cameraName}</div>`;
+            sb += `<div class="galleryItemImg"><img style="max-height:256px;max-width:256px;display:none;${strFilter}" id="galleryImage${i}" src="${camera.url}" /></div>`;
+            
+            let strDateTime = new Date().toLocaleString();
+            sb += `<div style="text-align:right;font-size:12px">${escapeHTML(strDateTime)}</div>`;
+            sb += `<div class="galleryItemButtons">`;
+           
+            sb += `<button id="btnDialogAlertClose" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
+            sb += ` <div style="line-height: 4px;">`;
+            sb += `  <span class="regioneditortext">Inspect</span>`;
+            sb += ` </div>`;
+            sb += `</button>`;
+            sb += `</div>`;
+            sb += `</div>`;
+        }
+        document.getElementById('galleryList')!.innerHTML = sb;
+        for(let i=0;i<cameras.length;i++){
+            let camera:ICamera = cameras[i];
+            if(camera.usbIndex != null && camera.api != null){
+                getLiveCameraImage(i,camera.api,camera.usbIndex,null);
+            }
+            else if(camera.url != null && camera.url != ''){
+                getSavedCameraImage(i,camera.url,camera.api,camera.usbIndex);
+            }
+        }
+        if(cameraEditor.isViewingGallery){
+            document.getElementById('gallery')!.style.display = '';
+        }
+    }
+
     export function apiGetCamerasReceived(urlPrefix: string, jsonResult: any) {
 
         hideEverything();
         hideBusy();
-        document.getElementById('mainEditor')!.style.display = 'block';
+        if(cameraEditor.isViewingEditor){
+            document.getElementById('mainEditor')!.style.display = 'block';
+        }
         let cameras = [];
         if (jsonResult != null && jsonResult.cameras != null) {
 
@@ -4034,6 +4117,9 @@ module CamManager {
         }
         cameraEditor.cameras = cameras;
         changeCamera(cameraEditor.selectedCameraIndex, false, false);
+        if(cameraEditor.isViewingGallery){
+            drawCameraGallery(cameras);
+        }
     }
 
     function hideUI() {
@@ -4426,7 +4512,7 @@ module CamManager {
 
         let usbIndex = camera.usbIndex;
         let api = camera.api;
-        getLiveCameraImage(api, usbIndex, null);
+        getLiveCameraImage(cameraEditor.selectedCameraIndex,api, usbIndex, null);
     }
 
     /*
@@ -4845,7 +4931,7 @@ module CamManager {
 
     }
 
-    function getLiveCameraImage(api: string | null, usbIndex: number | null, url: string | null) {
+    function getLiveCameraImage(camIndex:number, api: string | null, usbIndex: number | null, url: string | null) {
         if (!cameraEditor.isWatchingLive) {
             showBusy(true);
         }
@@ -4854,7 +4940,7 @@ module CamManager {
             .then(response => {
                 if (!response.ok) {
                     console.error('response not ok');
-                    CamManager.apiLiveCameraReceived({ "liveCamera": null });
+                    CamManager.apiLiveCameraReceived(camIndex,{ "liveCamera": null });
                 }
                 return response.json();
             })
@@ -4865,7 +4951,10 @@ module CamManager {
                     scriptReturnValue = JSON.parse(scriptReturnValue);
                 }
                 CamManager.showAssignableCameras();
-                CamManager.apiLiveCameraReceived(scriptReturnValue);
+                CamManager.apiLiveCameraReceived(camIndex, scriptReturnValue);
+                if(camIndex != cameraEditor.selectedCameraIndex){
+                    return;
+                }
                 if (cameraEditor.isWatchingLive) {
                     let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
                     if (camera == null || camera.usbIndex == null || camera.api == null) {
@@ -4881,7 +4970,7 @@ module CamManager {
             })
             .catch(error => {
                 console.error('catch fetch getLiveImage', error);
-                CamManager.apiLiveCameraReceived({ "liveCamera": null });
+                CamManager.apiLiveCameraReceived(camIndex, { "liveCamera": null });
             })
 
     }
@@ -4894,14 +4983,19 @@ module CamManager {
         return Array.from(atob(base64), c => c.charCodeAt(0));
     }
 
-    export function apiLiveCameraReceived(jsonResult: any) {
+    export function apiLiveCameraReceived(camIndex:number, jsonResult: any) {
         hideBusy();
         if (jsonResult == null || jsonResult.liveCamera == null) {
             let message = 'There was an error locating the camera image file.';
             if (jsonResult != null && jsonResult.errorMessage != null && jsonResult.errorMessage != "") {
                 message = jsonResult.errorMessage;
             }
-            showAlertDialog(null, 'Camera Error', message, true);
+            if(camIndex == cameraEditor.selectedCameraIndex){
+                showAlertDialog(null, 'Camera Error', message, true);
+            }
+            else{
+                console.error(message);
+            }
             return;
         }
         let liveCamera = jsonResult.liveCamera;
@@ -4916,38 +5010,51 @@ module CamManager {
             getDomButton('btnRefreshSavedImage').style.borderColor = '';
         }
 
+        
+
+
+        let tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
+        let tempCanvasCtx = tempCanvas.getContext("2d") as CanvasRenderingContext2D;
+        tempCanvas.width = liveCamera.nativeWidth;
+        tempCanvas.height = liveCamera.nativeHeight
+
+        let imageData = tempCanvasCtx.createImageData(tempCanvas.width, tempCanvas.height);
+
+        //rgbaImageData is a byte[] that get converted to a base64 string by the c# Serializer
+        imageData.data.set(base64ToArray(liveCamera.rgbaImageData));
+
+        tempCanvasCtx.putImageData(imageData, 0, 0);
+
+        //update gallery image
+        let galleryImage = document.getElementById('galleryImage' + camIndex.toString()) as HTMLImageElement;
+        if(galleryImage != null){
+            galleryImage.src = tempCanvas.toDataURL();
+            galleryImage.style.display = '';
+        }
+
+        if(cameraEditor.selectedCameraIndex != camIndex){
+            return;
+        }
+
         //brgImageData is a byte[] that get converted to a base64 string by the c# Serializer
         //if they are viewing history they won't send this and we should just leave what is there alone.
         if (liveCamera != null && liveCamera.bgrImageData != null) {
             rawTiffImageData = base64ToArray(liveCamera.bgrImageData);
         }
 
-
-        let canvas = document.createElement("canvas") as HTMLCanvasElement;
-        let ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-        canvas.width = liveCamera.nativeWidth;
-        canvas.height = liveCamera.nativeHeight
-
-        let imageData = ctx.createImageData(canvas.width, canvas.height);
-
-        //rgbaImageData is a byte[] that get converted to a base64 string by the c# Serializer
-        imageData.data.set(base64ToArray(liveCamera.rgbaImageData));
-
-        ctx.putImageData(imageData, 0, 0);
-
         let regionEditorBaseImage = document.getElementById('regionEditorBaseImage') as HTMLImageElement;
 
-        regionEditorBaseImage.src = canvas.toDataURL();
+        regionEditorBaseImage.src = tempCanvas.toDataURL();
 
         tempsCelsius = liveCamera.temperaturesInCelsius;
 
         if (regionEditor == null) {
 
             regionEditor = getEmptyRegionEditor();
-            regionEditor.imageNativeWidth = canvas.width;
-            regionEditor.imageNativeHeight = canvas.height;
-            distanceMap = new Array(canvas.width * canvas.height);
-            materialMap = new Array(canvas.width * canvas.height);
+            regionEditor.imageNativeWidth = tempCanvas.width;
+            regionEditor.imageNativeHeight = tempCanvas.height;
+            distanceMap = new Array(tempCanvas.width * tempCanvas.height);
+            materialMap = new Array(tempCanvas.width * tempCanvas.height);
 
             imageScale = cameraEditor.defaultZoomLevel;
             imageFilter = 'inferno';
@@ -4968,7 +5075,7 @@ module CamManager {
 
     }
 
-    function getSavedCameraImage(src: string, api: string | null, usbIndex: number | null) {
+    function getSavedCameraImage(camIndex:number, src: string, api: string | null, usbIndex: number | null) {
         showBusy(true);
         let xhr = new XMLHttpRequest();
         xhr.open("GET", src + "?t=" + new Date().getTime());//nocache please
@@ -4978,9 +5085,9 @@ module CamManager {
 
                 getDomButton('btnRefreshLiveImage').style.borderColor = '';
                 getDomButton('btnRefreshSavedImage').style.borderColor = 'white';
-                imgLoaded(e);
+                imgLoaded(camIndex,e);
                 if (api != null && usbIndex != null) {
-                    getLiveCameraImage(api, usbIndex, null);
+                    getLiveCameraImage(camIndex, api, usbIndex, null);
                 }
             }
             else {
@@ -5032,13 +5139,13 @@ module CamManager {
                 if (usbIndex != null && api != null) {
                     getDomButton('btnRefreshLiveImage').style.visibility = 'visible';
                 }
-                getSavedCameraImage(src, api, usbIndex);
+                getSavedCameraImage(cameraEditor.selectedCameraIndex, src, api, usbIndex);
 
             }
             else if (usbIndex != null && api != null) {
                 getDomButton('btnRefreshLiveImage').style.visibility = 'visible';
                 getDomButton('btnRefreshLiveImage').style.borderColor = 'white';
-                getLiveCameraImage(api, usbIndex, null);
+                getLiveCameraImage(cameraIndex,api, usbIndex, null);
             }
             else {
                 console.log("Camera With No Live Image:" + JSON.stringify(camera));
@@ -5058,7 +5165,7 @@ module CamManager {
         if (camera.isKnown) {
             let url = camera.url;
             if (url != null && url != "") {
-                getLiveCameraImage(null, null, camera.url);
+                getLiveCameraImage(cameraEditor.selectedCameraIndex,null, null, camera.url);
             }
         }
     }
@@ -5069,18 +5176,17 @@ module CamManager {
         let api = camera.api;
         let usbIndex = camera.usbIndex;
         if (usbIndex != null && api != null) {
-            getLiveCameraImage(api, usbIndex, null);
+            getLiveCameraImage(cameraEditor.selectedCameraIndex,api, usbIndex, null);
         }
     }
 
-    function imgLoaded(e: ProgressEvent) {
+    function imgLoaded(camIndex:number, e: ProgressEvent) {
 
         //@ts-ignore
         let ifds = UTIF.decode(e.target.response);
         let ifd = ifds[0];
         //@ts-ignore
         UTIF.decodeImage(e.target.response, ifd);//this adds width, height, and data to the ifd object.
-        rawTiffImageData = [...ifd.data];
         //@ts-ignore
         let rgba = UTIF.toRGBA8(ifd);  // Uint8Array with RGBA pixels
         let tags = ifd;
@@ -5088,22 +5194,33 @@ module CamManager {
         let userCommentTagID = "t37510";
         let userComment = exifIFD[userCommentTagID];
         let thermalData = JSON.parse(userComment);
-        let canvas = document.createElement("canvas") as HTMLCanvasElement;
-        let ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-        canvas.width = ifd.width;
-        canvas.height = ifd.height;
-        let imageData = ctx.createImageData(canvas.width, canvas.height);
+        let tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
+        let tempCanvasCtx = tempCanvas.getContext("2d") as CanvasRenderingContext2D;
+        tempCanvas.width = ifd.width;
+        tempCanvas.height = ifd.height;
+        let imageData = tempCanvasCtx.createImageData(tempCanvas.width, tempCanvas.height);
         imageData.data.set(rgba);
-        ctx.putImageData(imageData, 0, 0);
+        tempCanvasCtx.putImageData(imageData, 0, 0);
+
+        //update the gallery image
+        let elm = document.getElementById('galleryImage' + camIndex.toString()) as HTMLImageElement;
+        if(elm != null){
+            elm.src = tempCanvas.toDataURL();
+            elm.style.display = '';
+        }
+        if(camIndex != cameraEditor.selectedCameraIndex){
+            return;
+        }
+        rawTiffImageData = [...ifd.data];
         let regionEditorBaseImage = document.getElementById('regionEditorBaseImage') as HTMLImageElement;
-        regionEditorBaseImage.src = canvas.toDataURL();
+        regionEditorBaseImage.src = tempCanvas.toDataURL();
         tempsCelsius = thermalData.temperaturesInCelsius;
         if (tempsCelsius == null) {
-            tempsCelsius = new Array(canvas.width * canvas.height);
+            tempsCelsius = new Array(tempCanvas.width * tempCanvas.height);
         }
-        else if (tempsCelsius.length != canvas.width * canvas.height) {
+        else if (tempsCelsius.length != tempCanvas.width * tempCanvas.height) {
             console.error('tempsCelsius.length != canvas.width * canvas.height');
-            tempsCelsius = new Array(canvas.width * canvas.height);
+            tempsCelsius = new Array(tempCanvas.width * tempCanvas.height);
         }
         if (!cameraEditor.isEditing) {
             imageScale = thermalData.imageScale ?? cameraEditor.defaultZoomLevel;
@@ -5113,8 +5230,8 @@ module CamManager {
             }
 
             regionEditor = getEmptyRegionEditor();
-            regionEditor.imageNativeWidth = canvas.width;
-            regionEditor.imageNativeHeight = canvas.height;
+            regionEditor.imageNativeWidth = tempCanvas.width;
+            regionEditor.imageNativeHeight = tempCanvas.height;
             regionEditor.imageRotation = thermalData.imageRotation ?? 0;
             //console.log('Saved Image Data: rotation:' + regionEditor.imageRotation + ' width:' + regionEditor.imageNativeWidth + ' height:' + regionEditor.imageNativeHeight);
             if (regionEditor.imageRotation == 0 || regionEditor.imageRotation == 180) {
@@ -5139,14 +5256,14 @@ module CamManager {
                 distanceMap = [...thermalData.distanceMap];
             }
             else {
-                distanceMap = new Array(canvas.width * canvas.height);
+                distanceMap = new Array(tempCanvas.width * tempCanvas.height);
             }
 
             if (thermalData.materialMap != null) {
                 materialMap = [...thermalData.materialMap];
             }
             else {
-                materialMap = new Array(canvas.width * canvas.height);
+                materialMap = new Array(tempCanvas.width * tempCanvas.height);
             }
             cameraEditor.isViewingCelsius = !(thermalData.displayTemperatureInFahrenheit == true);
 

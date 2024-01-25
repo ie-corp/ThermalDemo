@@ -501,7 +501,26 @@ body{
     -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
   }
-  
+
+
+  .galleryContainer{
+    display:flex;
+    flex-wrap: wrap;
+    margin:0rem 1rem 1rem 1rem;
+  }
+
+  .galleryItem{
+    margin:0.5rem;
+   
+    border: 2px solid cyan;
+    padding: 0rem 2rem 0rem 2rem;
+    text-align:center;
+  }
+
+  .galleryItemButtons{
+    margin-top:2px;
+    float:right;
+  }
   
 
   

@@ -59,7 +59,7 @@
             <span id="busySpinner" class="loader"></span>
         </div>
     </div>
-    
+
     <div class="thermalDialog" id="dialogAlert" style="display:none">
         <div class="thermalDialogContent">
             <table width="100%">
@@ -84,13 +84,15 @@
                 <tr>
                     <td width="50%"><span id="dialogPromptTitle" class="thermalDialogTitle">Prompt</span></td>
                     <td width="50%" style="text-align:right">
-                        <button id="btnDialogPromptCloseYes" onclick="CamManager.closePromptDialog(true)" class="resizebutton">
+                        <button id="btnDialogPromptCloseYes" onclick="CamManager.closePromptDialog(true)"
+                            class="resizebutton">
                             <div style="line-height: 4px;">
                                 <span class="regioneditortext">OK</span>
                             </div>
                         </button>
 
-                        <button id="btnDialogPromptCloseNo" onclick="CamManager.closePromptDialog(false)" class="resizebutton">
+                        <button id="btnDialogPromptCloseNo" onclick="CamManager.closePromptDialog(false)"
+                            class="resizebutton">
                             <div style="line-height: 4px;">
                                 <span class="regioneditortext">Cancel</span>
                             </div>
@@ -99,7 +101,7 @@
                 </tr>
             </table>
             <hr class="thermalDialogRule" />
-            <input id="dialogPromptValue" style="font-size:28px" value=""  autocomplete="off" />
+            <input id="dialogPromptValue" style="font-size:28px" value="" autocomplete="off" />
             <div id="dialogPromptBody" class="thermalDialogBody"></div>
 
         </div>
@@ -110,13 +112,15 @@
                 <tr>
                     <td width="50%"><span id="dialogConfirmTitle" class="thermalDialogTitle">Confirm</span></td>
                     <td width="50%" style="text-align:right">
-                        <button id="btnDialogConfirmCloseYes" onclick="CamManager.closeConfirmDialog(true)" class="resizebutton">
+                        <button id="btnDialogConfirmCloseYes" onclick="CamManager.closeConfirmDialog(true)"
+                            class="resizebutton">
                             <div style="line-height: 4px;">
                                 <span class="regioneditortext">Yes</span>
                             </div>
                         </button>
 
-                        <button id="btnDialogConfirmCloseNo" onclick="CamManager.closeConfirmDialog(false)" class="resizebutton">
+                        <button id="btnDialogConfirmCloseNo" onclick="CamManager.closeConfirmDialog(false)"
+                            class="resizebutton">
                             <div style="line-height: 4px;">
                                 <span class="regioneditortext">No</span>
                             </div>
@@ -139,7 +143,8 @@
                                 <span class="regioneditortext">Save</span>
                             </div>
                         </button>
-                        <button id="btnDialogRetentionClose" onclick="CamManager.closeThermalDialogAndRefresh()" class="resizebutton">
+                        <button id="btnDialogRetentionClose" onclick="CamManager.closeThermalDialogAndRefresh()"
+                            class="resizebutton">
                             <div style="line-height: 4px;">
                                 <span class="regioneditortext">Cancel</span>
                             </div>
@@ -182,9 +187,11 @@
                                 <div>
                                     <hr style="margin-left:15px;margin-bottom:-12px" />
                                     <input id="fromMaterialSlider" class="sliderFrom" type="range" value="0" min="0"
-                                        max="1" step="0.01" oninput="CamManager.changeMaterialEmissivityFilter(true,this.value)" />
+                                        max="1" step="0.01"
+                                        oninput="CamManager.changeMaterialEmissivityFilter(true,this.value)" />
                                     <input id="toMaterialSlider" class="sliderTo" type="range" value="1" min="0" max="1"
-                                        step="0.01" oninput="CamManager.changeMaterialEmissivityFilter(false,this.value)" />
+                                        step="0.01"
+                                        oninput="CamManager.changeMaterialEmissivityFilter(false,this.value)" />
                                 </div>
 
                             </td>
@@ -209,10 +216,38 @@
         </div>
 
     </div>
-    <div id="mainEditor">
+
+    <div id="gallery">
+
+        <h3 style="text-align: center;margin:0px;padding:0px">CAMERA GALLERY</h3>
+        <div style="height:64px;margin:0px;padding:0px">
+            <div style="float:right">
+                <button id="btnRefreshCameraGallery" onclick="CamManager.refreshCameras()" class="resizebutton">
+                    <div style="line-height: 19px;">
+                        <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Refresh</div>
+                        <div style="margin-bottom:14px" class="regioneditortext2">Camera</div>
+                        <div class="regioneditortext2">Gallery</div>
+                    </div>
+                </button>
+            </div>
+
+        </div>
+        <div id="galleryList" class="galleryContainer">
+        </div>
+    </div>
+
+    <div id="mainEditor" style="display:none">
 
         <div id="cameraTools" class="editorrow">
-
+            <button id="btnGallery" onclick="CamManager.showGallery()" class="resizebutton">
+                <div style="line-height: 4px;">
+                    <div style="line-height: 19px;">
+                        <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Return</div>
+                        <div style="margin-bottom:14px" class="regioneditortext2">To</div>
+                        <div class="regioneditortext2">Gallery</div>
+                    </div>
+                </div>
+            </button>
             <div id="cameraList"></div>
             <button id="btnRefreshCameras" onclick="CamManager.refreshCameras()" class="resizebutton">
                 <div style="line-height: 19px;">
@@ -285,7 +320,7 @@
                 </div>
             </button>
 
-           
+
 
             <button id="btnRefreshLiveImage" onclick="CamManager.refreshLiveImage()" class="resizebutton">
                 <div style="line-height: 19px;">
@@ -294,7 +329,7 @@
                     <div class="regioneditortext2">Image</div>
                 </div>
             </button>
-            
+
             <button id="btnRefreshSavedImage" onclick="CamManager.refreshSavedImage()" class="resizebutton">
                 <div style="line-height: 19px;">
                     <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Show</div>
@@ -305,7 +340,8 @@
 
             <div style="width:138px"></div>
 
-            <button id="btnSaveCamera" onclick="CamManager.saveCamera()" class="resizebutton" style="background-color:rgb(0,255,0,.1)">
+            <button id="btnSaveCamera" onclick="CamManager.saveCamera()" class="resizebutton"
+                style="background-color:rgb(0,255,0,.1)">
                 <div style="line-height: 4px;">
                     <span class="regioneditortext">Save</span><br />
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -324,7 +360,8 @@
 
 
 
-            <button id="btnDeleteCamera" onclick="CamManager.deleteCamera()" class="resizebutton" style="background-color:red">
+            <button id="btnDeleteCamera" onclick="CamManager.deleteCamera()" class="resizebutton"
+                style="background-color:red">
                 <div style="line-height: 4px;">
                     <span class="regioneditortext">Delete</span>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -362,9 +399,9 @@
             </button>
             <div style="width:8px"></div>
 
-            
 
-            
+
+
 
 
         </div>
@@ -381,7 +418,8 @@
                 </div>
             </button>
 
-            <button id="btnImageHighTemp" onclick="CamManager.showTemp(true,true)" class="resizebutton" style="background-color: black;">
+            <button id="btnImageHighTemp" onclick="CamManager.showTemp(true,true)" class="resizebutton"
+                style="background-color: black;">
                 <div style="line-height: 14px;">
                     <div class="regioneditortext2" style="margin-bottom:6px">Img Hi</div>
                     <div id="valImageHighTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
@@ -397,7 +435,8 @@
                 </div>
             </button>
 
-            <button id="btnImageLowTemp" onclick="CamManager.showTemp(true,false)" class="resizebutton" style="background-color: black;">
+            <button id="btnImageLowTemp" onclick="CamManager.showTemp(true,false)" class="resizebutton"
+                style="background-color: black;">
                 <div style="line-height: 14px;">
                     <div class="regioneditortext2" style="margin-bottom:6px">Img Lo</div>
                     <div id="valImageLowTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
@@ -434,7 +473,8 @@
 
 
 
-            <button id="btnRegionHighTemp" onclick="CamManager.showTemp(false,true)" class="resizebutton" style="background-color: black;">
+            <button id="btnRegionHighTemp" onclick="CamManager.showTemp(false,true)" class="resizebutton"
+                style="background-color: black;">
                 <div style="line-height: 14px;">
                     <div class="regioneditortext2" style="margin-bottom:6px">Spot Hi</div>
                     <div id="valRegionHighTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
@@ -453,7 +493,8 @@
 
 
 
-            <button id="btnRegionLowTemp" onclick="CamManager.showTemp(false,false)" class="resizebutton" style="background-color: black;">
+            <button id="btnRegionLowTemp" onclick="CamManager.showTemp(false,false)" class="resizebutton"
+                style="background-color: black;">
                 <div style="line-height: 14px;">
                     <div class="regioneditortext2" style="margin-bottom:6px">Spot Lo</div>
                     <div id="valRegionLowTempC" class="regionditortextsub3" style="margin-bottom:6px">--&deg;C</div>
@@ -468,7 +509,7 @@
             <div style="width:8px;">
             </div>
 
-            
+
 
             <button id="btnShowRetained" onclick="CamManager.showRetained()" style="display:none" class="resizebutton">
                 <div style="line-height: 28px;">
@@ -643,9 +684,11 @@
                 </div>
             </button>
 
-            <button id="btnChangeDistanceLess" onmousedown="CamManager.repeatFunc(CamManager.changeDistanceBy.bind(null,-.01))"
+            <button id="btnChangeDistanceLess"
+                onmousedown="CamManager.repeatFunc(CamManager.changeDistanceBy.bind(null,-.01))"
                 onmouseup="CamManager.clearFunc()" class="resizebutton">-</button>
-            <button id="btnChangeDistanceMore" onmousedown="CamManager.repeatFunc(CamManager.changeDistanceBy.bind(null,.01))"
+            <button id="btnChangeDistanceMore"
+                onmousedown="CamManager.repeatFunc(CamManager.changeDistanceBy.bind(null,.01))"
                 onmouseup="CamManager.clearFunc()" class="resizebutton">+</button>
 
             <button disabled id="btnDistanceColorRampMin" class="resizebutton" style="background-color:black">
@@ -753,7 +796,8 @@
                 <div style="background-color:black">
                     <div style="width:60px; text-align: center;color:white;user-select: none;">Touch Tools</div>
                     <div style="height:4px"></div>
-                    <button id="btnRegionToolLook" onclick="CamManager.selectRegionEditorTool('look')" class="resizebutton">
+                    <button id="btnRegionToolLook" onclick="CamManager.selectRegionEditorTool('look')"
+                        class="resizebutton">
                         <div style="line-height: 4px;">
                             <span class="regioneditortext">Look</span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -765,7 +809,8 @@
                         </div>
                     </button>
 
-                    <button id="btnRegionToolSelect" onclick="CamManager.selectRegionEditorTool('select')" class="resizebutton">
+                    <button id="btnRegionToolSelect" onclick="CamManager.selectRegionEditorTool('select')"
+                        class="resizebutton">
                         <div style="line-height: 4px;">
                             <span class="regioneditortext">Select</span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -776,7 +821,8 @@
                         </div>
                     </button>
 
-                    <button id="btnRegionToolMove" onclick="CamManager.selectRegionEditorTool('move')" class="resizebutton">
+                    <button id="btnRegionToolMove" onclick="CamManager.selectRegionEditorTool('move')"
+                        class="resizebutton">
                         <div style="line-height: 4px;">
                             <span class="regioneditortext">Move</span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -846,7 +892,8 @@
                         </div>
                     </button>
 
-                    <button id="btnRegionToolFill" onclick="CamManager.selectRegionEditorTool('fill')" class="resizebutton">
+                    <button id="btnRegionToolFill" onclick="CamManager.selectRegionEditorTool('fill')"
+                        class="resizebutton">
                         <div style="line-height: 4px;">
                             <div class="regioneditortext">Fill</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -870,15 +917,16 @@
                     </button>
 
                     <button id="btnChangeFillRangeLess" style="margin-left:16px;"
-                        onmousedown="CamManager.repeatFunc(CamManager.changeFillRangeBy.bind(null,-.1))" onmouseup="CamManager.clearFunc()"
-                        class="resizebutton">-</button>
+                        onmousedown="CamManager.repeatFunc(CamManager.changeFillRangeBy.bind(null,-.1))"
+                        onmouseup="CamManager.clearFunc()" class="resizebutton">-</button>
                     <button id="btnChangeFillRangeMore" style="margin-left:16px;"
-                        onmousedown="CamManager.repeatFunc(CamManager.changeFillRangeBy.bind(null,.1))" onmouseup="CamManager.clearFunc()"
-                        class="resizebutton">+</button>
+                        onmousedown="CamManager.repeatFunc(CamManager.changeFillRangeBy.bind(null,.1))"
+                        onmouseup="CamManager.clearFunc()" class="resizebutton">+</button>
 
 
 
-                    <button id="btnRegionToolChange" onclick="CamManager.selectRegionEditorTool('change')" class="resizebutton">
+                    <button id="btnRegionToolChange" onclick="CamManager.selectRegionEditorTool('change')"
+                        class="resizebutton">
                         <div style="line-height: 4px;">
                             <div class="regioneditortext">Change</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -893,7 +941,8 @@
                         </div>
                     </button>
 
-                    <button id="btnRegionToolPaint" onclick="CamManager.selectRegionEditorTool('paint')" class="resizebutton">
+                    <button id="btnRegionToolPaint" onclick="CamManager.selectRegionEditorTool('paint')"
+                        class="resizebutton">
                         <div id="shapePaintRound" style="line-height: 4px;">
                             <div class="regioneditortext">Paint</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -927,13 +976,14 @@
                     </button>
 
                     <button id="btnChangePaintSizeLess" style="margin-left:16px;"
-                        onmousedown="CamManager.repeatFunc(CamManager.changeBrushSizeBy.bind(null,true,-1))" onmouseup="CamManager.clearFunc()"
-                        class="resizebutton">-</button>
+                        onmousedown="CamManager.repeatFunc(CamManager.changeBrushSizeBy.bind(null,true,-1))"
+                        onmouseup="CamManager.clearFunc()" class="resizebutton">-</button>
                     <button id="btnChangePaintSizeMore" style="margin-left:16px;"
-                        onmousedown="CamManager.repeatFunc(CamManager.changeBrushSizeBy.bind(null,true,1))" onmouseup="CamManager.clearFunc()"
-                        class="resizebutton">+</button>
+                        onmousedown="CamManager.repeatFunc(CamManager.changeBrushSizeBy.bind(null,true,1))"
+                        onmouseup="CamManager.clearFunc()" class="resizebutton">+</button>
 
-                    <button id="btnRegionToolErase" onclick="CamManager.selectRegionEditorTool('erase')" class="resizebutton">
+                    <button id="btnRegionToolErase" onclick="CamManager.selectRegionEditorTool('erase')"
+                        class="resizebutton">
                         <div id="shapeEraseRound" style="line-height: 4px;">
                             <div class="regioneditortext">Erase</div>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -984,11 +1034,11 @@
                     </button>
 
                     <button id="btnChangeEraseSizeLess" style="margin-left:16px;"
-                        onmousedown="CamManager.repeatFunc(CamManager.changeBrushSizeBy.bind(null,false,-1))" onmouseup="CamManager.clearFunc()"
-                        class="resizebutton">-</button>
+                        onmousedown="CamManager.repeatFunc(CamManager.changeBrushSizeBy.bind(null,false,-1))"
+                        onmouseup="CamManager.clearFunc()" class="resizebutton">-</button>
                     <button id="btnChangeEraseSizeMore" style="margin-left:16px;"
-                        onmousedown="CamManager.repeatFunc(CamManager.changeBrushSizeBy.bind(null,false,1))" onmouseup="CamManager.clearFunc()"
-                        class="resizebutton">+</button>
+                        onmousedown="CamManager.repeatFunc(CamManager.changeBrushSizeBy.bind(null,false,1))"
+                        onmouseup="CamManager.clearFunc()" class="resizebutton">+</button>
 
                 </div>
             </div>
@@ -997,7 +1047,7 @@
                     style="white-space: nowrap; height:30px;color:white;font-size:24px;user-select: none;"></div>
 
                 <div id="regionEditorImageContainer" class="regionContainer">
-                <canvas id="regionEditorImageCanvas" width="256" height="192" draggable="false"></canvas>
+                    <canvas id="regionEditorImageCanvas" width="256" height="192" draggable="false"></canvas>
                 </div>
 
             </div>

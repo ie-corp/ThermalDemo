@@ -1,4 +1,6 @@
 interface ICameraEditor{
+    "isViewingGallery": boolean,
+    "isViewingEditor":boolean,
     "selectedCameraIndex": number,
     "isViewingCelsius": boolean,
     "showHotspotNumbers": boolean,
