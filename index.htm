@@ -220,12 +220,37 @@
     <div id="gallery">
 
         <h3 style="text-align: center;margin:0px;padding:0px">CAMERA GALLERY</h3>
-        <div style="height:64px;margin:0px;padding:0px">
+        <div style="height:64px;margin:0px;padding:0px" >
             <div style="float:right">
-                <button id="btnRefreshCameraGallery" onclick="CamManager.refreshCameras()" class="resizebutton">
+
+                <button id="btnViewThermalReport" onclick="CamManager.viewThermalReport()" class="resizebutton">
+                    <div style="line-height: 19px;">
+                        <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">View</div>
+                        <div style="margin-bottom:14px;font-size:11px" class="regioneditortext2">Thermal</div>
+                        <div class="regioneditortext2">Report</div>
+                    </div>
+                </button>
+
+                <button id="btnViewAuditReport" onclick="CamManager.viewAuditReport()" class="resizebutton">
+                    <div style="line-height: 19px;">
+                        <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">View</div>
+                        <div style="margin-bottom:14px;font-size:11px" class="regioneditortext2">Edit</div>
+                        <div class="regioneditortext2">Report</div>
+                    </div>
+                </button>
+
+                <button id="btnViewInspectionReport" onclick="CamManager.viewRetentionReport()" class="resizebutton">
+                    <div style="line-height: 19px;">
+                        <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">View</div>
+                        <div style="margin-bottom:14px;font-size:11px" class="regioneditortext2">Inspection</div>
+                        <div class="regioneditortext2">Reports</div>
+                    </div>
+                </button>
+                
+                <button id="btnRefreshCameraGallery" onclick="CamManager.refreshCameras()" class="resizebutton" style="margin-left: 64px;">
                     <div style="line-height: 19px;">
                         <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Refresh</div>
-                        <div style="margin-bottom:14px" class="regioneditortext2">Camera</div>
+                        <div style="margin-bottom:14px;font-size:11px" class="regioneditortext2">Camera</div>
                         <div class="regioneditortext2">Gallery</div>
                     </div>
                 </button>
