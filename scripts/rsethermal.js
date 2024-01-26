@@ -4429,7 +4429,8 @@ var CamManager;
             elm.style.display = '';
             let rotation = thermalData.imageRotation == null ? 0 : thermalData.imageRotation;
             let scaleX = (thermalData.imageMirrorHorizontally != null && thermalData.imageMirrorHorizontally) ? -1 : 1;
-            elm.style.transform = ' scaleX(' + scaleX + ')';
+            elm.style.transform = 'none';
+            elm.style.transform = 'scaleX(' + scaleX + ')';
             if (rotation != 0) {
                 elm.style.transform += 'rotate(' + rotation + 'deg)';
                 if (rotation != 180) {
