@@ -3383,10 +3383,32 @@ var CamManager;
                 sb += '<div id="valCamGallery' + strIndex + 'Status" style="color:green;margin-top:0px" class="regionditortextsub3">Online</div>';
             }
             let strFilter = camera.isThermalCamera ? 'filter:url(#inferno)' : '';
+            let strImage = `<img style="margin:left:4px;max-height:256px;max-width:256px;display:none;${strFilter}" id="galleryImage${i}" src="${camera.url}" />`;
             sb += `<div class="galleryItemName">${cameraName}</div>`;
-            sb += `<div class="galleryItemImg"><img style="max-height:256px;max-width:256px;display:none;${strFilter}" id="galleryImage${i}" src="${camera.url}" /></div>`;
+            sb += `<div class="galleryItemImg">`;
+            if (camera.isThermalCamera) {
+                sb += '<table style="border:collapse;">';
+                sb += '<tr>';
+                sb += '<td id="galleryHighTemp${i}" style="padding:0;margin:0;font-size:10px;">100.5 &deg;F</td>';
+                sb += '<td rowspan="3" style="padding:0;margin:0;">' + strImage + '</td>';
+                sb += '</tr>';
+                sb += '<tr>';
+                sb += '<td style="padding:0;margin:0;">';
+                sb += `<svg id="galleryScale${i}" width="8" height="160"  fill="none" xmlns="http://www.w3.org/2000/svg">`;
+                sb += `<rect width="8" height="100%" fill="url(#infernoGradient)" style="${strFilter}"/>`;
+                sb += `</svg">`;
+                sb += '</td>';
+                sb += '<tr>';
+                sb += '<td id="galleryLowTemp${i}" style="padding:0;margin:0;font-size:10px">72.0 &deg;F</td>';
+                sb += '</tr>';
+                sb += '</table>';
+            }
+            else {
+                sb += strImage;
+            }
+            sb += `</div>`;
             let strDateTime = new Date().toLocaleString();
-            sb += `<div style="text-align:right;font-size:12px">${escapeHTML(strDateTime)}</div>`;
+            sb += `<div style="text-align:right;font-size:10px">${escapeHTML(strDateTime)}</div>`;
             sb += `<div class="galleryItemButtons">`;
             sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
             sb += ` <div style="line-height: 4px;">`;
