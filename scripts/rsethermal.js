@@ -3267,6 +3267,15 @@ var CamManager;
     let doEditing = false;
     function go() {
         hideEverything();
+        if (isDemo()) {
+            setup();
+        }
+        else {
+            ping(setup); //need this to be done because preflight cors checks is slow
+        }
+    }
+    CamManager.go = go;
+    function setup() {
         setupMouseEvents();
         let regionEditorBaseImage = document.getElementById('regionEditorBaseImage');
         regionEditorBaseImage.onload = function () {
@@ -3274,13 +3283,12 @@ var CamManager;
         };
         refreshCameras();
     }
-    CamManager.go = go;
     function getApiSettings() {
         if (location.href.indexOf('github.io') > -1) {
             //when hosted on github pages, we have to make json calls and image calls with this prefix.
             return { "isDemo": true, "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
         }
-        else if (location.href.indexOf('5500') > -1) {
+        else if (false && location.href.indexOf('5500') > -1) {
             return { "isDemo": true, "isPost": false, "url": "", "rootUrl": "" }; //running locally
         }
         else {
@@ -3316,6 +3324,30 @@ var CamManager;
         document.getElementById('busyLayer').style.visibility = 'hidden';
         document.getElementById('busySpinner').style.visibility = 'hidden';
     }
+    function ping(callback) {
+        showBusy(true);
+        let apiSettings = getApiSettings();
+        let scriptName = 'rse_ping';
+        const start = performance.now();
+        getFetch(scriptName, {})
+            .then(response => {
+            if (!response.ok) {
+                CamManager.showAlertDialog(null, 'Network Error', 'Network Error', true);
+            }
+            return response.json();
+        })
+            .then(json => {
+            //console.log('response ok');
+            const end = performance.now();
+            console.log(`${scriptName} Fetch time: ${end - start} ms`);
+            if (callback != null) {
+                callback();
+            }
+        })
+            .catch(error => {
+            CamManager.showAlertDialog(null, 'Network Error', 'Network Error', true);
+        });
+    }
     function refreshCameras() {
         document.getElementById('galleryList').innerHTML = '';
         cameraEditor.isWatchingLive = false; //shut this off if it was on.
@@ -3323,6 +3355,7 @@ var CamManager;
         let apiSettings = getApiSettings();
         let camPrefix = apiSettings.rootUrl;
         let scriptName = 'rse_thermalcameras_get';
+        const start = performance.now();
         getFetch(scriptName, {})
             .then(response => {
             if (!response.ok) {
@@ -3334,10 +3367,16 @@ var CamManager;
         })
             .then(json => {
             //console.log('response ok');
+            const end = performance.now();
+            console.log(`${scriptName} Fetch time: ${end - start} ms`);
             let scriptReturnValue = json.ScriptReturnValue;
             if (typeof scriptReturnValue == 'string') {
                 scriptReturnValue = JSON.parse(scriptReturnValue);
             }
+            console.log(`${scriptName} Server Execution time ${scriptReturnValue.executionTimeInMillis} ms`);
+            console.log(`Configured Camera Count ${scriptReturnValue.configedCameraCount}`);
+            console.log(`Live Camera Count ${scriptReturnValue.liveCameraCount}`);
+            console.log(`Configured Cameras With NO Live Camera Assigned To Them ${scriptReturnValue.unassignedConfiguredCameraCount}`);
             CamManager.apiGetCamerasReceived(camPrefix, scriptReturnValue);
         })
             .catch(error => {
@@ -3383,7 +3422,7 @@ var CamManager;
                 sb += '<div id="valCamGallery' + strIndex + 'Status" style="color:green;margin-top:0px" class="regionditortextsub3">Online</div>';
             }
             let strFilter = camera.isThermalCamera ? 'filter:url(#inferno)' : '';
-            let strImage = `<img style="margin:left:4px;max-height:256px;max-width:256px;display:none;${strFilter}" id="galleryImage${i}" src="${camera.url}" />`;
+            let strImage = `<img style="display:none;margin:left:4px;max-height:256px;max-width:256px;${strFilter}" id="galleryImage${i}" src="" />`;
             sb += `<div class="galleryItemName">${cameraName}</div>`;
             sb += `<div class="galleryItemImg">`;
             if (camera.isThermalCamera) {
@@ -3419,13 +3458,19 @@ var CamManager;
             sb += `</div>`;
         }
         document.getElementById('galleryList').innerHTML = sb;
+        document.getElementById('gallery').style.display = '';
         for (let i = 0; i < cameras.length; i++) {
             let camera = cameras[i];
-            if (camera.usbIndex != null && camera.api != null) {
+            if (camera.url != null && camera.url != '') {
+                console.log('this camera has a url' + camera.url + ' so we we already loaded it');
+                getSavedCameraImage(i, camera.url, camera.api, camera.usbIndex);
+            }
+            else if (camera.usbIndex != null && camera.api != null) {
+                console.log(`Camera Index ${i} has a usbIndex of ${camera.usbIndex} and api so we will load it.`);
                 getLiveCameraImage(i, camera.api, camera.usbIndex, null);
             }
-            else if (camera.url != null && camera.url != '') {
-                getSavedCameraImage(i, camera.url, camera.api, camera.usbIndex);
+            else {
+                console.error(`Camera Index ${i} has no url or usbIndex so we can't load it.`);
             }
         }
         if (cameraEditor.isViewingGallery) {
@@ -3497,9 +3542,11 @@ var CamManager;
             }
         }
         cameraEditor.cameras = cameras;
-        changeCamera(cameraEditor.selectedCameraIndex, false, false);
         if (cameraEditor.isViewingGallery) {
             drawCameraGallery(cameras);
+        }
+        else {
+            changeCamera(cameraEditor.selectedCameraIndex, false, false);
         }
     }
     CamManager.apiGetCamerasReceived = apiGetCamerasReceived;
@@ -4222,7 +4269,9 @@ var CamManager;
             return response.json();
         })
             .then(json => {
-            //console.log('response ok');
+            if (url != null && url != '') {
+                console.log('Received Live Image for ' + url);
+            }
             let scriptReturnValue = json.ScriptReturnValue;
             if (typeof scriptReturnValue == 'string') {
                 scriptReturnValue = JSON.parse(scriptReturnValue);
@@ -4338,8 +4387,10 @@ var CamManager;
             if (xhr.status === 200 || xhr.status == 0) {
                 getDomButton('btnRefreshLiveImage').style.borderColor = '';
                 getDomButton('btnRefreshSavedImage').style.borderColor = 'white';
+                console.log('getSavedCameraImage success for camIndex:' + camIndex.toString());
                 imgLoaded(camIndex, e);
                 if (api != null && usbIndex != null) {
+                    console.log('Received Saved Image, getting live image for camIndex:' + camIndex.toString());
                     getLiveCameraImage(camIndex, api, usbIndex, null);
                 }
             }

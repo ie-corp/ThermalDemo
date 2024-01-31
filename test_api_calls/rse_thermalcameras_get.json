@@ -1,6 +1,10 @@
 {
     "StatusCode": 0,
     "ScriptReturnValue": {
+        "configedCameraCount":17,
+        "liveCameraCount":17,
+        "unassignedConfiguredCameraCount":0,
+        "executionTimeInMillis":100,
         "cameras": [
             {
                 "usbIndex": null,
