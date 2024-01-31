@@ -3957,7 +3957,8 @@ module CamManager {
     }
 
 
-    function showBusy(showSpinner: boolean) {
+    function showBusy(showSpinner: boolean, callerName: string) {
+        console.log(`showBusy called by ${callerName}`);
         document.getElementById('busyLayer')!.style.visibility = '';
         document.getElementById('busySpinner')!.style.visibility = showSpinner ? '' : 'hidden';
     }
@@ -3969,7 +3970,7 @@ module CamManager {
     }
 
     function ping(callback:any){
-        showBusy(true);
+        showBusy(true, "bing");
 
         let apiSettings = getApiSettings();
         
@@ -4001,7 +4002,7 @@ module CamManager {
     export function refreshCameras() {
         document.getElementById('galleryList')!.innerHTML = '';
         cameraEditor.isWatchingLive = false;//shut this off if it was on.
-        showBusy(true);
+        showBusy(true,"refreshCameras");
 
         let apiSettings = getApiSettings();
         let camPrefix = apiSettings.rootUrl;
@@ -4027,6 +4028,7 @@ module CamManager {
                 console.log(`${scriptName} Server Execution time ${scriptReturnValue.executionTimeInMillis} ms`);
                 console.log(`Configured Camera Count ${scriptReturnValue.configedCameraCount}`);
                 console.log(`Live Camera Count ${scriptReturnValue.liveCameraCount}`);
+                console.log(`Live Thermal Camera Count ${scriptReturnValue.liveThermalCameraCount}`);
                 console.log(`Configured Cameras With NO Live Camera Assigned To Them ${scriptReturnValue.unassignedConfiguredCameraCount}`);
                 
                 
@@ -4123,7 +4125,7 @@ module CamManager {
             let camera:ICamera = cameras[i];
             
             if(camera.url != null && camera.url != ''){
-                console.log('this camera has a url' + camera.url + ' so we we already loaded it');
+                console.log('this camera has a url ' + camera.url + ' so we we will load a saved image first');
                 getSavedCameraImage(i,camera.url,camera.api,camera.usbIndex);
             }
             else if(camera.usbIndex != null && camera.api != null){
@@ -4136,7 +4138,7 @@ module CamManager {
         }
         if(cameraEditor.isViewingGallery){
             document.getElementById('gallery')!.style.display = '';
-            showBusy(true);
+            showBusy(true,"drawCameraGallery");
             window.setTimeout(() => {
                 hideBusy('draw camera gallery pause delay');
                 if(cameraEditor.selectedCameraIndex > 3){
@@ -4383,7 +4385,7 @@ module CamManager {
         let apiSettings = getApiSettings();
         let camPrefix = apiSettings.rootUrl;
         let scriptName = 'rse_thermalcameras_delete';
-        showBusy(true);
+        showBusy(true,"callDeleteCameras");
         getFetch(scriptName, { "cameraNamesToDelete": cameraNamesToDelete })
             .then(response => {
                 if (!response.ok) {
@@ -4561,7 +4563,7 @@ module CamManager {
 
     function getRetentionFields(camera: ICamera) {
 
-        showBusy(true);
+        showBusy(true,"getRetentionFields");
 
         let scriptName = "rse_themalcameras_retention_config_get";
         getFetch(scriptName, { "isThermalCamera": camera.isThermalCamera })
@@ -4895,7 +4897,7 @@ module CamManager {
 
 
 
-        showBusy(true);
+        showBusy(true,"callSaveCameras");
         getFetch(scriptName, myParms)
             .then(response => {
                 if (!response.ok) {
@@ -5026,11 +5028,12 @@ module CamManager {
     }
 
     function getLiveCameraImage(camIndex:number, api: string | null, usbIndex: number | null, url: string | null) {
-        if (!cameraEditor.isWatchingLive) {
-            showBusy(true);
+        if (!cameraEditor.isWatchingLive && !cameraEditor.isViewingGallery) {
+            showBusy(true,"getLiveCameraImage");
         }
         let scriptName = 'rse_thermalcameraslive_get';
-        getFetch(scriptName, { "api": api, "usbIndex": usbIndex, "url": url })
+        let useCache = !cameraEditor.isViewingEditor;
+        getFetch(scriptName, { "api": api, "usbIndex": usbIndex, "url": url, "useCache": useCache})
             .then(response => {
                 if (!response.ok) {
                     console.error('response not ok');
@@ -5174,7 +5177,7 @@ module CamManager {
     }
 
     function getSavedCameraImage(camIndex:number, src: string, api: string | null, usbIndex: number | null) {
-        showBusy(true);
+        showBusy(true,"getSavedCameraImage");
         let xhr = new XMLHttpRequest();
         xhr.open("GET", src + "?t=" + new Date().getTime());//nocache please
         xhr.responseType = "arraybuffer";

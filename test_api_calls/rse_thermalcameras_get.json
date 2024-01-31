@@ -3,6 +3,7 @@
     "ScriptReturnValue": {
         "configedCameraCount":17,
         "liveCameraCount":17,
+        "liveThermalCameraCount":14,
         "unassignedConfiguredCameraCount":0,
         "executionTimeInMillis":100,
         "cameras": [

@@ -3315,7 +3315,8 @@ var CamManager;
             return fetch(apiSettings.url + '/test_api_calls/' + scriptName + '.json');
         }
     }
-    function showBusy(showSpinner) {
+    function showBusy(showSpinner, callerName) {
+        console.log(`showBusy called by ${callerName}`);
         document.getElementById('busyLayer').style.visibility = '';
         document.getElementById('busySpinner').style.visibility = showSpinner ? '' : 'hidden';
     }
@@ -3325,7 +3326,7 @@ var CamManager;
         document.getElementById('busySpinner').style.visibility = 'hidden';
     }
     function ping(callback) {
-        showBusy(true);
+        showBusy(true, "bing");
         let apiSettings = getApiSettings();
         let scriptName = 'rse_ping';
         const start = performance.now();
@@ -3351,7 +3352,7 @@ var CamManager;
     function refreshCameras() {
         document.getElementById('galleryList').innerHTML = '';
         cameraEditor.isWatchingLive = false; //shut this off if it was on.
-        showBusy(true);
+        showBusy(true, "refreshCameras");
         let apiSettings = getApiSettings();
         let camPrefix = apiSettings.rootUrl;
         let scriptName = 'rse_thermalcameras_get';
@@ -3376,6 +3377,7 @@ var CamManager;
             console.log(`${scriptName} Server Execution time ${scriptReturnValue.executionTimeInMillis} ms`);
             console.log(`Configured Camera Count ${scriptReturnValue.configedCameraCount}`);
             console.log(`Live Camera Count ${scriptReturnValue.liveCameraCount}`);
+            console.log(`Live Thermal Camera Count ${scriptReturnValue.liveThermalCameraCount}`);
             console.log(`Configured Cameras With NO Live Camera Assigned To Them ${scriptReturnValue.unassignedConfiguredCameraCount}`);
             CamManager.apiGetCamerasReceived(camPrefix, scriptReturnValue);
         })
@@ -3462,7 +3464,7 @@ var CamManager;
         for (let i = 0; i < cameras.length; i++) {
             let camera = cameras[i];
             if (camera.url != null && camera.url != '') {
-                console.log('this camera has a url' + camera.url + ' so we we already loaded it');
+                console.log('this camera has a url ' + camera.url + ' so we we will load a saved image first');
                 getSavedCameraImage(i, camera.url, camera.api, camera.usbIndex);
             }
             else if (camera.usbIndex != null && camera.api != null) {
@@ -3475,7 +3477,7 @@ var CamManager;
         }
         if (cameraEditor.isViewingGallery) {
             document.getElementById('gallery').style.display = '';
-            showBusy(true);
+            showBusy(true, "drawCameraGallery");
             window.setTimeout(() => {
                 hideBusy('draw camera gallery pause delay');
                 if (cameraEditor.selectedCameraIndex > 3) {
@@ -3694,7 +3696,7 @@ var CamManager;
         let apiSettings = getApiSettings();
         let camPrefix = apiSettings.rootUrl;
         let scriptName = 'rse_thermalcameras_delete';
-        showBusy(true);
+        showBusy(true, "callDeleteCameras");
         getFetch(scriptName, { "cameraNamesToDelete": cameraNamesToDelete })
             .then(response => {
             if (!response.ok) {
@@ -3852,7 +3854,7 @@ var CamManager;
     }
     CamManager.RetentionFieldsReceived = RetentionFieldsReceived;
     function getRetentionFields(camera) {
-        showBusy(true);
+        showBusy(true, "getRetentionFields");
         let scriptName = "rse_themalcameras_retention_config_get";
         getFetch(scriptName, { "isThermalCamera": camera.isThermalCamera })
             .then(response => {
@@ -4142,7 +4144,7 @@ var CamManager;
                 }
             }
         };
-        showBusy(true);
+        showBusy(true, "callSaveCameras");
         getFetch(scriptName, myParms)
             .then(response => {
             if (!response.ok) {
@@ -4256,11 +4258,12 @@ var CamManager;
         }
     }
     function getLiveCameraImage(camIndex, api, usbIndex, url) {
-        if (!cameraEditor.isWatchingLive) {
-            showBusy(true);
+        if (!cameraEditor.isWatchingLive && !cameraEditor.isViewingGallery) {
+            showBusy(true, "getLiveCameraImage");
         }
         let scriptName = 'rse_thermalcameraslive_get';
-        getFetch(scriptName, { "api": api, "usbIndex": usbIndex, "url": url })
+        let useCache = !cameraEditor.isViewingEditor;
+        getFetch(scriptName, { "api": api, "usbIndex": usbIndex, "url": url, "useCache": useCache })
             .then(response => {
             if (!response.ok) {
                 console.error('response not ok');
@@ -4379,7 +4382,7 @@ var CamManager;
     }
     CamManager.apiLiveCameraReceived = apiLiveCameraReceived;
     function getSavedCameraImage(camIndex, src, api, usbIndex) {
-        showBusy(true);
+        showBusy(true, "getSavedCameraImage");
         let xhr = new XMLHttpRequest();
         xhr.open("GET", src + "?t=" + new Date().getTime()); //nocache please
         xhr.responseType = "arraybuffer";
