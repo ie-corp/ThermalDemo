@@ -3349,6 +3349,52 @@ var CamManager;
             CamManager.showAlertDialog(null, 'Network Error', 'Network Error', true);
         });
     }
+    function autoAssignCameras() {
+        if (cameraEditor.cameras == null || cameraEditor.cameras.length == 0) {
+            showAlertDialog(null, 'Auto Assign Cameras', 'There are no cameras found. Check your cable connections and try refreshing. (Cameras can take up to 30 seconds to be discovered)', true);
+        }
+        else if (isDemo()) {
+            showAlertDialog(null, 'Auto Assign Cameras', 'Sorry, you cannot auto assign cameras in demo.', true);
+        }
+        else {
+            showConfirmDialog(() => {
+                performAutoAssignCameras();
+            }, 'Auto Assign Cameras', 'This will auto assign cameras to the live images.  Any existing saved cameras will be deleted.  Are you sure you want to do this?');
+        }
+    }
+    CamManager.autoAssignCameras = autoAssignCameras;
+    function performAutoAssignCameras() {
+        cameraEditor.isWatchingLive = false; //shut this off if it was on.
+        hideUI();
+        showBusy(true, "performAutoAssignCameras");
+        let apiSettings = getApiSettings();
+        let scriptName = 'rse_thermalcameras_auto_assign';
+        const start = performance.now();
+        getFetch(scriptName, { "confirmed": true })
+            .then(response => {
+            if (!response.ok) {
+                CamManager.showAlertDialog(() => {
+                    refreshCameras();
+                }, 'Network Error', 'Network Error auto assigning cameras.', true);
+            }
+            return response.json();
+        })
+            .then(json => {
+            console.log(`${scriptName} response was ok`);
+            const end = performance.now();
+            console.log(`${scriptName} Fetch time: ${end - start} ms`);
+            let scriptReturnValue = json.ScriptReturnValue;
+            if (typeof scriptReturnValue == 'string') {
+                scriptReturnValue = JSON.parse(scriptReturnValue);
+            }
+            refreshCameras();
+        })
+            .catch(error => {
+            CamManager.showAlertDialog(() => {
+                refreshCameras();
+            }, 'Network Error', 'Network Error auto assigning cameras.', true);
+        });
+    }
     function refreshCameras() {
         document.getElementById('galleryList').innerHTML = '';
         cameraEditor.isWatchingLive = false; //shut this off if it was on.
@@ -3566,6 +3612,7 @@ var CamManager;
         document.getElementById('rowDistanceTools').style.display = 'none';
         document.getElementById('touchTools').style.display = 'none';
         document.getElementById('regionEditorAnnotations').style.display = 'none';
+        document.getElementById('gallery').style.display = 'none';
     }
     function setStatusText(text, color, encode) {
         document.getElementById('statusText').innerHTML = encode ? escapeHTML(text) : text;
@@ -3643,7 +3690,11 @@ var CamManager;
     }
     CamManager.showAssignableCameras = showAssignableCameras;
     function showUI() {
-        if (cameraEditor.isEditing) {
+        if (cameraEditor.isViewingGallery) {
+            document.getElementById('gallery').style.display = '';
+            return;
+        }
+        else if (cameraEditor.isEditing) {
             document.getElementById('cameraEditTools').style.display = '';
         }
         else {

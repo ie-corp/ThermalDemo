@@ -14,8 +14,8 @@ module CamManager {
     let selectedEventIndex = -1;
 
     let cameraEditor: ICameraEditor = {
-        "isViewingGallery":true,
-        "isViewingEditor":false,
+        "isViewingGallery": true,
+        "isViewingEditor": false,
         "selectedCameraIndex": 0,
         "isViewingCelsius": true,
         "showHotspotNumbers": false,
@@ -841,10 +841,10 @@ module CamManager {
 
     export function cancelEventDialog() {
         hideEverything();
-        if(cameraEditor.isViewingEditor){
+        if (cameraEditor.isViewingEditor) {
             document.getElementById('mainEditor')!.style.display = 'block';
         }
-        if(cameraEditor.isViewingGallery){
+        if (cameraEditor.isViewingGallery) {
             document.getElementById('gallery')!.style.display = '';
         }
     }
@@ -856,10 +856,10 @@ module CamManager {
 
     function cancelMaterial() {
         hideEverything();
-        if(cameraEditor.isViewingEditor){
+        if (cameraEditor.isViewingEditor) {
             document.getElementById('mainEditor')!.style.display = 'block';
         }
-        if(cameraEditor.isViewingGallery){
+        if (cameraEditor.isViewingGallery) {
             document.getElementById('gallery')!.style.display = '';
         }
     }
@@ -1394,7 +1394,7 @@ module CamManager {
         addRegionHistory('rotate image', null, false);//I don't think this needs a undo.
     }
 
-    function positionAnnotationsLayer(){
+    function positionAnnotationsLayer() {
         //this may need to get called as things get scrolled or dialogs are shown.
         let annotationsCanvas = document.getElementById('regionEditorAnnotations') as HTMLCanvasElement;
         let regionEditorImageCanvas = document.getElementById('regionEditorImageCanvas') as HTMLCanvasElement;
@@ -1547,9 +1547,9 @@ module CamManager {
         ctxAnnotations.drawImage(canvasTopLayer, 0, 0, annotationsCanvas.width, annotationsCanvas.height);
 
 
-        
+
         positionAnnotationsLayer();
-        
+
 
         if (isAutoComparingImages()) {
             //console.log('drawing compare image:' + compareDividerPosition);
@@ -3901,16 +3901,16 @@ module CamManager {
     let doEditing = false;
     export function go() {
         hideEverything();
-        if(isDemo()){
+        if (isDemo()) {
             setup();
         }
-        else{
+        else {
             ping(setup);//need this to be done because preflight cors checks is slow
         }
     }
 
-    function setup(){
-        
+    function setup() {
+
         setupMouseEvents();
         let regionEditorBaseImage = document.getElementById('regionEditorBaseImage') as HTMLImageElement;
         regionEditorBaseImage.onload = function () {
@@ -3963,17 +3963,17 @@ module CamManager {
         document.getElementById('busySpinner')!.style.visibility = showSpinner ? '' : 'hidden';
     }
 
-    function hideBusy(callerInfo:string) {
+    function hideBusy(callerInfo: string) {
         //console.log('hideBusy called by ' + callerInfo);
         document.getElementById('busyLayer')!.style.visibility = 'hidden';
         document.getElementById('busySpinner')!.style.visibility = 'hidden';
     }
 
-    function ping(callback:any){
+    function ping(callback: any) {
         showBusy(true, "bing");
 
         let apiSettings = getApiSettings();
-        
+
         let scriptName = 'rse_ping';
         const start = performance.now();
         getFetch(scriptName, {})
@@ -3987,10 +3987,10 @@ module CamManager {
                 //console.log('response ok');
                 const end = performance.now();
                 console.log(`${scriptName} Fetch time: ${end - start} ms`);
-                if(callback != null){
+                if (callback != null) {
                     callback();
                 }
-                
+
 
             })
             .catch(error => {
@@ -3999,10 +3999,61 @@ module CamManager {
             })
     }
 
+    export function autoAssignCameras() {
+        if(cameraEditor.cameras == null || cameraEditor.cameras.length == 0){
+            showAlertDialog(null, 'Auto Assign Cameras', 'There are no cameras found. Check your cable connections and try refreshing. (Cameras can take up to 30 seconds to be discovered)', true);
+        }
+        else if (isDemo()) {
+            showAlertDialog(null, 'Auto Assign Cameras', 'Sorry, you cannot auto assign cameras in demo.', true);
+        }
+        else {
+            showConfirmDialog(() => {
+                performAutoAssignCameras();
+            }, 'Auto Assign Cameras', 'This will auto assign cameras to the live images.  Any existing saved cameras will be deleted.  Are you sure you want to do this?');
+
+        }
+    }
+
+    function performAutoAssignCameras() {
+        cameraEditor.isWatchingLive = false;//shut this off if it was on.
+        hideUI();
+        showBusy(true, "performAutoAssignCameras");
+
+        let apiSettings = getApiSettings();
+        let scriptName = 'rse_thermalcameras_auto_assign';
+        const start = performance.now();
+        getFetch(scriptName, { "confirmed": true })
+            .then(response => {
+                if (!response.ok) {
+                    CamManager.showAlertDialog(() => {
+                        refreshCameras();
+                    }, 'Network Error', 'Network Error auto assigning cameras.', true);
+                }
+                return response.json();
+            })
+            .then(json => {
+                console.log(`${scriptName} response was ok`);
+                const end = performance.now();
+                console.log(`${scriptName} Fetch time: ${end - start} ms`);
+                let scriptReturnValue = json.ScriptReturnValue;
+                if (typeof scriptReturnValue == 'string') {
+                    scriptReturnValue = JSON.parse(scriptReturnValue);
+                }
+                refreshCameras();
+            })
+            .catch(error => {
+                CamManager.showAlertDialog(() => {
+                    refreshCameras();
+                }, 'Network Error', 'Network Error auto assigning cameras.', true);
+
+            })
+
+    }
+
     export function refreshCameras() {
         document.getElementById('galleryList')!.innerHTML = '';
         cameraEditor.isWatchingLive = false;//shut this off if it was on.
-        showBusy(true,"refreshCameras");
+        showBusy(true, "refreshCameras");
 
         let apiSettings = getApiSettings();
         let camPrefix = apiSettings.rootUrl;
@@ -4030,8 +4081,8 @@ module CamManager {
                 console.log(`Live Camera Count ${scriptReturnValue.liveCameraCount}`);
                 console.log(`Live Thermal Camera Count ${scriptReturnValue.liveThermalCameraCount}`);
                 console.log(`Configured Cameras With NO Live Camera Assigned To Them ${scriptReturnValue.unassignedConfiguredCameraCount}`);
-                
-                
+
+
                 CamManager.apiGetCamerasReceived(camPrefix, scriptReturnValue);
 
             })
@@ -4062,12 +4113,12 @@ module CamManager {
         refreshCameras();
     }
 
-    function drawCameraGallery(cameras:ICamera[]){
+    function drawCameraGallery(cameras: ICamera[]) {
         let sb = '';
-        for(let i=0;i<cameras.length;i++){
-            let camera:ICamera = cameras[i];
+        for (let i = 0; i < cameras.length; i++) {
+            let camera: ICamera = cameras[i];
             let cameraName = camera.name;
-            if(cameraName == null || cameraName == ''){
+            if (cameraName == null || cameraName == '') {
                 cameraName = 'Unknown Camera';
             }
             let strIndex = i.toString();
@@ -4079,37 +4130,37 @@ module CamManager {
                 sb += '<div id="valCamGallery' + strIndex + 'Status" style="color:green;margin-top:0px" class="regionditortextsub3">Online</div>';
             }
 
-            let strFilter = camera.isThermalCamera? 'filter:url(#inferno)' : '';
-            let strImage =  `<img style="display:none;margin:left:4px;max-height:256px;max-width:256px;${strFilter}" id="galleryImage${i}" src="" />`;
+            let strFilter = camera.isThermalCamera ? 'filter:url(#inferno)' : '';
+            let strImage = `<img style="display:none;margin:left:4px;max-height:256px;max-width:256px;${strFilter}" id="galleryImage${i}" src="" />`;
             sb += `<div class="galleryItemName">${cameraName}</div>`;
             sb += `<div class="galleryItemImg">`;
-            if(camera.isThermalCamera){
-                sb+= '<table style="border:collapse;">';
+            if (camera.isThermalCamera) {
+                sb += '<table style="border:collapse;">';
                 sb += '<tr>';
-                sb+= '<td id="galleryHighTemp${i}" style="padding:0;margin:0;font-size:10px;">100.5 &deg;F</td>'
+                sb += '<td id="galleryHighTemp${i}" style="padding:0;margin:0;font-size:10px;">100.5 &deg;F</td>'
                 sb += '<td rowspan="3" style="padding:0;margin:0;">' + strImage + '</td>';
                 sb += '</tr>';
                 sb += '<tr>';
                 sb += '<td style="padding:0;margin:0;">';
-                sb+= `<svg id="galleryScale${i}" width="8" height="160"  fill="none" xmlns="http://www.w3.org/2000/svg">`;
-                sb+= `<rect width="8" height="100%" fill="url(#infernoGradient)" style="${strFilter}"/>`;
-                sb+= `</svg">`;
+                sb += `<svg id="galleryScale${i}" width="8" height="160"  fill="none" xmlns="http://www.w3.org/2000/svg">`;
+                sb += `<rect width="8" height="100%" fill="url(#infernoGradient)" style="${strFilter}"/>`;
+                sb += `</svg">`;
                 sb += '</td>';
                 sb += '<tr>';
-                sb+= '<td id="galleryLowTemp${i}" style="padding:0;margin:0;font-size:10px">72.0 &deg;F</td>'
+                sb += '<td id="galleryLowTemp${i}" style="padding:0;margin:0;font-size:10px">72.0 &deg;F</td>'
                 sb += '</tr>';
                 sb += '</table>';
-            } 
-            else{
+            }
+            else {
                 sb += strImage;
-            }           
-           
+            }
+
             sb += `</div>`;
-            
+
             let strDateTime = new Date().toLocaleString();
             sb += `<div style="text-align:right;font-size:10px">${escapeHTML(strDateTime)}</div>`;
             sb += `<div class="galleryItemButtons">`;
-           
+
             sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
             sb += ` <div style="line-height: 4px;">`;
             sb += `  <span class="regioneditortext">Inspect</span>`;
@@ -4120,36 +4171,36 @@ module CamManager {
         }
         document.getElementById('galleryList')!.innerHTML = sb;
         document.getElementById('gallery')!.style.display = '';
-        
-        for(let i=0;i<cameras.length;i++){
-            let camera:ICamera = cameras[i];
-            
-            if(camera.url != null && camera.url != ''){
+
+        for (let i = 0; i < cameras.length; i++) {
+            let camera: ICamera = cameras[i];
+
+            if (camera.url != null && camera.url != '') {
                 console.log('this camera has a url ' + camera.url + ' so we we will load a saved image first');
-                getSavedCameraImage(i,camera.url,camera.api,camera.usbIndex);
+                getSavedCameraImage(i, camera.url, camera.api, camera.usbIndex);
             }
-            else if(camera.usbIndex != null && camera.api != null){
+            else if (camera.usbIndex != null && camera.api != null) {
                 console.log(`Camera Index ${i} has a usbIndex of ${camera.usbIndex} and api so we will load it.`);
-                getLiveCameraImage(i,camera.api,camera.usbIndex,null);
+                getLiveCameraImage(i, camera.api, camera.usbIndex, null);
             }
-            else{
+            else {
                 console.error(`Camera Index ${i} has no url or usbIndex so we can't load it.`);
             }
         }
-        if(cameraEditor.isViewingGallery){
+        if (cameraEditor.isViewingGallery) {
             document.getElementById('gallery')!.style.display = '';
-            showBusy(true,"drawCameraGallery");
+            showBusy(true, "drawCameraGallery");
             window.setTimeout(() => {
                 hideBusy('draw camera gallery pause delay');
-                if(cameraEditor.selectedCameraIndex > 3){
+                if (cameraEditor.selectedCameraIndex > 3) {
                     let btnLastClicked = document.getElementById('btnInspectCamera' + cameraEditor.selectedCameraIndex);
-                    if(btnLastClicked != null){   
+                    if (btnLastClicked != null) {
                         btnLastClicked?.focus();
                         console.log('focus on last clicked inspect button');
                     }
                 }
             }, 2000);
-            
+
         }
     }
 
@@ -4157,7 +4208,7 @@ module CamManager {
 
         hideEverything();
         hideBusy('apiGetCamerasReceived');
-        if(cameraEditor.isViewingEditor){
+        if (cameraEditor.isViewingEditor) {
             document.getElementById('mainEditor')!.style.display = 'block';
         }
         let cameras = [];
@@ -4180,7 +4231,7 @@ module CamManager {
             });
             for (let i = 0; i < sortedArray.length; i++) {
                 let camera = sortedArray[i];
-                
+
                 let newCamera = {
                     "usbIndex": camera.usbIndex,
                     "api": camera.api,
@@ -4210,11 +4261,11 @@ module CamManager {
             }
         }
         cameraEditor.cameras = cameras;
-        
-        if(cameraEditor.isViewingGallery){
+
+        if (cameraEditor.isViewingGallery) {
             drawCameraGallery(cameras);
         }
-        else{
+        else {
             changeCamera(cameraEditor.selectedCameraIndex, false, false);
         }
     }
@@ -4233,7 +4284,7 @@ module CamManager {
         document.getElementById('rowDistanceTools')!.style.display = 'none';
         document.getElementById('touchTools')!.style.display = 'none';
         document.getElementById('regionEditorAnnotations')!.style.display = 'none';
-
+        document.getElementById('gallery')!.style.display = 'none';
     }
 
     function setStatusText(text: string, color: string, encode: boolean) {
@@ -4318,10 +4369,16 @@ module CamManager {
     }
 
     function showUI() {
-        if (cameraEditor.isEditing) {
+        if(cameraEditor.isViewingGallery){
+         
+            document.getElementById('gallery')!.style.display = '';
+            return;
+        }
+        else if (cameraEditor.isEditing) {
             document.getElementById('cameraEditTools')!.style.display = '';
         }
         else {
+            
             document.getElementById('cameraTools')!.style.display = '';
 
         }
@@ -4385,7 +4442,7 @@ module CamManager {
         let apiSettings = getApiSettings();
         let camPrefix = apiSettings.rootUrl;
         let scriptName = 'rse_thermalcameras_delete';
-        showBusy(true,"callDeleteCameras");
+        showBusy(true, "callDeleteCameras");
         getFetch(scriptName, { "cameraNamesToDelete": cameraNamesToDelete })
             .then(response => {
                 if (!response.ok) {
@@ -4442,23 +4499,22 @@ module CamManager {
         if (camera == null || lastRetentionFields == null) {
             return;
         }
-        let myFields:IRetentionField[] = JSON.parse(JSON.stringify(lastRetentionFields));
+        let myFields: IRetentionField[] = JSON.parse(JSON.stringify(lastRetentionFields));
         //validate the fields.
-        for(let i = 0; i < myFields.length; i++){
+        for (let i = 0; i < myFields.length; i++) {
             let field = myFields[i];
             let value = getDomInputValue(field.FormID, field.Values);
             if (field.Required && (value == null || value == '')) {
-                showAlertDialog(()=>{ document.getElementById('dialogRetention')!.style.display = ''; positionAnnotationsLayer(); }, 'Error', `${field.DisplayName} is required.`, true);
+                showAlertDialog(() => { document.getElementById('dialogRetention')!.style.display = ''; positionAnnotationsLayer(); }, 'Error', `${field.DisplayName} is required.`, true);
                 return;
             }
-            if(field.Values == null)
-            {
+            if (field.Values == null) {
                 if (field.MaximumLength > 0 && value != null && value.length > field.MaximumLength) {
-                    showAlertDialog(()=>{ document.getElementById('dialogRetention')!.style.display = ''; positionAnnotationsLayer();  }, 'Error', `${field.DisplayName} cannot be longer than ${field.MaximumLength} characters.`, true);
+                    showAlertDialog(() => { document.getElementById('dialogRetention')!.style.display = ''; positionAnnotationsLayer(); }, 'Error', `${field.DisplayName} cannot be longer than ${field.MaximumLength} characters.`, true);
                     return;
                 }
                 if (field.MinimumLength > 0 && value != null && value.length < field.MinimumLength) {
-                    showAlertDialog(()=>{ document.getElementById('dialogRetention')!.style.display = ''; positionAnnotationsLayer();  }, 'Error', `${field.DisplayName} cannot be shorter than ${field.MinimumLength} characters.`, true);
+                    showAlertDialog(() => { document.getElementById('dialogRetention')!.style.display = ''; positionAnnotationsLayer(); }, 'Error', `${field.DisplayName} cannot be shorter than ${field.MinimumLength} characters.`, true);
                     return;
                 }
             }
@@ -4469,22 +4525,22 @@ module CamManager {
     }
 
 
-   
 
-    function getDomInputValue(id: string, values:string[] | null):string {
-        if(values != null && values.length > 0){
+
+    function getDomInputValue(id: string, values: string[] | null): string {
+        if (values != null && values.length > 0) {
             let strValue = '';
-            for(let i = 0; i < values.length; i++){
+            for (let i = 0; i < values.length; i++) {
                 let value = values[i];
                 let elm = document.getElementById(id + i.toString()) as HTMLInputElement;
-                if(elm != null && elm.checked){
+                if (elm != null && elm.checked) {
                     strValue = value;
                     break;
                 }
             }
             return strValue.trim();
         }
-        else{
+        else {
             let elm = document.getElementById(id) as HTMLInputElement;
             if (elm == null) {
                 return '';
@@ -4508,7 +4564,7 @@ module CamManager {
 
     }
 
-    let lastRetentionFields:IRetentionField[]|null = null;
+    let lastRetentionFields: IRetentionField[] | null = null;
     export function RetentionFieldsReceived(camera: ICamera, success: boolean, fields: IRetentionField[] | null) {
         lastRetentionFields = fields;
         hideBusy('RetentionFieldsReceived');
@@ -4541,7 +4597,7 @@ module CamManager {
                     if (field.Values != null && field.Values.length > 0) {
                         for (let j = 0; j < field.Values.length; j++) {
                             let strValue = field.Values[j];
-                           
+
                             sb += `<input class="thermalFormField" type="radio" id="${field.FormID + j.toString()}" name="${field.FormID}" value="${strValue}">`;
                             sb += `<label class="thermalFormField" for="${field.FormID + j.toString()}">${escapeHTML(strValue)}</label>`;
                             sb += '<br>';
@@ -4557,13 +4613,13 @@ module CamManager {
         }
         document.getElementById('dialogRetentionBody')!.innerHTML = sb;
         showUI();//let them see the form
-        
+
 
     }
 
     function getRetentionFields(camera: ICamera) {
 
-        showBusy(true,"getRetentionFields");
+        showBusy(true, "getRetentionFields");
 
         let scriptName = "rse_themalcameras_retention_config_get";
         getFetch(scriptName, { "isThermalCamera": camera.isThermalCamera })
@@ -4608,7 +4664,7 @@ module CamManager {
 
         let usbIndex = camera.usbIndex;
         let api = camera.api;
-        getLiveCameraImage(cameraEditor.selectedCameraIndex,api, usbIndex, null);
+        getLiveCameraImage(cameraEditor.selectedCameraIndex, api, usbIndex, null);
     }
 
     /*
@@ -4766,7 +4822,7 @@ module CamManager {
                 return;
             }
         }
-        callSaveCameras(cameraEditor.cameras[cameraEditor.selectedCameraIndex],false, null);
+        callSaveCameras(cameraEditor.cameras[cameraEditor.selectedCameraIndex], false, null);
     }
 
 
@@ -4837,13 +4893,13 @@ module CamManager {
     }
 
 
-    function callSaveCameras(camera: ICamera, isRetention:boolean, retentionFields: IRetentionField[] | null = null) {
+    function callSaveCameras(camera: ICamera, isRetention: boolean, retentionFields: IRetentionField[] | null = null) {
         if (regionEditor == null) {
             return;
         }
         hideEverything();
 
-        let scriptName = isRetention? 'rse_themalcameras_retention_save' : 'rse_thermalcameras_save';
+        let scriptName = isRetention ? 'rse_themalcameras_retention_save' : 'rse_thermalcameras_save';
 
         let saveRegions = JSON.parse(JSON.stringify(regionEditor.regions)) as IRegion[];
 
@@ -4897,7 +4953,7 @@ module CamManager {
 
 
 
-        showBusy(true,"callSaveCameras");
+        showBusy(true, "callSaveCameras");
         getFetch(scriptName, myParms)
             .then(response => {
                 if (!response.ok) {
@@ -4919,7 +4975,7 @@ module CamManager {
                 }
                 else {
                     let sb = '';
-                    if (!isRetention && ( scriptReturnValue != null && scriptReturnValue.paths != null && scriptReturnValue.paths.length > 0)) {
+                    if (!isRetention && (scriptReturnValue != null && scriptReturnValue.paths != null && scriptReturnValue.paths.length > 0)) {
                         sb += '<h3>A system reboot will be needed for the sensors to be monitored.</h3>';
                         sb += '<div>The following sensors were created:</div>';
                         sb += '<ol>';
@@ -5027,22 +5083,22 @@ module CamManager {
 
     }
 
-    function getLiveCameraImage(camIndex:number, api: string | null, usbIndex: number | null, url: string | null) {
+    function getLiveCameraImage(camIndex: number, api: string | null, usbIndex: number | null, url: string | null) {
         if (!cameraEditor.isWatchingLive && !cameraEditor.isViewingGallery) {
-            showBusy(true,"getLiveCameraImage");
+            showBusy(true, "getLiveCameraImage");
         }
         let scriptName = 'rse_thermalcameraslive_get';
         let useCache = !cameraEditor.isViewingEditor;
-        getFetch(scriptName, { "api": api, "usbIndex": usbIndex, "url": url, "useCache": useCache})
+        getFetch(scriptName, { "api": api, "usbIndex": usbIndex, "url": url, "useCache": useCache })
             .then(response => {
                 if (!response.ok) {
                     console.error('response not ok');
-                    CamManager.apiLiveCameraReceived(camIndex,{ "liveCamera": null });
+                    CamManager.apiLiveCameraReceived(camIndex, { "liveCamera": null });
                 }
                 return response.json();
             })
             .then(json => {
-                if(url != null && url != ''){
+                if (url != null && url != '') {
                     console.log('Received Live Image for ' + url);
                 }
                 let scriptReturnValue = json.ScriptReturnValue;
@@ -5051,7 +5107,7 @@ module CamManager {
                 }
                 CamManager.showAssignableCameras();
                 CamManager.apiLiveCameraReceived(camIndex, scriptReturnValue);
-                if(camIndex != cameraEditor.selectedCameraIndex){
+                if (camIndex != cameraEditor.selectedCameraIndex) {
                     return;
                 }
                 if (cameraEditor.isWatchingLive) {
@@ -5082,8 +5138,8 @@ module CamManager {
         return Array.from(atob(base64), c => c.charCodeAt(0));
     }
 
-    export function apiLiveCameraReceived(camIndex:number, jsonResult: any) {
-        if(cameraEditor.isViewingEditor){
+    export function apiLiveCameraReceived(camIndex: number, jsonResult: any) {
+        if (cameraEditor.isViewingEditor) {
             hideBusy('apiLiveCameraReceived');
         }
         if (jsonResult == null || jsonResult.liveCamera == null) {
@@ -5091,10 +5147,10 @@ module CamManager {
             if (jsonResult != null && jsonResult.errorMessage != null && jsonResult.errorMessage != "") {
                 message = jsonResult.errorMessage;
             }
-            if(camIndex == cameraEditor.selectedCameraIndex){
+            if (camIndex == cameraEditor.selectedCameraIndex) {
                 showAlertDialog(null, 'Camera Error', message, true);
             }
-            else{
+            else {
                 console.error(message);
             }
             return;
@@ -5111,7 +5167,7 @@ module CamManager {
             getDomButton('btnRefreshSavedImage').style.borderColor = '';
         }
 
-        
+
 
 
         let tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -5128,12 +5184,12 @@ module CamManager {
 
         //update gallery image
         let galleryImage = document.getElementById('galleryImage' + camIndex.toString()) as HTMLImageElement;
-        if(galleryImage != null){
+        if (galleryImage != null) {
             galleryImage.src = tempCanvas.toDataURL();
             galleryImage.style.display = '';
         }
 
-        if(cameraEditor.selectedCameraIndex != camIndex){
+        if (cameraEditor.selectedCameraIndex != camIndex) {
             return;
         }
 
@@ -5176,8 +5232,8 @@ module CamManager {
 
     }
 
-    function getSavedCameraImage(camIndex:number, src: string, api: string | null, usbIndex: number | null) {
-        showBusy(true,"getSavedCameraImage");
+    function getSavedCameraImage(camIndex: number, src: string, api: string | null, usbIndex: number | null) {
+        showBusy(true, "getSavedCameraImage");
         let xhr = new XMLHttpRequest();
         xhr.open("GET", src + "?t=" + new Date().getTime());//nocache please
         xhr.responseType = "arraybuffer";
@@ -5187,12 +5243,12 @@ module CamManager {
                 getDomButton('btnRefreshLiveImage').style.borderColor = '';
                 getDomButton('btnRefreshSavedImage').style.borderColor = 'white';
                 console.log('getSavedCameraImage success for camIndex:' + camIndex.toString());
-                imgLoaded(camIndex,e);
+                imgLoaded(camIndex, e);
                 if (api != null && usbIndex != null) {
-                    
+
                     console.log('Received Saved Image, getting live image for camIndex:' + camIndex.toString());
                     getLiveCameraImage(camIndex, api, usbIndex, null);
-                    
+
                 }
             }
             else {
@@ -5250,7 +5306,7 @@ module CamManager {
             else if (usbIndex != null && api != null) {
                 getDomButton('btnRefreshLiveImage').style.visibility = 'visible';
                 getDomButton('btnRefreshLiveImage').style.borderColor = 'white';
-                getLiveCameraImage(cameraIndex,api, usbIndex, null);
+                getLiveCameraImage(cameraIndex, api, usbIndex, null);
             }
             else {
                 console.log("Camera With No Live Image:" + JSON.stringify(camera));
@@ -5270,7 +5326,7 @@ module CamManager {
         if (camera.isKnown) {
             let url = camera.url;
             if (url != null && url != "") {
-                getLiveCameraImage(cameraEditor.selectedCameraIndex,null, null, camera.url);
+                getLiveCameraImage(cameraEditor.selectedCameraIndex, null, null, camera.url);
             }
         }
     }
@@ -5281,11 +5337,11 @@ module CamManager {
         let api = camera.api;
         let usbIndex = camera.usbIndex;
         if (usbIndex != null && api != null) {
-            getLiveCameraImage(cameraEditor.selectedCameraIndex,api, usbIndex, null);
+            getLiveCameraImage(cameraEditor.selectedCameraIndex, api, usbIndex, null);
         }
     }
 
-    function imgLoaded(camIndex:number, e: ProgressEvent) {
+    function imgLoaded(camIndex: number, e: ProgressEvent) {
 
         //@ts-ignore
         let ifds = UTIF.decode(e.target.response);
@@ -5309,21 +5365,21 @@ module CamManager {
 
         //update the gallery image
         let elm = document.getElementById('galleryImage' + camIndex.toString()) as HTMLImageElement;
-        if(elm != null){
+        if (elm != null) {
             elm.src = tempCanvas.toDataURL();
             elm.style.display = '';
             let rotation = thermalData.imageRotation == null ? 0 : thermalData.imageRotation;
-            let scaleX = (thermalData.imageMirrorHorizontally != null && thermalData.imageMirrorHorizontally)  ? -1 : 1;
+            let scaleX = (thermalData.imageMirrorHorizontally != null && thermalData.imageMirrorHorizontally) ? -1 : 1;
             elm.style.transform = 'none';
             elm.style.transform = 'scaleX(' + scaleX + ')';
-            if(rotation != 0){
+            if (rotation != 0) {
                 elm.style.transform += 'rotate(' + rotation + 'deg)';
-                if(rotation != 180){
+                if (rotation != 180) {
                     elm.height = tempCanvas.width;
                 }
             }
         }
-        if(!cameraEditor.isViewingEditor || camIndex != cameraEditor.selectedCameraIndex){
+        if (!cameraEditor.isViewingEditor || camIndex != cameraEditor.selectedCameraIndex) {
             return;
         }
 
