@@ -4160,7 +4160,8 @@ module CamManager {
     }
 
     function fetchAIVisionResults(cameraName:string, api:string, usbIndex:number) {
-        
+        hideEverything();
+        showBusy(true, "fetchAIVisionResultsEntry");
         let apiSettings = getApiSettings();
         let scriptName = 'rse_thermalcameras_image_certainty_get';
         const start = performance.now();

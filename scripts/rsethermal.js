@@ -3496,6 +3496,8 @@ var CamManager;
     }
     CamManager.showAIVision = showAIVision;
     function fetchAIVisionResults(cameraName, api, usbIndex) {
+        hideEverything();
+        showBusy(true, "fetchAIVisionResultsEntry");
         let apiSettings = getApiSettings();
         let scriptName = 'rse_thermalcameras_image_certainty_get';
         const start = performance.now();
