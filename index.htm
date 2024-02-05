@@ -56,10 +56,10 @@
     </svg>
 
     <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0">
-    <linearGradient id="infernoGradient" x1="0" x2="0" y1="0" y2="1">
-        <stop offset="0%" stop-color="white" />
-        <stop offset="100%" stop-color="black" />
-      </linearGradient>
+        <linearGradient id="infernoGradient" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="white" />
+            <stop offset="100%" stop-color="black" />
+        </linearGradient>
     </svg>
 
     <div id="busyLayer" style="visibility: hidden;">
@@ -225,11 +225,75 @@
 
     </div>
 
+    <div id="aiVisionViewer" style="display:none;margin-left:8px">
+        <h3 style="text-align: center;margin:0px;padding:0px">VISION VIEWER</h3>
+        <h4 id="cameraVisionMessage" style="text-align: center;margin:0px;padding:0px"></h4>
+        <div style="height:64px;margin:0px;padding:0px">
+
+            <div style="float:left">
+                <button id="btnAIVisionGallery" onclick="CamManager.showGallery()" class="resizebutton">
+                    <div style="line-height: 4px;">
+                        <div style="line-height: 19px;">
+                            <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Return</div>
+                            <div style="margin-bottom:14px" class="regioneditortext2">To</div>
+                            <div class="regioneditortext2">Gallery</div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+            <div style="float:right">
+            
+                <button id="btnRefreshVisionViewer" onclick="CamManager.refreshVisionViewer()" class="resizebutton"
+                    style="margin-left: 64px;">
+                    <div style="line-height: 19px;">
+                        <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Refresh</div>
+                        <div style="margin-bottom:14px;font-size:11px" class="regioneditortext2">Vision</div>
+                        <div class="regioneditortext2">Viewer</div>
+                    </div>
+                </button>
+            </div>
+
+        </div>
+
+        
+
+        <div id="aiVisionViewerContent">
+            
+            <div id="aiVisionViewerBody">
+                <table>
+                    <tr>
+                        <td colspan="2"><h4>Saved Image Of Configured Camera</h4></td>
+                    </tr>
+                    <tr>
+                        <td><img id="aiVisionViewerImageConfig" src="" /></td>
+                        <td><img id="aiVisionViewerImageConfigVision" src="" /></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><h4>Assigned USB Camera Live Image</h4></td>
+                    </tr>
+                    <tr>
+                        <td><img id="aiVisionViewerImageLive" src="" /></td>
+                        <td><img id="aiVisionViewerImageLiveVision" src="" /></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span id="aiVisionConfidencePercent">--%</span>
+                            <br/>
+                            <span id="aiVisionConfidenceResult">--</span>
+                        </td>
+                        <td><img id="aiVisionViewerImageDiffVision" src="" /></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div id="gallery">
 
         <h3 style="text-align: center;margin:0px;padding:0px">CAMERA GALLERY</h3>
-        <div style="height:64px;margin:0px;padding:0px" >
-            
+        <h4 id="cameraGalleryMessage" style="text-align: center;margin:0px;padding:0px">Loading...</h4>
+        <div style="height:64px;margin:0px;padding:0px">
+
             <div style="float:right">
 
                 <button id="btnAutoAssignCameras" onclick="CamManager.autoAssignCameras()" class="resizebutton">
@@ -263,8 +327,9 @@
                         <div class="regioneditortext2">Reports</div>
                     </div>
                 </button>
-                
-                <button id="btnRefreshCameraGallery" onclick="CamManager.refreshCameras()" class="resizebutton" style="margin-left: 64px;">
+
+                <button id="btnRefreshCameraGallery" onclick="CamManager.refreshCameras()" class="resizebutton"
+                    style="margin-left: 64px;">
                     <div style="line-height: 19px;">
                         <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Refresh</div>
                         <div style="margin-bottom:14px;font-size:11px" class="regioneditortext2">Camera</div>

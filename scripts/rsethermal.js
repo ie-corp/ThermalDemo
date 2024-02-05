@@ -12,6 +12,7 @@ var CamManager;
     //let eventMap = [];
     let selectedEventIndex = -1;
     let cameraEditor = {
+        "isViewingAIVisionViewer": false,
         "isViewingGallery": true,
         "isViewingEditor": false,
         "selectedCameraIndex": 0,
@@ -701,6 +702,7 @@ var CamManager;
     CamManager.clearDistanceMap = clearDistanceMap;
     function hideEverything() {
         hideTips();
+        document.getElementById('aiVisionViewer').style.display = 'none';
         document.getElementById('gallery').style.display = 'none';
         document.getElementById('mainEditor').style.display = 'none';
         document.getElementById('dialogDistance').style.display = 'none';
@@ -714,6 +716,9 @@ var CamManager;
         if (cameraEditor.isViewingGallery) {
             document.getElementById('gallery').style.display = '';
         }
+        if (cameraEditor.isViewingAIVisionViewer) {
+            document.getElementById('aiVisionViewer').style.display = '';
+        }
     }
     CamManager.cancelEventDialog = cancelEventDialog;
     function cancelMaterial() {
@@ -723,6 +728,9 @@ var CamManager;
         }
         if (cameraEditor.isViewingGallery) {
             document.getElementById('gallery').style.display = '';
+        }
+        if (cameraEditor.isViewingAIVisionViewer) {
+            document.getElementById('aiVisionViewer').style.display = '';
         }
     }
     function pickMaterial() {
@@ -3334,6 +3342,7 @@ var CamManager;
             .then(response => {
             if (!response.ok) {
                 CamManager.showAlertDialog(null, 'Network Error', 'Network Error', true);
+                setGalleryMessage('Network Error. Try refreshing.', true, false);
             }
             return response.json();
         })
@@ -3346,8 +3355,14 @@ var CamManager;
             }
         })
             .catch(error => {
-            CamManager.showAlertDialog(null, 'Network Error', 'Network Error', true);
+            CamManager.showAlertDialog(null, 'Network Error', 'There was a Network Error', true);
+            setGalleryMessage('Network Error. Try refreshing.', true, false);
         });
+    }
+    function setGalleryMessage(message, isError, isWarning) {
+        let messageDiv = document.getElementById('cameraGalleryMessage');
+        messageDiv.innerHTML = message;
+        messageDiv.style.color = isError ? 'red' : isWarning ? 'orange' : 'green';
     }
     function autoAssignCameras() {
         if (cameraEditor.cameras == null || cameraEditor.cameras.length == 0) {
@@ -3370,7 +3385,7 @@ var CamManager;
         let apiSettings = getApiSettings();
         let scriptName = 'rse_thermalcameras_auto_assign';
         const start = performance.now();
-        getFetch(scriptName, { "confirmed": true })
+        getFetch(scriptName, { "confirmed": true, "useCelsius": false })
             .then(response => {
             if (!response.ok) {
                 CamManager.showAlertDialog(() => {
@@ -3397,6 +3412,7 @@ var CamManager;
     }
     function refreshCameras() {
         document.getElementById('galleryList').innerHTML = '';
+        setGalleryMessage('', false, false);
         cameraEditor.isWatchingLive = false; //shut this off if it was on.
         showBusy(true, "refreshCameras");
         let apiSettings = getApiSettings();
@@ -3450,16 +3466,137 @@ var CamManager;
         hideEverything();
         cameraEditor.isViewingGallery = true;
         cameraEditor.isViewingEditor = false;
+        cameraEditor.isViewingAIVisionViewer = false;
         refreshCameras();
     }
     CamManager.showGallery = showGallery;
+    function refreshVisionViewer() {
+        let cameraIndex = cameraEditor.selectedCameraIndex;
+        if (cameraIndex > -1) {
+            showAIVision(cameraIndex);
+        }
+    }
+    CamManager.refreshVisionViewer = refreshVisionViewer;
+    function showAIVision(cameraIndex) {
+        let cam = cameraEditor.cameras[cameraIndex];
+        if (!cam.isKnown) {
+            showAlertDialog(null, 'AIVision', 'AIVision is not available for unknown cameras.', true);
+            return;
+        }
+        cameraEditor.selectedCameraIndex = cameraIndex;
+        //we need our camera and all possible cameras..
+        hideEverything();
+        cameraEditor.isViewingGallery = false;
+        cameraEditor.isViewingEditor = false;
+        cameraEditor.isWatchingLive = false;
+        cameraEditor.isViewingAIVisionViewer = true;
+        if (cam.api != null && cam.usbIndex != null) {
+            fetchAIVisionResults(cam.name, cam.api, cam.usbIndex);
+        }
+    }
+    CamManager.showAIVision = showAIVision;
+    function fetchAIVisionResults(cameraName, api, usbIndex) {
+        let apiSettings = getApiSettings();
+        let scriptName = 'rse_thermalcameras_image_certainty_get';
+        const start = performance.now();
+        getFetch(scriptName, { "name": cameraName, "api": api, "usbIndex": usbIndex })
+            .then(response => {
+            if (!response.ok) {
+                CamManager.showAlertDialog(() => {
+                    cameraEditor.isViewingAIVisionViewer = false;
+                    cameraEditor.isViewingGallery = true;
+                    showGallery();
+                }, 'Network Error', 'Network Error fetching AI Vision results.', true);
+            }
+            return response.json();
+        })
+            .then(json => {
+            //console.log('response ok');
+            const end = performance.now();
+            console.log(`${scriptName} Fetch time: ${end - start} ms`);
+            let scriptReturnValue = json.ScriptReturnValue;
+            if (typeof scriptReturnValue == 'string') {
+                scriptReturnValue = JSON.parse(scriptReturnValue);
+            }
+            if (scriptReturnValue.errorMessage != null && scriptReturnValue.errorMessage != '') {
+                CamManager.showAlertDialog(() => {
+                    cameraEditor.isViewingAIVisionViewer = false;
+                    cameraEditor.isViewingGallery = true;
+                    showGallery();
+                }, 'AI Vision Error', scriptReturnValue.errorMessage, true);
+                return;
+            }
+            else {
+                let requiredImageMatchConfidencePercent = scriptReturnValue.requiredImageMatchConfidencePercent;
+                let isMatch = scriptReturnValue.confidencePercent >= requiredImageMatchConfidencePercent;
+                let configImage = document.getElementById('aiVisionViewerImageConfig');
+                configImage.src = 'data:image/jpeg;base64,' + scriptReturnValue.configImage;
+                let configImageVision = document.getElementById('aiVisionViewerImageConfigVision');
+                configImageVision.src = 'data:image/jpeg;base64,' + scriptReturnValue.configVision;
+                let liveImage = document.getElementById('aiVisionViewerImageLive');
+                liveImage.src = 'data:image/jpeg;base64,' + scriptReturnValue.liveImage;
+                let liveImageVision = document.getElementById('aiVisionViewerImageLiveVision');
+                liveImageVision.src = 'data:image/jpeg;base64,' + scriptReturnValue.liveVision;
+                let diffImageVision = document.getElementById('aiVisionViewerImageDiffVision');
+                diffImageVision.src = 'data:image/jpeg;base64,' + scriptReturnValue.diffVision;
+                let confidencePercentElm = document.getElementById('aiVisionConfidencePercent');
+                confidencePercentElm.innerHTML = `Match Confidence: ${scriptReturnValue.confidencePercent.toFixed(1)}%<br/>(>=${requiredImageMatchConfidencePercent.toFixed(1)}% is a match)`;
+                let confidencePercentResult = document.getElementById('aiVisionConfidenceResult');
+                confidencePercentResult.innerHTML = isMatch ? 'Match' : 'No Match';
+                confidencePercentResult.style.color = isMatch ? 'green' : 'red';
+                hideBusy('fetchAIVisionResults');
+                document.getElementById('aiVisionViewer').style.display = '';
+            }
+        })
+            .catch(error => {
+            console.log('There was and error fetching AI Vision results.', error);
+            CamManager.showAlertDialog(() => {
+                cameraEditor.isViewingAIVisionViewer = false;
+                cameraEditor.isViewingGallery = true;
+                showGallery();
+            }, 'Network Error', 'Network Error fetching AI Vision results. ' + JSON.stringify(error), true);
+        });
+    }
     function drawCameraGallery(cameras) {
         let sb = '';
+        setGalleryMessage('', true, false);
+        let knownThermalCamerasNotOnlineCount = 0;
+        let knownThermalCamerasOnlineCount = 0;
+        let unknownThermalCamerasCount = 0;
+        let knownPictureCamerasNotOnlineCount = 0;
+        let knownPictureCamerasOnlineCount = 0;
+        let unknownPictureCamerasCount = 0;
         for (let i = 0; i < cameras.length; i++) {
             let camera = cameras[i];
             let cameraName = camera.name;
             if (cameraName == null || cameraName == '') {
                 cameraName = 'Unknown Camera';
+            }
+            if (camera.isThermalCamera) {
+                if (camera.isKnown) {
+                    if (!camera.isOnline) {
+                        knownThermalCamerasNotOnlineCount++;
+                    }
+                    else {
+                        knownThermalCamerasOnlineCount++;
+                    }
+                }
+                else {
+                    unknownThermalCamerasCount++;
+                }
+            }
+            else {
+                if (camera.isKnown) {
+                    if (!camera.isOnline) {
+                        knownPictureCamerasNotOnlineCount++;
+                    }
+                    else {
+                        knownPictureCamerasOnlineCount++;
+                    }
+                }
+                else {
+                    unknownPictureCamerasCount++;
+                }
             }
             let strIndex = i.toString();
             sb += `<div class="galleryItem">`;
@@ -3476,7 +3613,7 @@ var CamManager;
             if (camera.isThermalCamera) {
                 sb += '<table style="border:collapse;">';
                 sb += '<tr>';
-                sb += '<td id="galleryHighTemp${i}" style="padding:0;margin:0;font-size:10px;">100.5 &deg;F</td>';
+                sb += `<td id="galleryHighTemp${i}" style="padding:0;margin:0;font-size:10px;">--</td>`;
                 sb += '<td rowspan="3" style="padding:0;margin:0;">' + strImage + '</td>';
                 sb += '</tr>';
                 sb += '<tr>';
@@ -3486,7 +3623,7 @@ var CamManager;
                 sb += `</svg">`;
                 sb += '</td>';
                 sb += '<tr>';
-                sb += '<td id="galleryLowTemp${i}" style="padding:0;margin:0;font-size:10px">72.0 &deg;F</td>';
+                sb += `<td id="galleryLowTemp${i}" style="padding:0;margin:0;font-size:10px">--</td>`;
                 sb += '</tr>';
                 sb += '</table>';
             }
@@ -3497,6 +3634,11 @@ var CamManager;
             let strDateTime = new Date().toLocaleString();
             sb += `<div style="text-align:right;font-size:10px">${escapeHTML(strDateTime)}</div>`;
             sb += `<div class="galleryItemButtons">`;
+            sb += `<button id="btnShowAIVision${i}" onclick="CamManager.showAIVision(${i})" class="resizebutton" style="height:45px">`;
+            sb += ` <div style="line-height: 4px;">`;
+            sb += `  <span class="regioneditortext">AI Vision</span>`;
+            sb += ` </div>`;
+            sb += `</button>`;
             sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
             sb += ` <div style="line-height: 4px;">`;
             sb += `  <span class="regioneditortext">Inspect</span>`;
@@ -3523,6 +3665,30 @@ var CamManager;
         }
         if (cameraEditor.isViewingGallery) {
             document.getElementById('gallery').style.display = '';
+            let galleryMessage = '';
+            let galleryWarning = false;
+            let galleryError = false;
+            if (cameras.length == 0) {
+                galleryWarning = true;
+                galleryMessage = 'No cameras found. Check your cable connections and try refreshing. (Cameras can take up to 30 seconds to be discovered)';
+            }
+            else {
+                galleryMessage = (getGalleryMessage(true, knownThermalCamerasNotOnlineCount, unknownThermalCamerasCount) +
+                    " " + getGalleryMessage(false, knownPictureCamerasNotOnlineCount, unknownPictureCamerasCount)).trim();
+                if (galleryMessage == '') {
+                    if (knownThermalCamerasOnlineCount > 0 || knownPictureCamerasOnlineCount > 0) {
+                        galleryMessage = `All ${(knownThermalCamerasOnlineCount + knownPictureCamerasOnlineCount).toString()} Cameras Are Online`;
+                    }
+                    else if (unknownThermalCamerasCount > 0 || unknownPictureCamerasCount > 0) {
+                        galleryWarning = true;
+                        galleryMessage = `All ${(unknownThermalCamerasCount + unknownPictureCamerasCount).toString()} cameras need to be configured.`;
+                    }
+                }
+                else {
+                    galleryError = true;
+                }
+            }
+            setGalleryMessage(galleryMessage, galleryError, galleryWarning);
             showBusy(true, "drawCameraGallery");
             window.setTimeout(() => {
                 hideBusy('draw camera gallery pause delay');
@@ -3535,6 +3701,25 @@ var CamManager;
                 }
             }, 2000);
         }
+    }
+    function getGalleryMessage(isThermal, knownCamerasNotOnlineCount, unknownCamerasCount) {
+        let galleryMessage = '';
+        let cameraType = isThermal ? 'Thermal' : 'Picture';
+        if (knownCamerasNotOnlineCount > 0) {
+            if (knownCamerasNotOnlineCount == unknownCamerasCount) {
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that could not be resolved to a live camera. Something in the scene may have changed.  You can inspect them to resolve the issue.`;
+            }
+            else if (unknownCamerasCount == 0) {
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the cameras have been plugged in for more than 30 seconds, please inspect the cabling or hit refresh.`;
+            }
+            else {
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the system just started, please wait 30 seconds and refresh the gallery, otherwise check your cabling and camera connections.`;
+            }
+        }
+        else if (unknownCamerasCount > 0) {
+            galleryMessage = `You have ${unknownCamerasCount} unknown ${cameraType} camera(s).  You can inspect them to assign them a name and other properties.`;
+        }
+        return galleryMessage;
     }
     function apiGetCamerasReceived(urlPrefix, jsonResult) {
         hideEverything();
@@ -3613,6 +3798,7 @@ var CamManager;
         document.getElementById('touchTools').style.display = 'none';
         document.getElementById('regionEditorAnnotations').style.display = 'none';
         document.getElementById('gallery').style.display = 'none';
+        document.getElementById('aiVisionViewer').style.display = 'none';
     }
     function setStatusText(text, color, encode) {
         document.getElementById('statusText').innerHTML = encode ? escapeHTML(text) : text;
@@ -3692,6 +3878,10 @@ var CamManager;
     function showUI() {
         if (cameraEditor.isViewingGallery) {
             document.getElementById('gallery').style.display = '';
+            return;
+        }
+        else if (cameraEditor.isViewingAIVisionViewer) {
+            document.getElementById('aiVisionViewer').style.display = '';
             return;
         }
         else if (cameraEditor.isEditing) {
@@ -4359,11 +4549,12 @@ var CamManager;
         return Array.from(atob(base64), c => c.charCodeAt(0));
     }
     function apiLiveCameraReceived(camIndex, jsonResult) {
+        let camera = cameraEditor.cameras[camIndex];
         if (cameraEditor.isViewingEditor) {
             hideBusy('apiLiveCameraReceived');
         }
         if (jsonResult == null || jsonResult.liveCamera == null) {
-            let message = 'There was an error locating the camera image file.';
+            let message = `Unable to locate live image for ${camera.name}. USB Index ${camera.usbIndex}. Please check the connection and try again.`;
             if (jsonResult != null && jsonResult.errorMessage != null && jsonResult.errorMessage != "") {
                 message = jsonResult.errorMessage;
             }
@@ -4397,6 +4588,27 @@ var CamManager;
         if (galleryImage != null) {
             galleryImage.src = tempCanvas.toDataURL();
             galleryImage.style.display = '';
+            //update gallery temps
+            if (camera.isThermalCamera) {
+                let strHigh = '';
+                let strLow = '';
+                let useCelsius = false; //todo need to figure out how to get this.
+                if (liveCamera.temperaturesInCelsius != null && liveCamera.temperaturesInCelsius.length > 0) {
+                    let temps = liveCamera.temperaturesInCelsius;
+                    let highCelsius = Math.max(...temps);
+                    let lowCelsius = Math.min(...temps);
+                    if (useCelsius) {
+                        strHigh = getDisplayTempFromCelsius(highCelsius, false) + '&deg;C';
+                        strLow = getDisplayTempFromCelsius(lowCelsius, false) + '&deg;C';
+                    }
+                    else {
+                        strHigh = getDisplayTempFromCelsius(highCelsius, true) + '&deg;F';
+                        strLow = getDisplayTempFromCelsius(lowCelsius, true) + '&deg;F';
+                    }
+                }
+                document.getElementById('galleryHighTemp' + camIndex.toString()).innerHTML = strHigh;
+                document.getElementById('galleryLowTemp' + camIndex.toString()).innerHTML = strLow;
+            }
         }
         if (cameraEditor.selectedCameraIndex != camIndex) {
             return;

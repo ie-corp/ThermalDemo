@@ -5,6 +5,7 @@ interface ICameraEditor{
     "isViewingCelsius": boolean,
     "showHotspotNumbers": boolean,
     "isEditing": boolean,
+    "isViewingAIVisionViewer": boolean,
     "isWatchingLive":boolean,
     "isRetaining":boolean,
     "minZoomLevel":number,
