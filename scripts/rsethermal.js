@@ -3304,6 +3304,7 @@ var CamManager;
         }
     }
     function getFetch(scriptName, apiParams) {
+        console.log('call ' + scriptName, apiParams);
         let apiSettings = getApiSettings();
         let myParms = null;
         if (apiParams != null && Object.keys(apiParams).length > 0) {
@@ -3501,11 +3502,12 @@ var CamManager;
         });
     }
     CamManager.refreshCameras = refreshCameras;
-    function inspectCamera(cameraIndex) {
+    function inspectCamera(cameraIndex, isEditing) {
         hideEverything();
         cameraEditor.isViewingGallery = false;
         cameraEditor.isViewingEditor = true;
-        changeCamera(cameraIndex, false, false, null);
+        cameraEditor.isWatchingLive = false;
+        changeCamera(cameraIndex, isEditing, false, null);
         document.getElementById('mainEditor').style.display = 'block';
         positionAnnotationsLayer();
     }
@@ -3781,7 +3783,7 @@ var CamManager;
                     }
                     if (possibleMatches.length > 0) {
                         sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Fix</div>';
-                        sb += '<div class="regioneditortext2">Alighnment</div>';
+                        sb += '<div class="regioneditortext2">Issue</div>';
                     }
                     else {
                         sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Fix</div>';
@@ -3792,14 +3794,14 @@ var CamManager;
                 sb += `</button>`;
             }
             if (camera.isKnown) {
-                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
+                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i},false)" class="resizebutton" style="height:45px">`;
                 sb += ` <div style="line-height: 4px;">`;
                 sb += `  <span class="regioneditortext">Inspect</span>`;
                 sb += ` </div>`;
                 sb += `</button>`;
             }
             else if (!hasKnownCamerasOffline) { //they can't create new while other cameras are off line.
-                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
+                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i},true)" class="resizebutton" style="height:45px">`;
                 sb += ` <div style="line-height: 4px;">`;
                 sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Create</div>';
                 sb += '<div class="regioneditortext2">New</div>';
@@ -3872,17 +3874,17 @@ var CamManager;
         let cameraType = isThermal ? 'thermal' : 'picture';
         if (knownCamerasNotOnlineCount > 0) {
             if (knownCamerasNotOnlineCount == unknownCamerasCount) {
-                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that could not be resolved to a live camera. Something in the scene may have changed.  You can resolve this by clicking the fix issue button.`;
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera${(knownCamerasNotOnlineCount > 1 ? "s" : "")} that could not be resolved to a live camera. Something in the scene may have changed.  You can resolve this by clicking the fix issue button.`;
             }
             else if (unknownCamerasCount == 0) {
-                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the cameras have been plugged in for more than 30 seconds, please inspect the cabling then press the redetect button.`;
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera${(knownCamerasNotOnlineCount > 1 ? "s" : "")} that appear to be offline. If all cameras have been plugged in for more than 30 seconds, please inspect the cabling then press the redetect button.`;
             }
-            else {
-                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the system just started, please wait 30 seconds and then refresh the gallery, otherwise check your cabling press the redetect button.`;
+            else { //more unknown than  known
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera${(knownCamerasNotOnlineCount > 1 ? "s" : "")} that could not be resolved to a live camera. Something in the scene may have changed.  You can resolve this by clicking the fix issue button.`;
             }
         }
         else if (unknownCamerasCount > 0) {
-            galleryMessage = `You have ${unknownCamerasCount} new ${cameraType} camera(s).  You can press the create new button to configure.`;
+            galleryMessage = `You have ${unknownCamerasCount} new ${cameraType} camera${(unknownCamerasCount > 1 ? "s" : "")}.  You can press the create new button to configure.`;
         }
         return galleryMessage;
     }
@@ -3922,7 +3924,7 @@ var CamManager;
                 let newCamera = {
                     "usbIndex": camera.usbIndex,
                     "api": camera.api,
-                    "name": ((camera.name ?? unknownCameraName + " USB Index" + camera.usbIndex).trim()),
+                    "name": ((camera.name ?? unknownCameraName + " USB Idx" + camera.usbIndex).trim()),
                     "existingName": (camera.isKnown ? camera.name : null),
                     "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                     "isOnline": camera.isOnline,
@@ -3998,9 +4000,13 @@ var CamManager;
                 cameraEditor.isViewingAIVisionViewer = false;
                 cameraEditor.isViewingGallery = false;
                 cameraEditor.isViewingEditor = true;
-                changeCamera(camIndex, true, true, null);
+                inspectCamera(camIndex, cam.canEdit);
+                return;
             }
         }
+        //logic errror
+        console.error('Could not assign live camera to saved camera.');
+        showGallery();
     }
     CamManager.assignLiveCameraToSavedCamera = assignLiveCameraToSavedCamera;
     function showAssignableCameras() {
@@ -4420,6 +4426,8 @@ var CamManager;
         document.getElementById('dialogPromptBody').innerHTML = escapeHTML(promptBody);
         document.getElementById('dialogPromptValue').value = promptValue;
         document.getElementById('dialogPrompt').style.display = '';
+        //(document.getElementById('dialogPromptValue') as HTMLInputElement).select();
+        document.getElementById('dialogPromptValue').focus();
     }
     function closePromptDialog(isYes) {
         hideUI();
@@ -4461,7 +4469,9 @@ var CamManager;
         }
         else {
             if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name.toLowerCase().indexOf(unknownCameraName.toLowerCase()) > -1 || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
-                showAlertDialog(null, 'Rename Camera', 'Please rename the camera before saving it.', true);
+                showAlertDialog(() => {
+                    renameCamera();
+                }, 'Rename Camera', 'Please rename the camera before saving it.', true);
                 return;
             }
         }
@@ -4686,7 +4696,8 @@ var CamManager;
         }
         let scriptName = 'rse_thermalcameraslive_get';
         let useCache = !cameraEditor.isViewingEditor;
-        getFetch(scriptName, { "api": api, "usbIndex": usbIndex, "url": url, "useCache": useCache })
+        let myParms = { "api": api, "usbIndex": usbIndex, "url": url, "useCache": useCache };
+        getFetch(scriptName, myParms)
             .then(response => {
             if (!response.ok) {
                 console.error('response not ok');
@@ -4731,6 +4742,7 @@ var CamManager;
         return Array.from(atob(base64), c => c.charCodeAt(0));
     }
     function apiLiveCameraReceived(camIndex, jsonResult) {
+        console.log('received live image for ' + camIndex.toString());
         let camera = cameraEditor.cameras[camIndex];
         if (cameraEditor.isViewingEditor) {
             hideBusy('apiLiveCameraReceived');

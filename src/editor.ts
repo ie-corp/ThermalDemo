@@ -3944,6 +3944,7 @@ module CamManager {
 
 
     function getFetch(scriptName: string, apiParams: object) {
+        console.log('call ' + scriptName,apiParams);
         let apiSettings = getApiSettings();
         let myParms = null;
         if (apiParams != null && Object.keys(apiParams).length > 0) {
@@ -4169,11 +4170,12 @@ module CamManager {
             })
     }
 
-    export function inspectCamera(cameraIndex: number) {
+    export function inspectCamera(cameraIndex: number,isEditing:boolean) {
         hideEverything();
         cameraEditor.isViewingGallery = false;
         cameraEditor.isViewingEditor = true;
-        changeCamera(cameraIndex, false, false, null);
+        cameraEditor.isWatchingLive = false;
+        changeCamera(cameraIndex, isEditing, false, null);
         document.getElementById('mainEditor')!.style.display = 'block';
         positionAnnotationsLayer();
     }
@@ -4493,7 +4495,7 @@ module CamManager {
                     }
                     if (possibleMatches.length > 0) {
                         sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Fix</div>';
-                        sb += '<div class="regioneditortext2">Alighnment</div>';
+                        sb += '<div class="regioneditortext2">Issue</div>';
                     }
                     else {
                         sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Fix</div>';
@@ -4506,14 +4508,14 @@ module CamManager {
             }
 
             if (camera.isKnown) {
-                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
+                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i},false)" class="resizebutton" style="height:45px">`;
                 sb += ` <div style="line-height: 4px;">`;
                 sb += `  <span class="regioneditortext">Inspect</span>`;
                 sb += ` </div>`;
                 sb += `</button>`;
             }
             else if (!hasKnownCamerasOffline) {//they can't create new while other cameras are off line.
-                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
+                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i},true)" class="resizebutton" style="height:45px">`;
                 sb += ` <div style="line-height: 4px;">`;
                 sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Create</div>';
                 sb += '<div class="regioneditortext2">New</div>';
@@ -4594,18 +4596,18 @@ module CamManager {
 
         if (knownCamerasNotOnlineCount > 0) {
             if (knownCamerasNotOnlineCount == unknownCamerasCount) {
-                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that could not be resolved to a live camera. Something in the scene may have changed.  You can resolve this by clicking the fix issue button.`;
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera${(knownCamerasNotOnlineCount > 1 ? "s": "")} that could not be resolved to a live camera. Something in the scene may have changed.  You can resolve this by clicking the fix issue button.`;
             }
             else if (unknownCamerasCount == 0) {
-                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the cameras have been plugged in for more than 30 seconds, please inspect the cabling then press the redetect button.`;
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera${(knownCamerasNotOnlineCount > 1 ? "s": "")} that appear to be offline. If all cameras have been plugged in for more than 30 seconds, please inspect the cabling then press the redetect button.`;
             }
-            else {
-                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the system just started, please wait 30 seconds and then refresh the gallery, otherwise check your cabling press the redetect button.`;
+            else {//more unknown than  known
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera${(knownCamerasNotOnlineCount > 1 ? "s": "")} that could not be resolved to a live camera. Something in the scene may have changed.  You can resolve this by clicking the fix issue button.`;
 
             }
         }
         else if (unknownCamerasCount > 0) {
-            galleryMessage = `You have ${unknownCamerasCount} new ${cameraType} camera(s).  You can press the create new button to configure.`;
+            galleryMessage = `You have ${unknownCamerasCount} new ${cameraType} camera${(unknownCamerasCount > 1 ? "s": "")}.  You can press the create new button to configure.`;
         }
         return galleryMessage;
     }
@@ -4650,7 +4652,7 @@ module CamManager {
                 let newCamera: ICamera = {
                     "usbIndex": camera.usbIndex,
                     "api": camera.api,
-                    "name": ((camera.name ?? unknownCameraName + " USB Index" + camera.usbIndex).trim()),
+                    "name": ((camera.name ?? unknownCameraName + " USB Idx" + camera.usbIndex).trim()),
                     "existingName": (camera.isKnown ? camera.name : null),
                     "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                     "isOnline": camera.isOnline,
@@ -4731,10 +4733,14 @@ module CamManager {
                 cameraEditor.isViewingAIVisionViewer = false;
                 cameraEditor.isViewingGallery = false;
                 cameraEditor.isViewingEditor = true;
-
-                changeCamera(camIndex, true, true, null);
+                inspectCamera(camIndex,cam.canEdit);
+                return;
             }
         }
+        //logic errror
+        console.error('Could not assign live camera to saved camera.');
+        showGallery();
+        
     }
 
     export function showAssignableCameras() {
@@ -5202,6 +5208,8 @@ module CamManager {
         document.getElementById('dialogPromptBody')!.innerHTML = escapeHTML(promptBody);
         (document.getElementById('dialogPromptValue') as HTMLInputElement).value = promptValue
         document.getElementById('dialogPrompt')!.style.display = '';
+        //(document.getElementById('dialogPromptValue') as HTMLInputElement).select();
+        (document.getElementById('dialogPromptValue') as HTMLInputElement).focus();
     }
 
 
@@ -5250,7 +5258,9 @@ module CamManager {
         }
         else {
             if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name!.toLowerCase().indexOf(unknownCameraName.toLowerCase()) > -1 || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
-                showAlertDialog(null, 'Rename Camera', 'Please rename the camera before saving it.', true);
+                showAlertDialog(()=>{
+                    renameCamera();
+                }, 'Rename Camera', 'Please rename the camera before saving it.', true);
                 return;
             }
         }
@@ -5521,7 +5531,9 @@ module CamManager {
         }
         let scriptName = 'rse_thermalcameraslive_get';
         let useCache = !cameraEditor.isViewingEditor;
-        getFetch(scriptName, { "api": api, "usbIndex": usbIndex, "url": url, "useCache": useCache })
+        let myParms = { "api": api, "usbIndex": usbIndex, "url": url, "useCache": useCache };
+        
+        getFetch(scriptName, myParms)
             .then(response => {
                 if (!response.ok) {
                     console.error('response not ok');
@@ -5571,9 +5583,12 @@ module CamManager {
     }
 
     export function apiLiveCameraReceived(camIndex: number, jsonResult: any) {
+        console.log('received live image for ' + camIndex.toString());
         let camera = cameraEditor.cameras[camIndex];
         if (cameraEditor.isViewingEditor) {
+            
             hideBusy('apiLiveCameraReceived');
+            
         }
         if (jsonResult == null || jsonResult.liveCamera == null) {
 
@@ -5726,6 +5741,7 @@ module CamManager {
 
 
     export function changeCamera(cameraIndex: number, editing: boolean, startWithHasEdited: boolean, linkToIndex: number | null) {
+
         cameraEditor.isWatchingLive = false;
         regionEditor = null;
         hasEdited = false;
@@ -5744,7 +5760,7 @@ module CamManager {
 
             cameraEditor.selectedCameraIndex = Math.max(0, Math.min(cameraIndex, cameraEditor.cameras.length - 1));
             let camera = cameraEditor.cameras[cameraEditor.selectedCameraIndex];
-
+            
             getDomButton('btnRefreshLiveImage').style.visibility = 'hidden';
             getDomButton('btnRefreshSavedImage').style.visibility = 'hidden';
             getDomButton('btnRefreshLiveImage').style.borderColor = '';
