@@ -3,7 +3,7 @@ var CamManager;
 (function (CamManager) {
     const cameraFixedEmissivity = .95;
     const cameraFixedDistanceMeters = .25;
-    const unknownCameraName = 'Unknown';
+    const unknownCameraName = 'New Cam';
     let comparingImageDirectionIsUp = true;
     let compareDividerPosition = 0;
     let materialMap = [];
@@ -1282,7 +1282,7 @@ var CamManager;
             drawDistanceMap(ctxBottomLayer, scale);
         }
         else {
-            drawRegionMap(ctxBottomLayer, scale, false); //can check alignment
+            drawRegionMap(ctxBottomLayer, scale, false);
             drawRegionMap(ctxTopLayer, scale, true);
             if (!cameraEditor.isEditing) {
                 drawNumbers(ctxTopLayer, scale);
@@ -3289,7 +3289,7 @@ var CamManager;
         regionEditorBaseImage.onload = function () {
             cameraChangedImageLoaded(cameraEditor.selectedCameraIndex, doEditing);
         };
-        refreshCameras();
+        refreshCameras('');
     }
     function getApiSettings() {
         if (location.href.indexOf('github.io') > -1) {
@@ -3364,6 +3364,56 @@ var CamManager;
         messageDiv.innerHTML = message;
         messageDiv.style.color = isError ? 'red' : isWarning ? 'orange' : 'green';
     }
+    function redetectAllCameras() {
+        showConfirmDialog(() => {
+            performRedetectAllCameras();
+        }, 'Redetect All Cameras', 'This will redetect all online cameras and match them to saved camera configurations.  Are you sure you want to do this?');
+    }
+    CamManager.redetectAllCameras = redetectAllCameras;
+    function performRedetectAllCameras() {
+        if (isDemo()) {
+            showAlertDialog(null, 'Redetect All Cameras', 'Sorry, this feature is not available in demo.', true);
+            return;
+        }
+        cameraEditor.isWatchingLive = false; //shut this off if it was on.
+        hideUI();
+        showBusy(true, "performRedetectAllCameras");
+        let apiSettings = getApiSettings();
+        let scriptName = 'rse_thermalcameras_redetect';
+        const start = performance.now();
+        getFetch(scriptName, { "confirmed": true })
+            .then(response => {
+            if (!response.ok) {
+                CamManager.showAlertDialog(() => {
+                    refreshCameras('');
+                }, 'Network Error', 'Network Error redetecting the cameras.', true);
+            }
+            return response.json();
+        })
+            .then(json => {
+            console.log(`${scriptName} response was ok`);
+            const end = performance.now();
+            console.log(`${scriptName} Fetch time: ${end - start} ms`);
+            let scriptReturnValue = json.ScriptReturnValue;
+            if (typeof scriptReturnValue == 'string') {
+                scriptReturnValue = JSON.parse(scriptReturnValue);
+            }
+            if (scriptReturnValue.errorMessage != null && scriptReturnValue.errorMessage != '') {
+                CamManager.showAlertDialog(() => {
+                    showUI();
+                }, 'Redetect Cameras', scriptReturnValue.errorMessage, true);
+            }
+            else {
+                //the service held us for a sufficent time. Refresh the gallery.
+                showGallery();
+            }
+        })
+            .catch(error => {
+            CamManager.showAlertDialog(() => {
+                refreshCameras('');
+            }, 'Network Error', 'Network Error redetecting cameras.', true);
+        });
+    }
     function autoAssignCameras() {
         if (cameraEditor.cameras == null || cameraEditor.cameras.length == 0) {
             showAlertDialog(null, 'Auto Assign Cameras', 'There are no cameras found. Check your cable connections and try refreshing. (Cameras can take up to 30 seconds to be discovered)', true);
@@ -3389,7 +3439,7 @@ var CamManager;
             .then(response => {
             if (!response.ok) {
                 CamManager.showAlertDialog(() => {
-                    refreshCameras();
+                    refreshCameras('');
                 }, 'Network Error', 'Network Error auto assigning cameras.', true);
             }
             return response.json();
@@ -3402,15 +3452,15 @@ var CamManager;
             if (typeof scriptReturnValue == 'string') {
                 scriptReturnValue = JSON.parse(scriptReturnValue);
             }
-            refreshCameras();
+            refreshCameras('');
         })
             .catch(error => {
             CamManager.showAlertDialog(() => {
-                refreshCameras();
+                refreshCameras('');
             }, 'Network Error', 'Network Error auto assigning cameras.', true);
         });
     }
-    function refreshCameras() {
+    function refreshCameras(selectedCameraName) {
         document.getElementById('galleryList').innerHTML = '';
         setGalleryMessage('', false, false);
         cameraEditor.isWatchingLive = false; //shut this off if it was on.
@@ -3423,7 +3473,7 @@ var CamManager;
             .then(response => {
             if (!response.ok) {
                 CamManager.showAlertDialog(() => {
-                    CamManager.apiGetCamerasReceived(camPrefix, { "cameras": [] });
+                    CamManager.apiGetCamerasReceived(camPrefix, { "cameras": [] }, selectedCameraName);
                 }, 'Network Error', 'Network Error refreshing cameras.', true);
             }
             return response.json();
@@ -3441,12 +3491,13 @@ var CamManager;
             console.log(`Live Camera Count ${scriptReturnValue.liveCameraCount}`);
             console.log(`Live Thermal Camera Count ${scriptReturnValue.liveThermalCameraCount}`);
             console.log(`Configured Cameras With NO Live Camera Assigned To Them ${scriptReturnValue.unassignedConfiguredCameraCount}`);
-            CamManager.apiGetCamerasReceived(camPrefix, scriptReturnValue);
+            CamManager.apiGetCamerasReceived(camPrefix, scriptReturnValue, selectedCameraName);
         })
             .catch(error => {
+            console.error('Error refreshing cameras.', error);
             CamManager.showAlertDialog(() => {
-                CamManager.apiGetCamerasReceived(camPrefix, { "cameras": [] });
-            }, 'Network Error', 'Network Error refreshing cameras.', true);
+                CamManager.apiGetCamerasReceived(camPrefix, { "cameras": [] }, selectedCameraName);
+            }, 'Error', 'There was and error refreshing cameras.', true);
         });
     }
     CamManager.refreshCameras = refreshCameras;
@@ -3454,7 +3505,7 @@ var CamManager;
         hideEverything();
         cameraEditor.isViewingGallery = false;
         cameraEditor.isViewingEditor = true;
-        changeCamera(cameraIndex, false, false);
+        changeCamera(cameraIndex, false, false, null);
         document.getElementById('mainEditor').style.display = 'block';
         positionAnnotationsLayer();
     }
@@ -3467,7 +3518,7 @@ var CamManager;
         cameraEditor.isViewingGallery = true;
         cameraEditor.isViewingEditor = false;
         cameraEditor.isViewingAIVisionViewer = false;
-        refreshCameras();
+        refreshCameras('');
     }
     CamManager.showGallery = showGallery;
     function refreshVisionViewer() {
@@ -3490,18 +3541,45 @@ var CamManager;
         cameraEditor.isViewingEditor = false;
         cameraEditor.isWatchingLive = false;
         cameraEditor.isViewingAIVisionViewer = true;
-        if (cam.api != null && cam.usbIndex != null) {
-            fetchAIVisionResults(cam.name, cam.api, cam.usbIndex);
+        let liveCameraIndexes = [];
+        let apiList = [];
+        let usbIndexList = [];
+        if (cam.api != null && cam.api.toString().length > 0 && cam.usbIndex != null) {
+            apiList.push(cam.api.toString());
+            usbIndexList.push(cam.usbIndex);
+            liveCameraIndexes.push(cameraIndex);
+        }
+        else {
+            for (let i = 0; i < cameraEditor.cameras.length; i++) {
+                let c = cameraEditor.cameras[i];
+                if (!c.isKnown && c.isOnline && c.api != null && c.api.toString().length > 0) {
+                    if (cam.isThermalCamera == c.isThermalCamera) { //todo need to check size.
+                        apiList.push(c.api.toString());
+                        usbIndexList.push(c.usbIndex);
+                        liveCameraIndexes.push(i);
+                    }
+                }
+            }
+        }
+        if (apiList.length == 0) {
+            showAlertDialog(() => {
+                showGallery();
+            }, 'AI Vision', `There are no suitable cameras online to assign to this ${(cam.isThermalCamera ? "thermal" : "picture")} camera. Check your cable connections or press redetect cameras.`, true);
+            return;
+        }
+        else {
+            fetchAIVisionResults(cameraIndex, liveCameraIndexes, apiList, usbIndexList);
         }
     }
     CamManager.showAIVision = showAIVision;
-    function fetchAIVisionResults(cameraName, api, usbIndex) {
+    function fetchAIVisionResults(cameraIndex, liveCameraIndexes, apiList, usbIndexList) {
+        let cam = cameraEditor.cameras[cameraIndex];
         hideEverything();
         showBusy(true, "fetchAIVisionResultsEntry");
         let apiSettings = getApiSettings();
         let scriptName = 'rse_thermalcameras_image_certainty_get';
         const start = performance.now();
-        getFetch(scriptName, { "name": cameraName, "api": api, "usbIndex": usbIndex })
+        getFetch(scriptName, { "request": { "name": cam.name, "apiList": apiList, "usbIndexList": usbIndexList } })
             .then(response => {
             if (!response.ok) {
                 CamManager.showAlertDialog(() => {
@@ -3528,26 +3606,73 @@ var CamManager;
                 }, 'AI Vision Error', scriptReturnValue.errorMessage, true);
                 return;
             }
-            else {
-                let requiredImageMatchConfidencePercent = scriptReturnValue.requiredImageMatchConfidencePercent;
-                let isMatch = scriptReturnValue.confidencePercent >= requiredImageMatchConfidencePercent;
-                let configImage = document.getElementById('aiVisionViewerImageConfig');
-                configImage.src = 'data:image/jpeg;base64,' + scriptReturnValue.configImage;
-                let configImageVision = document.getElementById('aiVisionViewerImageConfigVision');
-                configImageVision.src = 'data:image/jpeg;base64,' + scriptReturnValue.configVision;
-                let liveImage = document.getElementById('aiVisionViewerImageLive');
-                liveImage.src = 'data:image/jpeg;base64,' + scriptReturnValue.liveImage;
-                let liveImageVision = document.getElementById('aiVisionViewerImageLiveVision');
-                liveImageVision.src = 'data:image/jpeg;base64,' + scriptReturnValue.liveVision;
-                let diffImageVision = document.getElementById('aiVisionViewerImageDiffVision');
-                diffImageVision.src = 'data:image/jpeg;base64,' + scriptReturnValue.diffVision;
-                let confidencePercentElm = document.getElementById('aiVisionConfidencePercent');
-                confidencePercentElm.innerHTML = `Match Confidence: ${scriptReturnValue.confidencePercent.toFixed(1)}%<br/>(>=${requiredImageMatchConfidencePercent.toFixed(1)}% is a match)`;
-                let confidencePercentResult = document.getElementById('aiVisionConfidenceResult');
-                confidencePercentResult.innerHTML = isMatch ? 'Match' : 'No Match';
-                confidencePercentResult.style.color = isMatch ? 'green' : 'red';
+            else if (scriptReturnValue.confidence != null && scriptReturnValue.confidence.imageConfidence != null && scriptReturnValue.confidence.imageConfidence.length > 0) {
+                //am I getting one camera or multiple?
+                let sb = '<table>';
+                for (let i = 0; i < scriptReturnValue.confidence.imageConfidence.length; i++) {
+                    let confidence = scriptReturnValue.confidence;
+                    let imageResult = confidence.imageConfidence[i];
+                    //let requiredImageMatchConfidencePercent = scriptReturnValue.requiredImageMatchConfidencePercent;
+                    //let isMatch = imageResult.confidencePercent >= requiredImageMatchConfidencePercent;
+                    let api = imageResult.api;
+                    let usbIndex = imageResult.usbIndex;
+                    let foundCameraIndex = cameraEditor.cameras.findIndex(c => c.api == api && c.usbIndex == usbIndex);
+                    if (foundCameraIndex == -1) {
+                        console.error(`Could not find camera index for api ${api} and usb index ${usbIndex}.`);
+                        continue;
+                    }
+                    let isAssigned = foundCameraIndex == cameraIndex;
+                    let canAssign = !isAssigned && cam.isKnown && !cameraEditor.cameras[foundCameraIndex].isKnown;
+                    sb += '<tr>';
+                    sb += `<td colspan="2"><h4>Saved Image for ${escapeHTML(cam.name)}</h4></td>`;
+                    sb += '</tr>';
+                    sb += '<tr>';
+                    sb += `<td><img id="aiVisionViewerImageConfig${i}" src="${'data:image/jpeg;base64,' + confidence.configImage}" /></td>`;
+                    sb += `<td><img id="aiVisionViewerImageConfigVision${i}" src="${'data:image/jpeg;base64,' + imageResult.configVision}" /></td>`;
+                    sb += '</tr>';
+                    sb += '<tr>';
+                    sb += `<td colspan="2"><h4>Live Image for USB Index ${usbIndex}</h4></td>`;
+                    sb += '</tr>';
+                    sb += '<tr>';
+                    sb += `<td><img id="aiVisionViewerImageLive${i}" src="${'data:image/jpeg;base64,' + imageResult.liveImage}" /></td>`;
+                    sb += `<td><img id="aiVisionViewerImageLiveVision${i}" src="${'data:image/jpeg;base64,' + imageResult.liveVision}" /></td>`;
+                    sb += '</tr>';
+                    sb += '<tr>';
+                    sb += '<td>';
+                    sb += `<span id="aiVisionConfidencePercent">Match Confidence: ${imageResult.confidencePercent.toFixed(1)}%</span>`;
+                    sb += '<br/>';
+                    if (isAssigned) {
+                        sb += '<span>Assigned</span>';
+                    }
+                    else if (canAssign) {
+                        sb += `<button onclick="CamManager.assignLiveCameraToSavedCamera(${cameraIndex}, ${foundCameraIndex})" class="resizebutton">`;
+                        sb += '<div style="line-height: 4px;">';
+                        sb += '<div style="line-height: 19px;">';
+                        sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Assign</div>';
+                        sb += '<div style="margin-bottom:14px" class="regioneditortext2">This</div>';
+                        sb += '<div class="regioneditortext2">Camera</div>';
+                        sb += '</div>';
+                        sb += '</div>';
+                        sb += '</button>';
+                    }
+                    else {
+                        sb += '<span>Not Assigned</span>';
+                    }
+                    sb += '</td>';
+                    sb += `<td><img id="aiVisionViewerImageDiffVision" src="${'data:image/jpeg;base64,' + imageResult.diffVision}" /></td>`;
+                    sb += '</tr>';
+                }
+                sb += '</table>';
+                document.getElementById('aiVisionViewerBody').innerHTML = sb;
                 hideBusy('fetchAIVisionResults');
                 document.getElementById('aiVisionViewer').style.display = '';
+            }
+            else {
+                CamManager.showAlertDialog(() => {
+                    cameraEditor.isViewingAIVisionViewer = false;
+                    cameraEditor.isViewingGallery = true;
+                    showGallery();
+                }, 'AI Vision Error', 'No AI Vision results found.', true);
             }
         })
             .catch(error => {
@@ -3561,6 +3686,7 @@ var CamManager;
     }
     function drawCameraGallery(cameras) {
         let sb = '';
+        let hasKnownCamerasOffline = cameras.filter(c => c.isKnown && !c.isOnline).length > 0;
         setGalleryMessage('', true, false);
         let knownThermalCamerasNotOnlineCount = 0;
         let knownThermalCamerasOnlineCount = 0;
@@ -3636,16 +3762,53 @@ var CamManager;
             let strDateTime = new Date().toLocaleString();
             sb += `<div style="text-align:right;font-size:10px">${escapeHTML(strDateTime)}</div>`;
             sb += `<div class="galleryItemButtons">`;
-            sb += `<button id="btnShowAIVision${i}" onclick="CamManager.showAIVision(${i})" class="resizebutton" style="height:45px">`;
-            sb += ` <div style="line-height: 4px;">`;
-            sb += `  <span class="regioneditortext">AI Vision</span>`;
-            sb += ` </div>`;
-            sb += `</button>`;
-            sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
-            sb += ` <div style="line-height: 4px;">`;
-            sb += `  <span class="regioneditortext">Inspect</span>`;
-            sb += ` </div>`;
-            sb += `</button>`;
+            if (camera.isKnown) {
+                sb += `<button id="btnShowAIVision${i}" onclick="CamManager.showAIVision(${i})" class="resizebutton" style="height:45px">`;
+                sb += ` <div style="line-height: 4px;">`;
+                if (camera.isOnline) {
+                    sb += `  <span class="regioneditortext">AI Vision</span>`;
+                }
+                else {
+                    let possibleMatches = [];
+                    for (let j = 0; j < cameras.length; j++) {
+                        if (j == i) {
+                            continue;
+                        }
+                        let otherCamera = cameras[j];
+                        if (!otherCamera.isKnown && otherCamera.isThermalCamera == camera.isThermalCamera && otherCamera.isOnline) {
+                            possibleMatches.push(j);
+                        }
+                    }
+                    if (possibleMatches.length > 0) {
+                        sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Fix</div>';
+                        sb += '<div class="regioneditortext2">Alighnment</div>';
+                    }
+                    else {
+                        sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Fix</div>';
+                        sb += '<div class="regioneditortext2">Issue</div>';
+                    }
+                }
+                sb += ` </div>`;
+                sb += `</button>`;
+            }
+            if (camera.isKnown) {
+                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
+                sb += ` <div style="line-height: 4px;">`;
+                sb += `  <span class="regioneditortext">Inspect</span>`;
+                sb += ` </div>`;
+                sb += `</button>`;
+            }
+            else if (!hasKnownCamerasOffline) { //they can't create new while other cameras are off line.
+                sb += `<button id="btnInspectCamera${i}" onclick="CamManager.inspectCamera(${i})" class="resizebutton" style="height:45px">`;
+                sb += ` <div style="line-height: 4px;">`;
+                sb += '<div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Create</div>';
+                sb += '<div class="regioneditortext2">New</div>';
+                sb += ` </div>`;
+                sb += `</button>`;
+            }
+            else {
+                sb += '<div style="font-style:italic;max-width:256px;">This online camera cannot be configured while existing cameras are offline</div>';
+            }
             sb += `</div>`;
             sb += `</div>`;
         }
@@ -3679,7 +3842,7 @@ var CamManager;
                     " " + getGalleryMessage(false, knownPictureCamerasNotOnlineCount, unknownPictureCamerasCount)).trim();
                 if (galleryMessage == '') {
                     if (knownThermalCamerasOnlineCount > 0 || knownPictureCamerasOnlineCount > 0) {
-                        galleryMessage = `All ${(knownThermalCamerasOnlineCount + knownPictureCamerasOnlineCount).toString()} Cameras Are Online`;
+                        galleryMessage = `All ${(knownThermalCamerasOnlineCount + knownPictureCamerasOnlineCount).toString()} cameras are online`;
                     }
                     else if (unknownThermalCamerasCount > 0 || unknownPictureCamerasCount > 0) {
                         galleryWarning = true;
@@ -3706,24 +3869,24 @@ var CamManager;
     }
     function getGalleryMessage(isThermal, knownCamerasNotOnlineCount, unknownCamerasCount) {
         let galleryMessage = '';
-        let cameraType = isThermal ? 'Thermal' : 'Picture';
+        let cameraType = isThermal ? 'thermal' : 'picture';
         if (knownCamerasNotOnlineCount > 0) {
             if (knownCamerasNotOnlineCount == unknownCamerasCount) {
-                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that could not be resolved to a live camera. Something in the scene may have changed.  You can inspect them to resolve the issue.`;
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that could not be resolved to a live camera. Something in the scene may have changed.  You can resolve this by clicking the fix issue button.`;
             }
             else if (unknownCamerasCount == 0) {
-                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the cameras have been plugged in for more than 30 seconds, please inspect the cabling or hit refresh.`;
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the cameras have been plugged in for more than 30 seconds, please inspect the cabling then press the redetect button.`;
             }
             else {
-                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the system just started, please wait 30 seconds and refresh the gallery, otherwise check your cabling and camera connections.`;
+                galleryMessage = `You have ${knownCamerasNotOnlineCount} known ${cameraType} camera(s) that appear to be offline. If the system just started, please wait 30 seconds and then refresh the gallery, otherwise check your cabling press the redetect button.`;
             }
         }
         else if (unknownCamerasCount > 0) {
-            galleryMessage = `You have ${unknownCamerasCount} unknown ${cameraType} camera(s).  You can inspect them to assign them a name and other properties.`;
+            galleryMessage = `You have ${unknownCamerasCount} new ${cameraType} camera(s).  You can press the create new button to configure.`;
         }
         return galleryMessage;
     }
-    function apiGetCamerasReceived(urlPrefix, jsonResult) {
+    function apiGetCamerasReceived(urlPrefix, jsonResult, selectedCameraName) {
         hideEverything();
         hideBusy('apiGetCamerasReceived');
         if (cameraEditor.isViewingEditor) {
@@ -3734,16 +3897,24 @@ var CamManager;
             let sortedArray = [...jsonResult.cameras];
             //sort these by name.
             sortedArray.sort((a, b) => {
-                let nameA = (a.name ?? unknownCameraName).trim().toLowerCase();
-                let nameB = (b.name ?? unknownCameraName).trim().toLowerCase();
-                if (nameA < nameB) {
+                let nameA = (a.name ?? unknownCameraName).trim().toLowerCase() + "usb" + a.usbIndex;
+                let nameB = (b.name ?? unknownCameraName).trim().toLowerCase() + "usb" + a.usbIndex;
+                if (a.isKnown && !b.isKnown) {
                     return -1;
                 }
-                else if (nameA > nameB) {
+                else if (!a.isKnown && b.isKnown) {
                     return 1;
                 }
                 else {
-                    return 0;
+                    if (nameA < nameB) {
+                        return -1;
+                    }
+                    else if (nameA > nameB) {
+                        return 1;
+                    }
+                    else {
+                        return 0;
+                    }
                 }
             });
             for (let i = 0; i < sortedArray.length; i++) {
@@ -3751,7 +3922,7 @@ var CamManager;
                 let newCamera = {
                     "usbIndex": camera.usbIndex,
                     "api": camera.api,
-                    "name": ((camera.name ?? unknownCameraName).trim()),
+                    "name": ((camera.name ?? unknownCameraName + " USB Index" + camera.usbIndex).trim()),
                     "existingName": (camera.isKnown ? camera.name : null),
                     "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
                     "isOnline": camera.isOnline,
@@ -3781,7 +3952,13 @@ var CamManager;
             drawCameraGallery(cameras);
         }
         else {
-            changeCamera(cameraEditor.selectedCameraIndex, false, false);
+            if (selectedCameraName != null && selectedCameraName != '') {
+                let foundIndex = cameras.findIndex(c => c.name == selectedCameraName);
+                if (foundIndex > -1) {
+                    cameraEditor.selectedCameraIndex = foundIndex;
+                }
+            }
+            changeCamera(cameraEditor.selectedCameraIndex, false, false, null);
         }
     }
     CamManager.apiGetCamerasReceived = apiGetCamerasReceived;
@@ -3818,7 +3995,10 @@ var CamManager;
                 && !liveCam.isKnown && cam.isKnown && (liveCam.usbIndex != null && liveCam.api != null)) {
                 cam.usbIndex = liveCam.usbIndex;
                 cam.api = liveCam.api;
-                changeCamera(camIndex, true, true);
+                cameraEditor.isViewingAIVisionViewer = false;
+                cameraEditor.isViewingGallery = false;
+                cameraEditor.isViewingEditor = true;
+                changeCamera(camIndex, true, true, null);
             }
         }
     }
@@ -3858,7 +4038,7 @@ var CamManager;
                     sb += '<div class="regioneditortext" style="margin-top:-15px">Assign Image To</div>';
                     //camera names were already sanitized
                     let strStyle = '';
-                    if (camera.name == unknownCameraName) {
+                    if (!camera.isKnown) {
                         strStyle = ' style="color:red"';
                     }
                     sb += '<div id="valCamAssign' + strIndex + 'Name" class="regionditortextsub3"' + strStyle + '>' + escapeHTML(camera.name) + '</div>';
@@ -3966,12 +4146,12 @@ var CamManager;
         hideBusy('apicamerasDeletedReceived');
         cameraEditor.selectedCameraIndex = -1;
         cameraEditor.cameras = [];
-        refreshCameras();
+        refreshCameras('');
     }
     CamManager.apicamerasDeletedReceived = apicamerasDeletedReceived;
     function cancelCameraEdit() {
         if (!hasEdited) { //only confirm if there have been changes made.
-            refreshCameras();
+            refreshCameras('');
         }
         else {
             showConfirmDialog(cancelCameraCallback, "Discard Changes?", "Are you sure you want to discard your changes for the camera?");
@@ -3979,7 +4159,7 @@ var CamManager;
     }
     CamManager.cancelCameraEdit = cancelCameraEdit;
     function cancelCameraCallback() {
-        refreshCameras();
+        refreshCameras('');
     }
     function showRetained() {
         showAlertDialog(null, 'Retained', 'Retained Images are not supported yet', true);
@@ -4211,7 +4391,7 @@ var CamManager;
         cameraEditor.isRetaining = false;
         hideUI();
         showUI();
-        CamManager.refreshCameras();
+        CamManager.refreshCameras('');
     }
     CamManager.closeThermalDialogAndRefresh = closeThermalDialogAndRefresh;
     let alertCallback = null;
@@ -4280,7 +4460,7 @@ var CamManager;
             stagedUpdateCameraName = null;
         }
         else {
-            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == unknownCameraName || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
+            if (cameraEditor.cameras[cameraEditor.selectedCameraIndex].name.toLowerCase().indexOf(unknownCameraName.toLowerCase()) > -1 || cameraEditor.cameras[cameraEditor.selectedCameraIndex].name == null) {
                 showAlertDialog(null, 'Rename Camera', 'Please rename the camera before saving it.', true);
                 return;
             }
@@ -4393,7 +4573,7 @@ var CamManager;
             if (!response.ok) {
                 console.error('response not ok');
                 let message = 'There was an error saving the camera.';
-                CamManager.apicamerasSaveReceived('Error Saving', message, true);
+                CamManager.apicamerasSaveReceived('Error Saving', message, true, '');
             }
             return response.json();
         })
@@ -4404,7 +4584,7 @@ var CamManager;
                 scriptReturnValue = JSON.parse(scriptReturnValue);
             }
             if (scriptReturnValue != null && scriptReturnValue.errorMessage != null && scriptReturnValue.errorMessage != "") {
-                CamManager.apicamerasSaveReceived('Error Saving', scriptReturnValue.errorMessage, true);
+                CamManager.apicamerasSaveReceived('Error Saving', scriptReturnValue.errorMessage, true, '');
             }
             else {
                 let sb = '';
@@ -4425,22 +4605,22 @@ var CamManager;
                     }
                     sb += '</ol>';
                 }
-                CamManager.apicamerasSaveReceived('Saved Successfully', sb, false);
+                CamManager.apicamerasSaveReceived('Saved Successfully', sb, false, scriptReturnValue.cameraName);
             }
         })
             .catch(error => {
-            CamManager.apicamerasSaveReceived('Error Saving', 'There was an error saving the camera.', false);
+            CamManager.apicamerasSaveReceived('Error Saving', 'There was an error saving the camera.', false, '');
         });
     }
-    function apicamerasSaveReceived(title, message, escapeBody) {
+    function apicamerasSaveReceived(title, message, escapeBody, selectedCameraName) {
         hideBusy('apicamerasSaveReceived');
-        showAlertDialog(saveOKDialog, title, message, escapeBody);
+        showAlertDialog(() => { saveOKDialog(selectedCameraName); }, title, message, escapeBody);
     }
     CamManager.apicamerasSaveReceived = apicamerasSaveReceived;
-    function saveOKDialog() {
+    function saveOKDialog(selectedCameraName) {
         cameraEditor.selectedCameraIndex = -1;
         cameraEditor.cameras = [];
-        refreshCameras();
+        refreshCameras(selectedCameraName);
     }
     function renameCamera() {
         if (regionEditor == null) {
@@ -4448,7 +4628,7 @@ var CamManager;
         }
         let cameraIndex = cameraEditor.selectedCameraIndex;
         let oldCamName = cameraEditor.cameras[cameraIndex].name;
-        if (oldCamName == null || oldCamName.indexOf("-") > -1) {
+        if (oldCamName == null || oldCamName.toLowerCase().indexOf(unknownCameraName.toLowerCase()) > -1) {
             oldCamName = "";
         }
         let showName = oldCamName;
@@ -4673,7 +4853,7 @@ var CamManager;
         };
         xhr.send();
     }
-    function changeCamera(cameraIndex, editing, startWithHasEdited) {
+    function changeCamera(cameraIndex, editing, startWithHasEdited, linkToIndex) {
         cameraEditor.isWatchingLive = false;
         regionEditor = null;
         hasEdited = false;
@@ -4902,7 +5082,7 @@ var CamManager;
                         elmCamType.innerHTML = camera.isThermalCamera ? "Thermal Cam" : "Picture Cam";
                         let elmCamName = document.getElementById('valCamName');
                         elmCamName.innerHTML = camera.name;
-                        elmCamName.style.color = camera.name == unknownCameraName ? "red" : "white";
+                        elmCamName.style.color = !camera.isKnown ? "red" : "white";
                         let elmCamIssues = document.getElementById('valCamIssues');
                         elmCamIssues.innerHTML = "0";
                         if (camera.isOnline) {
@@ -4925,7 +5105,7 @@ var CamManager;
                                 setStatusText('Viewing Offline ' + camera.name + ' Camera', 'red', true);
                             }
                         }
-                        sb += '<button id="btnCam' + strIndex + '" onclick="CamManager.changeCamera(' + i + ',' + (camera.canEdit ? 'true' : 'false') + ',false)" class="resizebutton2" style="border-color:white">';
+                        sb += '<button id="btnCam' + strIndex + '" onclick="CamManager.changeCamera(' + i + ',' + (camera.canEdit ? 'true' : 'false') + ',false,null)" class="resizebutton2" style="border-color:white">';
                         sb += '<div style="line-height: 14px;">';
                         if (!camera.isOnline) {
                             sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>';
@@ -4943,7 +5123,7 @@ var CamManager;
                         let strCamTypeColor = camera.isThermalCamera ? 'skyblue' : 'DarkGray';
                         sb += '<div id="valCam' + strIndex + 'View" style="margin-top:-6px;color:' + strCamTypeColor + '" class="regionditortextsub3">' + strViewing + '</div>';
                         let strStyle = 'margin-top:-2px;';
-                        if (camera.name == unknownCameraName) {
+                        if (!camera.isKnown) {
                             strStyle += 'color:red;';
                         }
                         sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3" style="' + strStyle + '">' + escapeHTML(camera.name) + '</div>';
@@ -4952,7 +5132,7 @@ var CamManager;
                     }
                 }
                 else if (!editing) {
-                    sb += '<button id="btnCam' + strIndex + '" onclick="CamManager.changeCamera(' + i + ',false,false)" class="resizebutton2">';
+                    sb += '<button id="btnCam' + strIndex + '" onclick="CamManager.changeCamera(' + i + ',false,false,null)" class="resizebutton2">';
                     sb += '<div style="line-height: 14px;">';
                     if (!camera.isOnline) {
                         sb += '<div id="valCam' + strIndex + 'Status" style="color:red;margin-top:3px" class="regionditortextsub3">Offline</div>';
@@ -4966,7 +5146,7 @@ var CamManager;
                     sb += '<div style="margin-top:-6px;color:' + strCamTypeColor + '" class="regionditortextsub3">' + strViewing + '</div>';
                     //camera names were already sanitized
                     let strStyle = 'margin-top:-2px;';
-                    if (camera.name == unknownCameraName) {
+                    if (!camera.isKnown) {
                         strStyle += 'color:red;';
                     }
                     sb += '<div id="valCam' + strIndex + 'Name" class="regionditortextsub3" style="' + strStyle + '">' + escapeHTML(camera.name) + '</div>';
@@ -5193,6 +5373,7 @@ var CamManager;
     function capitalizeFirstLetter(val) {
         return val.charAt(0).toUpperCase() + val.slice(1);
     }
+    //function to take a html canvas and flip it vertically
     function addRegion(regionType) {
         if (regionEditor == null) {
             return;

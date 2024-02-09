@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Thermal</title>
+    <title>Cameras</title>
     <link rel="stylesheet" href="styles/thermalstyle.css">
     <script src="scripts/UTIF.js"></script>
     <script src="scripts/rsethermal.js"></script>
@@ -260,30 +260,7 @@
         <div id="aiVisionViewerContent">
             
             <div id="aiVisionViewerBody">
-                <table>
-                    <tr>
-                        <td colspan="2"><h4>Saved Image Of Configured Camera</h4></td>
-                    </tr>
-                    <tr>
-                        <td><img id="aiVisionViewerImageConfig" src="" /></td>
-                        <td><img id="aiVisionViewerImageConfigVision" src="" /></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2"><h4>Assigned USB Camera Live Image</h4></td>
-                    </tr>
-                    <tr>
-                        <td><img id="aiVisionViewerImageLive" src="" /></td>
-                        <td><img id="aiVisionViewerImageLiveVision" src="" /></td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span id="aiVisionConfidencePercent">--%</span>
-                            <br/>
-                            <span id="aiVisionConfidenceResult">--</span>
-                        </td>
-                        <td><img id="aiVisionViewerImageDiffVision" src="" /></td>
-                    </tr>
-                </table>
+                
             </div>
         </div>
     </div>
@@ -300,6 +277,14 @@
                     <div style="line-height: 19px;">
                         <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Auto</div>
                         <div style="margin-bottom:14px;font-size:11px" class="regioneditortext2">Assign</div>
+                        <div class="regioneditortext2">Cameras</div>
+                    </div>
+                </button>
+
+                <button id="btnRedetectAllCameras" onclick="CamManager.redetectAllCameras()" class="resizebutton">
+                    <div style="line-height: 19px;">
+                        <div style="margin-top:4px;margin-bottom:14px" class="regioneditortext2">Redetect</div>
+                        <div style="margin-bottom:14px;font-size:11px" class="regioneditortext2">All</div>
                         <div class="regioneditortext2">Cameras</div>
                     </div>
                 </button>

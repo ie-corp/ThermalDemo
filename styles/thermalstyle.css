@@ -507,13 +507,15 @@ body{
     display:flex;
     flex-wrap: wrap;
     margin:0rem 1rem 1rem 1rem;
+    justify-content: center;/*centers the entire container horizontally*/
   }
 
   .galleryItem{
+    flex:1;/*makes all items the same size horizontally*/
     margin:0.5rem;
    
     border: 2px solid cyan;
-    padding: 0rem 2rem 0rem 2rem;
+    padding: 1rem 1rem 1rem 1rem;
     text-align:center;
   }
 

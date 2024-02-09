@@ -1,6 +1,6 @@
 interface ICamera{
-    name:string,
-    existingName:string,
+    name:string|null,
+    existingName:string|null,
     isOnline:boolean,
     isThermalCamera: boolean,
     canRenameCamera: boolean,
@@ -19,6 +19,8 @@ interface ICamera{
     canAddPointSpot: boolean,
     canDeleteSpots: boolean,
     canRenameSpots: boolean,
-    canChangeSpotColor: boolean
+    canChangeSpotColor: boolean,
+    materialMap: any|null,
+    distanceMap: any|null,
 
 }
