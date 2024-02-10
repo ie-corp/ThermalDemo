@@ -22,5 +22,10 @@ interface ICamera{
     canChangeSpotColor: boolean,
     materialMap: any|null,
     distanceMap: any|null,
+    imageConfidence: number
+    nativeWidth: number,
+    nativeHeight: number,
+    rotation: number,
+    imageMirrorHorizontally: boolean
 
 }

@@ -4292,8 +4292,34 @@ module CamManager {
 
 
                     //am I getting one camera or multiple?
-                    let sb = '<table>';
+                    let imageMirrorHorizontally = cam.imageMirrorHorizontally;
+                    let rotation = cam.rotation;
+                    let imageNativeWidth = cam.nativeWidth;
+                    let imageNativeHeight = cam.nativeHeight;
+                    let strStyle = '';
+                    let strContainerStyle = '';
+                    
+                    if(rotation != 0 && rotation != 180){
+                        if(imageMirrorHorizontally){
+                            //prer Mozilla docs: The transform functions are multiplied in order from left to right, meaning that composite transforms are effectively applied in order from right to left.
+                            //the easiest way to adjust for a rotation overflow is to adjust the margin.
+                            strStyle += `transform:rotate(${rotation}deg);scaleX(-1);margin:${(imageNativeWidth-imageNativeHeight)/2}px -${(imageNativeWidth-imageNativeHeight)/2}px`;
+                        }
+                        else{
+                            strStyle += `transform:rotate(${rotation}deg);margin:${(imageNativeWidth-imageNativeHeight)/2}px -${(imageNativeWidth-imageNativeHeight)/2}px`;
+                        }
+                        
+                        //this doesn't appear to be needed as the margin takes care of the overflow.
+                        //let newWidth = (rotate == 0 || rotate == 180) ? imageWidth : imageHeight;
+                        //let newHeight = (rotate == 0 || rotate == 180) ? imageHeight : imageWidth;
+                        //use a backgroundcolor is used in div to let me know if there is an issue with the margin adjustment.
+                        //strContainerStyle += `background-color:yellow;width:${newWidth}px;height:${newHeight}px;`;
+                    }
+                    else if(imageMirrorHorizontally){
+                        strStyle += `transform:scaleX(-1);`;
+                    }
 
+                    let sb = '<table>';
                     for (let i = 0; i < scriptReturnValue.confidence.imageConfidence.length; i++) {
 
                         let confidence = scriptReturnValue.confidence;
@@ -4309,20 +4335,20 @@ module CamManager {
                         }
                         let isAssigned = foundCameraIndex == cameraIndex;
                         let canAssign = !isAssigned && cam.isKnown && !cameraEditor.cameras[foundCameraIndex].isKnown;
-
+                        
                         sb += '<tr>';
                         sb += `<td colspan="2"><h4>Saved Image for ${escapeHTML(cam.name)}</h4></td>`;
                         sb += '</tr>';
                         sb += '<tr>';
-                        sb += `<td><img id="aiVisionViewerImageConfig${i}" src="${'data:image/jpeg;base64,' + confidence.configImage}" /></td>`;
-                        sb += `<td><img id="aiVisionViewerImageConfigVision${i}" src="${'data:image/jpeg;base64,' + imageResult.configVision}" /></td>`;
+                        sb += `<td ><div style="${strContainerStyle}"><img style="${strStyle}" id="aiVisionViewerImageConfig${i}" src="${'data:image/jpeg;base64,' + confidence.configImage}" /><div></td>`;
+                        sb += `<td><div style="${strContainerStyle}"><img style="${strStyle}" id="aiVisionViewerImageConfigVision${i}" src="${'data:image/jpeg;base64,' + imageResult.configVision}" /></div></td>`;
                         sb += '</tr>';
                         sb += '<tr>';
                         sb += `<td colspan="2"><h4>Live Image for USB Index ${usbIndex}</h4></td>`;
                         sb += '</tr>';
                         sb += '<tr>';
-                        sb += `<td><img id="aiVisionViewerImageLive${i}" src="${'data:image/jpeg;base64,' + imageResult.liveImage}" /></td>`;
-                        sb += `<td><img id="aiVisionViewerImageLiveVision${i}" src="${'data:image/jpeg;base64,' + imageResult.liveVision}" /></td>`;
+                        sb += `<td><div style="${strContainerStyle}"><img style="${strStyle}" id="aiVisionViewerImageLive${i}" src="${'data:image/jpeg;base64,' + imageResult.liveImage}" /></div></td>`;
+                        sb += `<td><div style="${strContainerStyle}"><img style="${strStyle}" id="aiVisionViewerImageLiveVision${i}" src="${'data:image/jpeg;base64,' + imageResult.liveVision}" /></div></td>`;
                         sb += '</tr>';
                         sb += '<tr>';
                         sb += '<td>';
@@ -4348,7 +4374,7 @@ module CamManager {
 
 
                         sb += '</td>';
-                        sb += `<td><img id="aiVisionViewerImageDiffVision" src="${'data:image/jpeg;base64,' + imageResult.diffVision}" /></td>`;
+                        sb += `<td><div style="${strContainerStyle}"><img style="${strStyle}" id="aiVisionViewerImageDiffVision" src="${'data:image/jpeg;base64,' + imageResult.diffVision}" /></div></td>`;
                         sb += '</tr>';
 
 
@@ -4441,8 +4467,17 @@ module CamManager {
             if (!camera.isOnline) {
                 sb += '<div id="valCamGallery' + strIndex + 'Status" style="color:red;margin-top:0px" class="regionditortextsub3">Offline</div>';
             }
-            else {
-                sb += '<div id="valCamGallery' + strIndex + 'Status" style="color:green;margin-top:0px" class="regionditortextsub3">Online</div>';
+            else if(!camera.isKnown) {
+                sb += '<div id="valCamGallery' + strIndex + 'Status" style="color:green;margin-top:0px" class="regionditortextsub3">Unassigned Online</div>';
+            }
+            else if(camera.isKnown) {
+                let strConfidence = camera.imageConfidence == null ? '??%' : camera.imageConfidence.toFixed(1) + '%';
+                let strConfidenceColor =((camera.imageConfidence != null && camera.imageConfidence > 80) ? 'green' : 'orange');
+                sb += '<div id="valCamGallery${strIndex}Status" style="margin-top:0px">';
+                sb +=  '<span style="color:green" class="regionditortextsub3">Online</span>';
+                sb +=  `<span style="color:${strConfidenceColor}" class="regionditortextsub3"> - Camera Alignment:</span>`;
+                sb +=  `<span style="color:${strConfidenceColor}" class="regionditortextsub3">${strConfidence}</span>`;
+                sb += '</div>';
             }
 
             let strFilter = camera.isThermalCamera ? 'filter:url(#inferno)' : '';
@@ -4456,7 +4491,7 @@ module CamManager {
                 sb += '<td rowspan="3" style="padding:0;margin:0;">' + strImage + '</td>';
                 sb += '</tr>';
                 sb += '<tr>';
-                sb += '<td style="padding:0;margin:0;">';
+                sb += '<td style="padding:0;margin:0 2 0 0;">';
                 sb += `<svg id="galleryScale${i}" width="8" height="160"  fill="none" xmlns="http://www.w3.org/2000/svg">`;
                 sb += `<rect width="8" height="100%" fill="url(#infernoGradient)" style="${strFilter}"/>`;
                 sb += `</svg">`;
@@ -4652,6 +4687,7 @@ module CamManager {
                 let newCamera: ICamera = {
                     "usbIndex": camera.usbIndex,
                     "api": camera.api,
+                    "imageConfidence": camera.imageConfidence,
                     "name": ((camera.name ?? unknownCameraName + " USB Idx" + camera.usbIndex).trim()),
                     "existingName": (camera.isKnown ? camera.name : null),
                     "url": (camera.url != null && camera.url != "") ? (urlPrefix + camera.url) : null,
@@ -4672,7 +4708,11 @@ module CamManager {
                     "canRenameSpots": camera.canRenameSpots,
                     "canChangeSpotColor": camera.canChangeSpotColor,
                     "canEditDistanceLayer": camera.canEditDistanceLayer,
-                    "canEditMaterialLayer": camera.canEditMaterialLayer
+                    "canEditMaterialLayer": camera.canEditMaterialLayer,
+                    "nativeWidth": camera.nativeWidth,
+                    "nativeHeight": camera.nativeHeight,
+                    "rotation": camera.rotation,
+                    "imageMirrorHorizontally": camera.imageMirrorHorizontally
                 };
                 cameras.push(newCamera);
             }
