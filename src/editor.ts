@@ -3967,7 +3967,7 @@ module CamManager {
 
 
     function showBusy(showSpinner: boolean, callerName: string) {
-        console.log(`showBusy called by ${callerName}`);
+        //console.log(`showBusy called by ${callerName}`);
         document.getElementById('busyLayer')!.style.visibility = '';
         document.getElementById('busySpinner')!.style.visibility = showSpinner ? '' : 'hidden';
     }
@@ -4487,17 +4487,19 @@ module CamManager {
             if (camera.isThermalCamera) {
                 sb += '<table style="border:collapse;">';
                 sb += '<tr>';
-                sb += `<td id="galleryHighTemp${i}" style="padding:0;margin:0;font-size:10px;">--</td>`
+                sb += `<td><div id="galleryHighTemp${i}" style="padding:0;margin:0px 2px 0px 0px;font-size:10px;">--</div></td>`
                 sb += '<td rowspan="3" style="padding:0;margin:0;">' + strImage + '</td>';
                 sb += '</tr>';
                 sb += '<tr>';
-                sb += '<td style="padding:0;margin:0 2 0 0;">';
+                sb += '<td>';
+                sb += '<div>';
                 sb += `<svg id="galleryScale${i}" width="8" height="160"  fill="none" xmlns="http://www.w3.org/2000/svg">`;
                 sb += `<rect width="8" height="100%" fill="url(#infernoGradient)" style="${strFilter}"/>`;
                 sb += `</svg">`;
+                sb += `</div">`;
                 sb += '</td>';
                 sb += '<tr>';
-                sb += `<td id="galleryLowTemp${i}" style="padding:0;margin:0;font-size:10px">--</td>`;
+                sb += `<td><div id="galleryLowTemp${i}" style="padding:0;margin:0px 2px 0px 0px;font-size:10px">--</div></td>`;
                 sb += '</tr>';
                 sb += '</table>';
             }
@@ -4506,9 +4508,9 @@ module CamManager {
             }
 
             sb += `</div>`;
-
-            let strDateTime = new Date().toLocaleString();
-            sb += `<div style="text-align:right;font-size:10px">${escapeHTML(strDateTime)}</div>`;
+            
+            let strDateTime = camera.timeStamp != null && camera.timeStamp != '' ? new Date(camera.timeStamp).toLocaleString() : 'Unknown';
+            sb += `<div id="galleryImageTime${i}" style="text-align:right;font-size:10px">${escapeHTML(strDateTime)}</div>`;
             sb += `<div class="galleryItemButtons">`;
 
             if (camera.isKnown) {
@@ -4571,11 +4573,9 @@ module CamManager {
             let camera: ICamera = cameras[i];
 
             if (camera.url != null && camera.url != '') {
-                console.log('this camera has a url ' + camera.url + ' so we we will load a saved image first');
                 getSavedCameraImage(i, camera.url, camera.api, camera.usbIndex);
             }
             else if (camera.usbIndex != null && camera.api != null) {
-                console.log(`Camera Index ${i} has a usbIndex of ${camera.usbIndex} and api so we will load it.`);
                 getLiveCameraImage(i, camera.api, camera.usbIndex, null);
             }
             else {
@@ -4617,7 +4617,7 @@ module CamManager {
                     let btnLastClicked = document.getElementById('btnInspectCamera' + cameraEditor.selectedCameraIndex);
                     if (btnLastClicked != null) {
                         btnLastClicked?.focus();
-                        console.log('focus on last clicked inspect button');
+                       
                     }
                 }
             }, 2000);
@@ -4712,7 +4712,8 @@ module CamManager {
                     "nativeWidth": camera.nativeWidth,
                     "nativeHeight": camera.nativeHeight,
                     "rotation": camera.rotation,
-                    "imageMirrorHorizontally": camera.imageMirrorHorizontally
+                    "imageMirrorHorizontally": camera.imageMirrorHorizontally,
+                    "timeStamp": camera.timeStamp
                 };
                 cameras.push(newCamera);
             }
@@ -4930,7 +4931,7 @@ module CamManager {
                 return response.json();
             })
             .then(json => {
-                //console.log('response ok');
+                
                 let scriptReturnValue = json.ScriptReturnValue;
                 if (typeof scriptReturnValue == 'string') {
                     scriptReturnValue = JSON.parse(scriptReturnValue);
@@ -5582,9 +5583,7 @@ module CamManager {
                 return response.json();
             })
             .then(json => {
-                if (url != null && url != '') {
-                    console.log('Received Live Image for ' + url);
-                }
+                
                 let scriptReturnValue = json.ScriptReturnValue;
                 if (typeof scriptReturnValue == 'string') {
                     scriptReturnValue = JSON.parse(scriptReturnValue);
@@ -5757,11 +5756,9 @@ module CamManager {
 
                 getDomButton('btnRefreshLiveImage').style.borderColor = '';
                 getDomButton('btnRefreshSavedImage').style.borderColor = 'white';
-                console.log('getSavedCameraImage success for camIndex:' + camIndex.toString());
                 imgLoaded(camIndex, e);
                 if (api != null && usbIndex != null) {
 
-                    console.log('Received Saved Image, getting live image for camIndex:' + camIndex.toString());
                     getLiveCameraImage(camIndex, api, usbIndex, null);
 
                 }

@@ -26,6 +26,7 @@ interface ICamera{
     nativeWidth: number,
     nativeHeight: number,
     rotation: number,
-    imageMirrorHorizontally: boolean
+    imageMirrorHorizontally: boolean,
+    timeStamp: string|null
 
 }
