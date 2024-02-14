@@ -3531,6 +3531,10 @@ var CamManager;
     }
     CamManager.refreshVisionViewer = refreshVisionViewer;
     function showAIVision(cameraIndex) {
+        if (isDemo()) {
+            showAlertDialog(null, 'AI Vision', 'AI Vision is not available in demo.', true);
+            return;
+        }
         let cam = cameraEditor.cameras[cameraIndex];
         if (!cam.isKnown) {
             showAlertDialog(null, 'AIVision', 'AIVision is not available for unknown cameras.', true);

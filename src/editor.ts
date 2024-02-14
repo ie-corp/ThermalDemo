@@ -4199,6 +4199,11 @@ module CamManager {
     }
 
     export function showAIVision(cameraIndex: number) {
+        if(isDemo()){
+            showAlertDialog(null, 'AI Vision', 'AI Vision is not available in demo.', true);
+            return;
+        }
+
         let cam = cameraEditor.cameras[cameraIndex];
 
         if (!cam.isKnown) {
