@@ -5625,6 +5625,7 @@ module CamManager {
     }
 
     export function apiLiveCameraReceived(camIndex: number, jsonResult: any) {
+        
         console.log('received live image for ' + camIndex.toString());
         let camera = cameraEditor.cameras[camIndex];
         if (cameraEditor.isViewingEditor) {
@@ -5679,37 +5680,7 @@ module CamManager {
             galleryImage.src = tempCanvas.toDataURL();
             galleryImage.style.display = '';
             //update gallery temps
-            if (camera.isThermalCamera) {
-
-                let strHigh = '';
-                let strLow = '';
-                let useCelsius = false;//todo need to figure out how to get this.
-                let range = liveCamera.temperaturesInCelsius;
-                if((range == null || range.length == 0) && isDemo()){
-                    range = [Math.random() * 100, Math.random() * 100];
-                }
-
-                if (range != null && range.length > 0) {
-                    let temps = range;
-                    let highCelsius = Math.max(...temps);
-                    let lowCelsius = Math.min(...temps);
-                    if (useCelsius) {
-                        strHigh = getDisplayTempFromCelsius(highCelsius, false) + '&deg;C';
-                        strLow = getDisplayTempFromCelsius(lowCelsius, false) + '&deg;C';
-                    }
-                    else {
-                        strHigh = getDisplayTempFromCelsius(highCelsius, true) + '&deg;F';
-                        strLow = getDisplayTempFromCelsius(lowCelsius, true) + '&deg;F';
-                    }
-
-
-                }
-                
-                document.getElementById('galleryHighTemp' + camIndex.toString())!.innerHTML = strHigh;
-                document.getElementById('galleryLowTemp' + camIndex.toString())!.innerHTML = strLow;
-            }
-
-
+            updateGalleryTemperatures(camIndex, liveCamera.temperaturesInCelsius, cameraEditor.isViewingCelsius);
         }
 
         if (cameraEditor.selectedCameraIndex != camIndex) {
@@ -5752,6 +5723,44 @@ module CamManager {
         clearStoredImageData();
         updateMagnifierIfShown();
         hideBusy('apiLiveCameraReceived exit');
+
+    }
+
+    function updateGalleryTemperatures(camIndex: number, temperaturesInCelsius:number[], useCelsius:boolean){
+        
+
+            let strHigh = '';
+            let strLow = '';
+            let range = temperaturesInCelsius;
+            if((range == null || range.length == 0) && isDemo()){
+                range = [Math.random() * 100, Math.random() * 100];
+            }
+
+            if (range != null && range.length > 0) {
+                let temps = range;
+                let highCelsius = Math.max(...temps);
+                let lowCelsius = Math.min(...temps);
+                if (useCelsius) {
+                    strHigh = getDisplayTempFromCelsius(highCelsius, false) + '&deg;C';
+                    strLow = getDisplayTempFromCelsius(lowCelsius, false) + '&deg;C';
+                }
+                else {
+                    strHigh = getDisplayTempFromCelsius(highCelsius, true) + '&deg;F';
+                    strLow = getDisplayTempFromCelsius(lowCelsius, true) + '&deg;F';
+                }
+
+
+            }
+            
+            let highElm = document.getElementById('galleryHighTemp' + camIndex.toString()) as HTMLElement;
+            if(highElm != null){
+                highElm.innerHTML = strHigh;
+            }
+            let lowElm = document.getElementById('galleryLowTemp' + camIndex.toString()) as HTMLElement;
+            if(lowElm != null){
+                lowElm.innerHTML = strLow;
+            }
+        
 
     }
 
@@ -5901,6 +5910,11 @@ module CamManager {
                 }
             }
         }
+
+        if(cameraEditor.isViewingGallery && isDemo() && cameraEditor.cameras[camIndex].isThermalCamera){
+            updateGalleryTemperatures(camIndex, thermalData.temperaturesInCelsius, false);//show f
+        }
+
         if (!cameraEditor.isViewingEditor || camIndex != cameraEditor.selectedCameraIndex) {
             return;
         }
@@ -5918,6 +5932,9 @@ module CamManager {
             console.error('tempsCelsius.length != canvas.width * canvas.height');
             tempsCelsius = new Array(tempCanvas.width * tempCanvas.height);
         }
+
+        
+
         if (!cameraEditor.isEditing) {
             imageScale = thermalData.imageScale ?? cameraEditor.defaultZoomLevel;
             if (imageScale < cameraEditor.minZoomLevel || imageScale > cameraEditor.maxZoomLevel) {
