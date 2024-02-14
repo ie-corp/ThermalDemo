@@ -3296,7 +3296,7 @@ var CamManager;
             //when hosted on github pages, we have to make json calls and image calls with this prefix.
             return { "isDemo": true, "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
         }
-        else if (false && location.href.indexOf('5500') > -1) {
+        else if (location.href.indexOf('5500') > -1) {
             return { "isDemo": true, "isPost": false, "url": "", "rootUrl": "" }; //running locally
         }
         else {
@@ -3797,6 +3797,9 @@ var CamManager;
             }
             sb += `</div>`;
             let strDateTime = camera.timeStamp != null && camera.timeStamp != '' ? new Date(camera.timeStamp).toLocaleString() : 'Unknown';
+            if (isDemo() && camera.isOnline) {
+                strDateTime = new Date().toLocaleString();
+            }
             sb += `<div id="galleryImageTime${i}" style="text-align:right;font-size:10px">${escapeHTML(strDateTime)}</div>`;
             sb += `<div class="galleryItemButtons">`;
             if (camera.isKnown) {
@@ -4821,8 +4824,12 @@ var CamManager;
                 let strHigh = '';
                 let strLow = '';
                 let useCelsius = false; //todo need to figure out how to get this.
-                if (liveCamera.temperaturesInCelsius != null && liveCamera.temperaturesInCelsius.length > 0) {
-                    let temps = liveCamera.temperaturesInCelsius;
+                let range = liveCamera.temperaturesInCelsius;
+                if ((range == null || range.length == 0) && isDemo()) {
+                    range = [Math.random() * 100, Math.random() * 100];
+                }
+                if (range != null && range.length > 0) {
+                    let temps = range;
                     let highCelsius = Math.max(...temps);
                     let lowCelsius = Math.min(...temps);
                     if (useCelsius) {
