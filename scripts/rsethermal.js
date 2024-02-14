@@ -3296,7 +3296,7 @@ var CamManager;
             //when hosted on github pages, we have to make json calls and image calls with this prefix.
             return { "isDemo": true, "isPost": false, "url": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main", "rootUrl": "https://raw.githubusercontent.com/ie-corp/ThermalDemo/main" };
         }
-        else if (location.href.indexOf('5500') > -1) {
+        else if (false && location.href.indexOf('5500') > -1) {
             return { "isDemo": true, "isPost": false, "url": "", "rootUrl": "" }; //running locally
         }
         else {
