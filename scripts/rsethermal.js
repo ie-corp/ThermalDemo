@@ -3300,8 +3300,7 @@ var CamManager;
             return { "isDemo": true, "isPost": false, "url": "", "rootUrl": "" }; //running locally
         }
         else {
-            console.warn('using port 5422');
-            return { "isDemo": false, "isPost": true, "url": "http://localhost:5422/jsonproxy.ashx", "rootUrl": "http://localhost:5422" }; //running embedded
+            return { "isDemo": false, "isPost": true, "url": "http://localhost:81/jsonproxy.ashx", "rootUrl": "http://localhost:81" }; //running embedded
         }
     }
     function getFetch(scriptName, apiParams) {
