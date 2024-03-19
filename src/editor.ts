@@ -4763,8 +4763,12 @@ module CamManager {
     }
 
     function setStatusText(text: string, color: string, encode: boolean) {
-        document.getElementById('statusText')!.innerHTML = encode ? escapeHTML(text) : text;
-        document.getElementById('statusText')!.style.color = color;
+        let elm = document.getElementById('statusText');
+        if(elm == null){
+            return;
+        }
+        elm.innerHTML = encode ? escapeHTML(text) : text;
+        elm.style.color = color;
     }
 
     export function assignLiveCameraToSavedCamera(camIndex: number, liveIndex: number) {
@@ -5645,7 +5649,8 @@ module CamManager {
                 message = jsonResult.errorMessage;
             }
             if (camIndex == cameraEditor.selectedCameraIndex) {
-                showAlertDialog(null, 'Camera Error', message, true);
+                //showAlertDialog(null, 'Camera Error', message, true);
+                setStatusText('Error Fetching Live ' + camera.name + ' Camera', 'red', true);
             }
             else {
                 console.error(message);

@@ -4027,8 +4027,12 @@ var CamManager;
         document.getElementById('aiVisionViewer').style.display = 'none';
     }
     function setStatusText(text, color, encode) {
-        document.getElementById('statusText').innerHTML = encode ? escapeHTML(text) : text;
-        document.getElementById('statusText').style.color = color;
+        let elm = document.getElementById('statusText');
+        if (elm == null) {
+            return;
+        }
+        elm.innerHTML = encode ? escapeHTML(text) : text;
+        elm.style.color = color;
     }
     function assignLiveCameraToSavedCamera(camIndex, liveIndex) {
         if (camIndex > -1 &&
@@ -4794,7 +4798,8 @@ var CamManager;
                 message = jsonResult.errorMessage;
             }
             if (camIndex == cameraEditor.selectedCameraIndex) {
-                showAlertDialog(null, 'Camera Error', message, true);
+                //showAlertDialog(null, 'Camera Error', message, true);
+                setStatusText('Error Fetching Live ' + camera.name + ' Camera', 'red', true);
             }
             else {
                 console.error(message);
